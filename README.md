@@ -1,6 +1,6 @@
 # How to install
 
-Download the latest package here ====================================================>
+Download the latest package [here](https://github.com/GlisseManTV/HL7Tester/releases/latest)
 
 
 # HL7Generator
@@ -10,27 +10,34 @@ User Friendly HL7 Generator trought windows Form Material UI
 This Windows application allow you to generate and send HL7 V2 messages trought a user friendly UI.
 
 
-Preview
+## Preview
 
-Reminder of current settings (at each launch)
+### Reminder of current settings (at each launch)
 
-![image](https://github.com/user-attachments/assets/a821589c-83d2-47ac-8978-204ce1b59c2f)
+![image](https://github.com/user-attachments/assets/4d7cb0a8-1608-4a5d-a607-e49f983370bc)
 
-Main UI dark
-
-![image](https://github.com/user-attachments/assets/029c950f-42a1-4c46-b5ca-fc966cf6eba5)
-
-Main UI light
-
-![image](https://github.com/user-attachments/assets/b46f91e5-e557-4699-87ef-46a37979d441)
-
-Settings dark & light
-
-![image](https://github.com/user-attachments/assets/233bec1c-523d-486b-97d2-607b3335c3e0)
-![image](https://github.com/user-attachments/assets/0c154061-a07d-4cae-bae8-5eb635421562)
+### Up to date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update check disabled 
+![image](https://github.com/user-attachments/assets/73523919-7a84-4411-a416-eaed079b0ed0)
+![image](https://github.com/user-attachments/assets/f01488b7-dc43-4aca-a7fb-962f0e155a92)
 
 
-Example of use : 
+### Main UI &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dark &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; light
+
+![Capture d'écran 2025-07-09 101214](https://github.com/user-attachments/assets/beac336c-2673-4782-97bb-6943316e3a58)
+![{FF29CBBC-572B-400B-AE9F-3BAAEA6E1A38}](https://github.com/user-attachments/assets/437b68de-30b6-4780-b491-28077f1f4e5e)
+
+
+
+
+### Settings &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dark &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; light
+
+
+![image](https://github.com/user-attachments/assets/ec4b25da-06dd-4b42-a63c-6ba21889136c)
+![image](https://github.com/user-attachments/assets/fd1006ef-e9e5-4008-bed8-4f62508d9223)
+
+
+
+### Example of use : 
 
 
 https://github.com/user-attachments/assets/36645d65-34c5-4d96-ae5c-8e56142c3fa5

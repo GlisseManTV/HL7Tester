@@ -241,15 +241,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:HL7Generator"
-        "ProductCode" = "8:{43D54B06-549C-4D2D-A2B8-8F292C8F4FFE}"
-        "PackageCode" = "8:{71343ED5-5249-4A18-916E-78F1E201A697}"
+        "ProductCode" = "8:{755C56E7-5158-4E4F-BA54-5006B32CACD8}"
+        "PackageCode" = "8:{33BD1B6E-43E0-4598-9DD2-139C00F08ECE}"
         "UpgradeCode" = "8:{32B6188E-E09A-4B51-9B29-74C1DA8402EF}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.3.1"
+        "ProductVersion" = "8:1.3.2"
         "Manufacturer" = "8:ITConsult4Care"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:https://github.com/GlisseManTV/HL7Generator/issues"
@@ -819,7 +819,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_BC49348462AD44CE8559673A87960641"
             {
-            "SourcePath" = "8:..\\HL7MessageGenerator\\obj\\Release\\net8.0-windows\\HL7MessageGenerator.dll"
+            "SourcePath" = "8:..\\HL7MessageGenerator\\obj\\Release\\net8.0-windows\\HL7Tester.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_59305C5D6DA4450F9406EDB561D58434"

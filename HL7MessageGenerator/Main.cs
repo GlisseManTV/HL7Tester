@@ -22,10 +22,10 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
-using static HL7MessageGenerator.Main;
+using static HL7Tester.Main;
 
 
-namespace HL7MessageGenerator
+namespace HL7Tester
 {
     public partial class Main : MaterialForm
     {
@@ -71,7 +71,7 @@ namespace HL7MessageGenerator
         }
         public class UpdateChecker
         {
-            private static readonly string GitHubApiUrl = "https://api.github.com/repos/GlisseManTV/HL7Generator/releases/latest";
+            private static readonly string GitHubApiUrl = "https://api.github.com/repos/GlisseManTV/HL7Tester/releases/latest";
 
             private static void SafeSetClipboardText(string text)
             {
@@ -134,7 +134,7 @@ namespace HL7MessageGenerator
                                 var psi = new System.Diagnostics.ProcessStartInfo
                                 {
                                     FileName = "cmd",
-                                    Arguments = "/c start https://github.com/GlisseManTV/HL7Generator/releases/latest",
+                                    Arguments = "/c start https://github.com/GlisseManTV/HL7Tester/releases/latest",
                                     CreateNoWindow = true,
                                     UseShellExecute = false
                                 };
@@ -142,7 +142,7 @@ namespace HL7MessageGenerator
                             }
                             catch (Exception ex)
                             {
-                                MessageBox.Show("Unable to open browser. Please visit :\nhttps://github.com/GlisseManTV/HL7Generator/releases/latest",
+                                MessageBox.Show("Unable to open browser. Please visit :\nhttps://github.com/GlisseManTV/HL7Tester/releases/latest",
                                                 "Error",
                                                 MessageBoxButtons.OK,
                                                 MessageBoxIcon.Error);

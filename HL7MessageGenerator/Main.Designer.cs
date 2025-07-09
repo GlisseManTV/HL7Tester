@@ -1,6 +1,6 @@
 ﻿using MaterialSkin.Controls;
 
-namespace HL7MessageGenerator
+namespace HL7Tester
 {
     partial class Main
     {

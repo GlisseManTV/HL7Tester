@@ -1,5 +1,5 @@
 ﻿using MaterialSkin.Controls;
-using static HL7MessageGenerator.Main;
+using static HL7Tester.Main;
 
 partial class HL7Settings
 {

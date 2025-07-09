@@ -1,8 +1,8 @@
-using static HL7MessageGenerator.Main;
+using static HL7Tester.Main;
 using System.Configuration;
 using System.IO;
 
-namespace HL7MessageGenerator
+namespace HL7Tester
 {
     internal static class Program
     {
@@ -19,11 +19,11 @@ namespace HL7MessageGenerator
         }
         static void MigrateUserSettingsIfNeeded()
         {
-            if (HL7MessageGenerator.Properties.Settings.Default.LastUpgradeVersion != Application.ProductVersion)
+            if (HL7Tester.Properties.Settings.Default.LastUpgradeVersion != Application.ProductVersion)
             {
-                HL7MessageGenerator.Properties.Settings.Default.Upgrade();
-                HL7MessageGenerator.Properties.Settings.Default.LastUpgradeVersion = Application.ProductVersion;
-                HL7MessageGenerator.Properties.Settings.Default.Save();
+                HL7Tester.Properties.Settings.Default.Upgrade();
+                HL7Tester.Properties.Settings.Default.LastUpgradeVersion = Application.ProductVersion;
+                HL7Tester.Properties.Settings.Default.Save();
             }
         }
     }

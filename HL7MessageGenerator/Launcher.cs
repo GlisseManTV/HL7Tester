@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static HL7MessageGenerator.Main;
+using static HL7Tester.Main;
 using NLog;
 
-namespace HL7MessageGenerator
+namespace HL7Tester
 {
         public partial class Launcher : Form
         {

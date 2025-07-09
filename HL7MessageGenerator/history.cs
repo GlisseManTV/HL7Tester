@@ -13,7 +13,7 @@ using NLog;
 using NLog.Config;
 using System.IO;
 using System.ComponentModel.DataAnnotations.Schema;
-using static HL7MessageGenerator.Main;
+using static HL7Tester.Main;
 using System.Data;
 using System.Windows.Forms;
 using System.Xml;
@@ -21,7 +21,7 @@ using System.Web;
 using System.Text.RegularExpressions;
 
 
-namespace HL7MessageGenerator
+namespace HL7Tester
 {
     public partial class history : MaterialForm
     {

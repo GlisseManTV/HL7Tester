@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using NHapi.Base.Model;
-using HL7MessageGenerator;
+using HL7Tester;
 using NHapi.Model.V23.Message;
 using NHapi.Model.V23.Segment;
 using MaterialSkin.Controls;
@@ -22,16 +22,16 @@ public partial class HL7Settings : MaterialForm
 
         InitializeComponent();
         isInitializing = true;
-        if (HL7MessageGenerator.Properties.Settings.Default.Properties["AutoUpdateCheck"] != null &&
-            HL7MessageGenerator.Properties.Settings.Default["AutoUpdateCheck"] == null)
+        if (HL7Tester.Properties.Settings.Default.Properties["AutoUpdateCheck"] != null &&
+            HL7Tester.Properties.Settings.Default["AutoUpdateCheck"] == null)
         {
-            HL7MessageGenerator.Properties.Settings.Default.AutoUpdateCheck = true;
-            HL7MessageGenerator.Properties.Settings.Default.Save();
+            HL7Tester.Properties.Settings.Default.AutoUpdateCheck = true;
+            HL7Tester.Properties.Settings.Default.Save();
         }
 
-        CheckUpdateBox.Checked = HL7MessageGenerator.Properties.Settings.Default.AutoUpdateCheck;
-        string lastIpAddress = HL7MessageGenerator.Properties.Settings.Default.LastIpAddress;
-        string lastPort = HL7MessageGenerator.Properties.Settings.Default.LastPort;
+        CheckUpdateBox.Checked = HL7Tester.Properties.Settings.Default.AutoUpdateCheck;
+        string lastIpAddress = HL7Tester.Properties.Settings.Default.LastIpAddress;
+        string lastPort = HL7Tester.Properties.Settings.Default.LastPort;
 
         txtIpAddress.Text = lastIpAddress;
         txtPort.Text = lastPort;
@@ -150,14 +150,14 @@ public partial class HL7Settings : MaterialForm
 
     private void btnSend_Click(object sender, EventArgs e)
     {
-        string currentIpAddress = HL7MessageGenerator.Properties.Settings.Default.LastIpAddress;
-        string currentPort = HL7MessageGenerator.Properties.Settings.Default.LastPort;
+        string currentIpAddress = HL7Tester.Properties.Settings.Default.LastIpAddress;
+        string currentPort = HL7Tester.Properties.Settings.Default.LastPort;
 
         if (txtIpAddress.Text != currentIpAddress || txtPort.Text != currentPort)
         {
-            HL7MessageGenerator.Properties.Settings.Default.LastIpAddress = txtIpAddress.Text;
-            HL7MessageGenerator.Properties.Settings.Default.LastPort = txtPort.Text;
-            HL7MessageGenerator.Properties.Settings.Default.Save();
+            HL7Tester.Properties.Settings.Default.LastIpAddress = txtIpAddress.Text;
+            HL7Tester.Properties.Settings.Default.LastPort = txtPort.Text;
+            HL7Tester.Properties.Settings.Default.Save();
             logger.Info($"\nChanging IP to {txtIpAddress.Text}:{txtPort.Text}\n");
         }
 
@@ -169,8 +169,8 @@ public partial class HL7Settings : MaterialForm
     {
         if (isInitializing)
             return;
-        HL7MessageGenerator.Properties.Settings.Default.AutoUpdateCheck = CheckUpdateBox.Checked;
-        HL7MessageGenerator.Properties.Settings.Default.Save();
+        HL7Tester.Properties.Settings.Default.AutoUpdateCheck = CheckUpdateBox.Checked;
+        HL7Tester.Properties.Settings.Default.Save();
         logger.Info($"\nUpdate check setting changed to {CheckUpdateBox.Checked}\n");
     }
 

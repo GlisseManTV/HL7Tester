@@ -1,6 +1,6 @@
 ﻿using System.Windows.Forms;
 
-namespace HL7MessageGenerator
+namespace HL7Tester
 {
     partial class history
     {

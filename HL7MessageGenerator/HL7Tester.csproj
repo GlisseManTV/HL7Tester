@@ -7,8 +7,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>HL7 _icon.ico</ApplicationIcon>
-    <AssemblyVersion>1.3.3</AssemblyVersion>
 	<FileVersion>1.3.3</FileVersion>
+	<AssemblyVersion>1.3.3</AssemblyVersion>
 	<InformationalVersion>1.3.3</InformationalVersion>
   </PropertyGroup>
 

@@ -568,7 +568,7 @@ namespace HL7Tester
                 lblNewPatientID.Visible = false;
                 txtNewPatientID.Visible = false;
             }
-            if (selectedType.Contains("non utilisé"))
+            if (selectedType.Contains("not used"))
             {
 
             }
@@ -818,8 +818,17 @@ namespace HL7Tester
 
         private void SettingsButton_Click(object sender, EventArgs e)
         {
-            HL7Settings sendHL7Form = new HL7Settings();
-            sendHL7Form.Show();
+            if (Application.OpenForms.OfType<HL7Settings>().Any())
+            {
+                HL7Settings existingForm = Application.OpenForms.OfType<HL7Settings>().First();
+
+                existingForm.BringToFront();
+            }
+            else
+            {
+                HL7Settings sendHL7Form = new HL7Settings();
+                sendHL7Form.Show();
+            }
         }
 
 
@@ -893,16 +902,16 @@ namespace HL7Tester
                 }
                 else
                 {
-                    MessageBox.Show($"Le fichier de logs '{logFileName}' n'a pas été trouvé dans le répertoire : {logDirectoryPath}",
-                                    "Fichier non trouvé",
+                    MessageBox.Show($"The log file '{logFileName}'was not found in the: {logDirectoryPath}",
+                                    "File not found",
                                     MessageBoxButtons.OK,
                                     MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erreur lors de l'ouverture du fichier de logs : {ex.Message}",
-                                "Erreur",
+                MessageBox.Show($"Error opening log file: {ex.Message}",
+                                "Error",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
             }

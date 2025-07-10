@@ -16,7 +16,6 @@ public partial class HL7Settings : MaterialForm
 {
     private static readonly Logger logger = LogManager.GetCurrentClassLogger();
     private bool isInitializing = true;
-
     public HL7Settings()
     {
 
@@ -55,6 +54,7 @@ public partial class HL7Settings : MaterialForm
         isInitializing = false;
 
     }
+
     private bool IsDarkThemeEnabled()
     {
         // W10 before 2003
@@ -143,6 +143,8 @@ public partial class HL7Settings : MaterialForm
     }
 
 
+
+
     private void btnCancel_Click(object sender, EventArgs e)
     {
         this.Close();
@@ -163,6 +165,31 @@ public partial class HL7Settings : MaterialForm
 
         this.Close();
     }
+    /// future improvements
+    /*private void btnSend_Click(object sender, EventArgs e)
+    {
+        string newIpAddress = cmbIpAddress.Text.Trim();
+        string selectedIpAddress = cmbIpAddress.SelectedItem?.ToString() ?? string.Empty;
+        string currentIpAddress = HL7Tester.Properties.Settings.Default.LastIpAddress;
+        string currentPort = HL7Tester.Properties.Settings.Default.LastPort;
+        if (string.IsNullOrEmpty(newIpAddress))
+        {
+            MessageBox.Show("Please enter a valid IP address.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        if (newIpAddress != currentIpAddress || txtPort.Text != currentPort)
+        {
+            HL7Tester.Properties.Settings.Default.LastIpAddress3 = HL7Tester.Properties.Settings.Default.LastIpAddress2;
+            HL7Tester.Properties.Settings.Default.LastIpAddress2 = HL7Tester.Properties.Settings.Default.LastIpAddress;
+            HL7Tester.Properties.Settings.Default.LastIpAddress = selectedIpAddress;
+            HL7Tester.Properties.Settings.Default.LastPort = txtPort.Text;
+            HL7Tester.Properties.Settings.Default.Save();
+
+            logger.Info($"\nChanging IP to {selectedIpAddress}:{txtPort.Text}\n");
+        }
+        this.Close();
+    }*/
 
 
     private void CheckUpdateBox_CheckedChanged(object sender, EventArgs e)

@@ -150,7 +150,7 @@ namespace HL7Tester
                             }
                         }
                     }
-                    if (latestVersion < currentVersion)
+                    else if (latestVersion < currentVersion)
                     {
                         MessageBox.Show($"You are using a development version {currentVersion}.\n" +
                                         "This version may not be stable and is intended for testing purposes only.",

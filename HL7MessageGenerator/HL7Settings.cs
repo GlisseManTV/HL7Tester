@@ -151,15 +151,25 @@ public partial class HL7Settings : MaterialForm
 
         if (txtIpAddress.Text != currentIpAddress || txtPort.Text != currentPort)
         {
+            HL7Tester.Properties.Settings.Default.LastIpAddress9 = HL7Tester.Properties.Settings.Default.LastIpAddress8;
+            HL7Tester.Properties.Settings.Default.LastIpAddress8 = HL7Tester.Properties.Settings.Default.LastIpAddress7;
+            HL7Tester.Properties.Settings.Default.LastIpAddress7 = HL7Tester.Properties.Settings.Default.LastIpAddress6;
+            HL7Tester.Properties.Settings.Default.LastIpAddress6 = HL7Tester.Properties.Settings.Default.LastIpAddress5;
             HL7Tester.Properties.Settings.Default.LastIpAddress5 = HL7Tester.Properties.Settings.Default.LastIpAddress4;
             HL7Tester.Properties.Settings.Default.LastIpAddress4 = HL7Tester.Properties.Settings.Default.LastIpAddress3;
             HL7Tester.Properties.Settings.Default.LastIpAddress3 = HL7Tester.Properties.Settings.Default.LastIpAddress2;
-            HL7Tester.Properties.Settings.Default.LastIpAddress2 = HL7Tester.Properties.Settings.Default.LastIpAddress;
+            HL7Tester.Properties.Settings.Default.LastIpAddress2 = HL7Tester.Properties.Settings.Default.LastIpAddress1;
+            HL7Tester.Properties.Settings.Default.LastIpAddress1 = HL7Tester.Properties.Settings.Default.LastIpAddress;
             HL7Tester.Properties.Settings.Default.LastIpAddress = txtIpAddress.Text;
+            HL7Tester.Properties.Settings.Default.LastPort9 = HL7Tester.Properties.Settings.Default.LastPort8;
+            HL7Tester.Properties.Settings.Default.LastPort8 = HL7Tester.Properties.Settings.Default.LastPort7;
+            HL7Tester.Properties.Settings.Default.LastPort7 = HL7Tester.Properties.Settings.Default.LastPort6;
+            HL7Tester.Properties.Settings.Default.LastPort6 = HL7Tester.Properties.Settings.Default.LastPort5;
             HL7Tester.Properties.Settings.Default.LastPort5 = HL7Tester.Properties.Settings.Default.LastPort4;
             HL7Tester.Properties.Settings.Default.LastPort4 = HL7Tester.Properties.Settings.Default.LastPort3;
             HL7Tester.Properties.Settings.Default.LastPort3 = HL7Tester.Properties.Settings.Default.LastPort2;
-            HL7Tester.Properties.Settings.Default.LastPort2 = HL7Tester.Properties.Settings.Default.LastPort;
+            HL7Tester.Properties.Settings.Default.LastPort2 = HL7Tester.Properties.Settings.Default.LastPort1;
+            HL7Tester.Properties.Settings.Default.LastPort1 = HL7Tester.Properties.Settings.Default.LastPort;
             HL7Tester.Properties.Settings.Default.LastPort = txtPort.Text;
             HL7Tester.Properties.Settings.Default.Save();
             logger.Info($"\nChanging IP to {txtIpAddress.Text}:{txtPort.Text}\n");

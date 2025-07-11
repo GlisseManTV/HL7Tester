@@ -41,10 +41,15 @@ namespace HL7Tester
             return new[]
             {
                 FormatConnection(Properties.Settings.Default.LastIpAddress ?? "N/A", Properties.Settings.Default.LastPort ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress1 ?? "N/A", Properties.Settings.Default.LastPort1 ?? "N/A"),
                 FormatConnection(Properties.Settings.Default.LastIpAddress2 ?? "N/A", Properties.Settings.Default.LastPort2 ?? "N/A"),
                 FormatConnection(Properties.Settings.Default.LastIpAddress3 ?? "N/A", Properties.Settings.Default.LastPort3 ?? "N/A"),
                 FormatConnection(Properties.Settings.Default.LastIpAddress4 ?? "N/A", Properties.Settings.Default.LastPort4 ?? "N/A"),
-                FormatConnection(Properties.Settings.Default.LastIpAddress5 ?? "N/A", Properties.Settings.Default.LastPort5 ?? "N/A")
+                FormatConnection(Properties.Settings.Default.LastIpAddress5 ?? "N/A", Properties.Settings.Default.LastPort5 ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress6 ?? "N/A", Properties.Settings.Default.LastPort6 ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress7 ?? "N/A", Properties.Settings.Default.LastPort7 ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress8 ?? "N/A", Properties.Settings.Default.LastPort8 ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress9 ?? "N/A", Properties.Settings.Default.LastPort9 ?? "N/A")
             };
 
             //(string.IsNullOrEmpty(Properties.Settings.Default.LastIpAddress) ? "N/A" : Properties.Settings.Default.LastIpAddress);

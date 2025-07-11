@@ -25,30 +25,6 @@ namespace HL7Tester.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastIpAddress {
-            get {
-                return ((string)(this["LastIpAddress"]));
-            }
-            set {
-                this["LastIpAddress"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastPort {
-            get {
-                return ((string)(this["LastPort"]));
-            }
-            set {
-                this["LastPort"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Profile=\"(Default)\"")]
         public string LastUpgradeVersion {
             get {
@@ -68,6 +44,30 @@ namespace HL7Tester.Properties {
             }
             set {
                 this["AutoUpdateCheck"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIpAddress {
+            get {
+                return ((string)(this["LastIpAddress"]));
+            }
+            set {
+                this["LastIpAddress"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIpAddress1 {
+            get {
+                return ((string)(this["LastIpAddress1"]));
+            }
+            set {
+                this["LastIpAddress1"] = value;
             }
         }
         
@@ -98,30 +98,6 @@ namespace HL7Tester.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastPort2 {
-            get {
-                return ((string)(this["LastPort2"]));
-            }
-            set {
-                this["LastPort2"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastPort3 {
-            get {
-                return ((string)(this["LastPort3"]));
-            }
-            set {
-                this["LastPort3"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string LastIpAddress4 {
             get {
                 return ((string)(this["LastIpAddress4"]));
@@ -146,6 +122,102 @@ namespace HL7Tester.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIpAddress6 {
+            get {
+                return ((string)(this["LastIpAddress6"]));
+            }
+            set {
+                this["LastIpAddress6"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIpAddress7 {
+            get {
+                return ((string)(this["LastIpAddress7"]));
+            }
+            set {
+                this["LastIpAddress7"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIpAddress8 {
+            get {
+                return ((string)(this["LastIpAddress8"]));
+            }
+            set {
+                this["LastIpAddress8"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIpAddress9 {
+            get {
+                return ((string)(this["LastIpAddress9"]));
+            }
+            set {
+                this["LastIpAddress9"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort {
+            get {
+                return ((string)(this["LastPort"]));
+            }
+            set {
+                this["LastPort"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort1 {
+            get {
+                return ((string)(this["LastPort1"]));
+            }
+            set {
+                this["LastPort1"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort2 {
+            get {
+                return ((string)(this["LastPort2"]));
+            }
+            set {
+                this["LastPort2"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort3 {
+            get {
+                return ((string)(this["LastPort3"]));
+            }
+            set {
+                this["LastPort3"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string LastPort4 {
             get {
                 return ((string)(this["LastPort4"]));
@@ -164,6 +236,54 @@ namespace HL7Tester.Properties {
             }
             set {
                 this["LastPort5"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort6 {
+            get {
+                return ((string)(this["LastPort6"]));
+            }
+            set {
+                this["LastPort6"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort7 {
+            get {
+                return ((string)(this["LastPort7"]));
+            }
+            set {
+                this["LastPort7"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort8 {
+            get {
+                return ((string)(this["LastPort8"]));
+            }
+            set {
+                this["LastPort8"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort9 {
+            get {
+                return ((string)(this["LastPort9"]));
+            }
+            set {
+                this["LastPort9"] = value;
             }
         }
     }

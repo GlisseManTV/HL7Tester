@@ -10,6 +10,7 @@ using NLog.Config;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Net;
@@ -83,6 +84,7 @@ namespace HL7Tester
 
             public static async Task CheckForUpdateAsync()
             {
+
                 if (Properties.Settings.Default.AutoUpdateCheck != true)
                 {
                     MessageBox.Show("Auto-update is disabled.\n", "Auto-Update Disabled", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -98,25 +100,22 @@ namespace HL7Tester
 
                     using var doc = JsonDocument.Parse(response);
                     var latestVersionString = doc.RootElement.GetProperty("tag_name").GetString();
-
+                    var releaseURL = doc.RootElement.GetProperty("html_url").GetString();
                     var latestVersion = new Version(latestVersionString.TrimStart('v'));
                     var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
 
-
-
+                    
                     if (latestVersion > currentVersion)
                     {
-                        string downloadUrl = null;
-
+                        string downloadUrl = "";
                         foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
-                        {
+                        {                            
                             var name = asset.GetProperty("name").GetString();
-                            if (name.EndsWith("setup.msi", StringComparison.OrdinalIgnoreCase))
+                            if (name != "")
                             {
                                 downloadUrl = asset.GetProperty("browser_download_url").GetString();
                                 break;
                             }
-
                         }
                         logger.Info($"\nUpdate check: \nCurrent version {currentVersion}\nLatest version {latestVersion}\n");
                         var result = MessageBox.Show(
@@ -129,12 +128,16 @@ namespace HL7Tester
 
                         if (result == DialogResult.Yes)
                         {
+                            if (downloadUrl == "")
+                            {
+                                downloadUrl = releaseURL;
+                            }
                             try
                             {
                                 var psi = new System.Diagnostics.ProcessStartInfo
                                 {
                                     FileName = "cmd",
-                                    Arguments = "/c start https://github.com/GlisseManTV/HL7Tester/releases/latest",
+                                    Arguments = $"/c start {downloadUrl}",
                                     CreateNoWindow = true,
                                     UseShellExecute = false
                                 };
@@ -181,17 +184,31 @@ namespace HL7Tester
             if (!Directory.Exists(logDirectoryPath))
             {
                 Directory.CreateDirectory(logDirectoryPath);
-                MessageBox.Show($"Logs folder has been created at: {logDirectoryPath}\nConfigured IP: {ipAddress}, Port: {port}",
+                MessageBox.Show($"Logs folder has been created at: {logDirectoryPath}\n\nConfigured IP: {ipAddress}, Port: {port}",
                                 "Folder Created",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
+                logger.Info($"\nLogs folder has been created at: {logDirectoryPath}\nConfigured IP: {ipAddress}, Port: {port}\n");
             }
             else
             {
-                MessageBox.Show($"Logs folder is here: {logDirectoryPath}\nConfigured IP: {ipAddress}, Port: {port}",
+                MessageBox.Show($"Logs folder is here: {logDirectoryPath}\n\nConfigured IP: {ipAddress}, Port: {port}",
                                 "Folder Exists",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
+                logger.Info($"\nLogs folder found\nConfigured IP: {ipAddress}, Port: {port}\n");
+            }
+            if (ipAddress is "")
+            {
+                logger.Info("No configured IP, please fix it in App settings");
+            }
+            else if (port is "")
+            {
+                logger.Info("No configured Port, please fix it in App settings");
+            }
+            else if (ipAddress is "" && port is "")
+            {
+                logger.Info("Both IP and port are not configured, please fix it in AppSettings");
             }
         }
 

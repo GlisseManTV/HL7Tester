@@ -1,10 +1,11 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using static HL7Tester.Main;
-using NLog;
 
 namespace HL7Tester
 {
@@ -28,7 +29,7 @@ namespace HL7Tester
             var mainForm = new Main();
                 mainForm.Show();
                 this.Hide();
-                logger.Info($"\nComputer: {Environment.MachineName}\nUser: {Environment.UserName}\nApplication started successfully.\n");
+                logger.Info($"\nComputer: {Environment.MachineName}\nUser: {Environment.UserName}\nApp Version: {Assembly.GetExecutingAssembly().GetName().Version}\nApplication started successfully.\n");
                 mainForm.FormClosed += (s, e) =>
                 {
                     logger.Info("\nApplication exited successfully.\n");

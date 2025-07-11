@@ -118,5 +118,53 @@ namespace HL7Tester.Properties {
                 this["LastPort3"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIpAddress4 {
+            get {
+                return ((string)(this["LastIpAddress4"]));
+            }
+            set {
+                this["LastIpAddress4"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIpAddress5 {
+            get {
+                return ((string)(this["LastIpAddress5"]));
+            }
+            set {
+                this["LastIpAddress5"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort4 {
+            get {
+                return ((string)(this["LastPort4"]));
+            }
+            set {
+                this["LastPort4"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastPort5 {
+            get {
+                return ((string)(this["LastPort5"]));
+            }
+            set {
+                this["LastPort5"] = value;
+            }
+        }
     }
 }

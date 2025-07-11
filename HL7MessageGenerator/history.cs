@@ -1,93 +1,79 @@
-﻿using System.Drawing.Drawing2D;
-using NHapi.Base.Model;
-using NHapi.Base.Parser;
-using NHapi.Model.V23.Message;
-using NHapi.Model.V23.Segment;
-using System.Security.Cryptography;
-using System.Text;
+﻿using MaterialSkin.Controls;
 using MaterialSkin;
-using MaterialSkin.Controls;
-using System.Net.Sockets;
-using System.Net;
-using NLog;
-using NLog.Config;
-using System.IO;
-using System.ComponentModel.DataAnnotations.Schema;
-using static HL7Tester.Main;
-using System.Data;
-using System.Windows.Forms;
-using System.Xml;
-using System.Web;
-using System.Text.RegularExpressions;
+using HL7Tester;
+using System;
+using System.Text;
+
 
 
 namespace HL7Tester
 {
     public partial class history : MaterialForm
     {
-       /* private readonly HL7MessageCache _messageCache;*/
-
-
-        /*public history(HL7MessageCache messageCache)
+        public history()
         {
             InitializeComponent();
-            var messages = messageCache.GetMessages();
-            /*
-            listBox1.Items.Clear();
-            foreach (var message in messages)
+            lastUsedIpsMultiBox.Text = string.Join("\n", GetLastUsedConnections());
+            var materialSkinManager = MaterialSkinManager.Instance;
+            materialSkinManager.AddFormToManage(this);
+            if (IsDarkThemeEnabled())
             {
-                listBox1.Items.Add(message);
-            }*/
-            /*using (var fileStream = File.Create("messages.html"))
-            {
-                using (var writer = XmlWriter.Create(fileStream))
-                {
-                    writer.WriteStartDocument();
-                    writer.WriteStartElement("html");
-                    writer.WriteStartElement("body");
-
-                    foreach (string message in messages)
-                    {
-                        string encodedMessage = Regex.Replace(message, @"\n", @"<br />");
-                        writer.WriteStartElement("p");
-                        writer.WriteString(encodedMessage);
-                        writer.WriteEndElement();
-                    }
-
-                    writer.WriteEndElement(); // body
-                    writer.WriteEndElement(); // html
-                    writer.WriteEndDocument();
-                }
-                webView21.NavigateToString(File.ReadAllText("messages.html"));
-
+                materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;
             }
-
-        }*/
-
-        /*private void history_Load(object sender, EventArgs e)
+            else
+            {
+                materialSkinManager.Theme = MaterialSkinManager.Themes.LIGHT;
+            }
+        }
+        private string FormatConnection(string ip, string port)
         {
-            List<string> messages = _messageCache.GetMessages().ToList(); // Fixed the return type of _messageCache.GetMessages()
-
-            // Create a DataTable to hold the message history
-            DataTable dt = new DataTable();
-
-            // Add two columns: MessageId and MessageText
-            dt.Columns.Add("MessageId", typeof(string));
-            dt.Columns.Add("MessageText", typeof(string));
-
-            foreach (string message in messages)
+            if (ip == "" && port == "")
             {
-                DataRow row = dt.NewRow();
-                // Add the MessageId and MessageText to the row
-                row["MessageId"] = "Unknown"; // Replace with actual MessageId value
-                row["MessageText"] = message; // Replace with actual MessageText value
+                return "";
+            }
+            else
+            {
+                return $"{ip}:{port}"; // Affiche "IP:Port" si au moins une valeur est valide
+            }
+        }
+        private string[] GetLastUsedConnections()
+        {
+            return new[]
+            {
+                FormatConnection(Properties.Settings.Default.LastIpAddress ?? "N/A", Properties.Settings.Default.LastPort ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress2 ?? "N/A", Properties.Settings.Default.LastPort2 ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress3 ?? "N/A", Properties.Settings.Default.LastPort3 ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress4 ?? "N/A", Properties.Settings.Default.LastPort4 ?? "N/A"),
+                FormatConnection(Properties.Settings.Default.LastIpAddress5 ?? "N/A", Properties.Settings.Default.LastPort5 ?? "N/A")
+            };
 
-                dt.Rows.Add(row);
+            //(string.IsNullOrEmpty(Properties.Settings.Default.LastIpAddress) ? "N/A" : Properties.Settings.Default.LastIpAddress);
+        }
+        private bool IsDarkThemeEnabled()
+        {
+            // W10 before 2003
+            using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes"))
+            {
+                if (key != null)
+                {
+                    var theme = key.GetValue("AppsUseLightTheme");
+                    if (theme != null)
+                        return (int)theme == 0;
+                }
             }
 
-            listBox1.DataSource = dt;
-        }*/
+            // W11
+            using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
+            {
+                if (key != null)
+                {
+                    var theme = key.GetValue("AppsUseLightTheme");
+                    if (theme != null)
+                        return (int)theme == 0;
+                }
+            }
 
-
-}
+            return false;
+        }
+    }
 }

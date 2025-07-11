@@ -29,11 +29,11 @@ namespace HL7Tester
 {
     public partial class Main : MaterialForm
     {
-        
+
         private async void Form1_Shown(object sender, EventArgs e)
         {
 
-            await UpdateChecker.CheckForUpdateAsync(); 
+            await UpdateChecker.CheckForUpdateAsync();
 
         }
         public Main()
@@ -43,7 +43,7 @@ namespace HL7Tester
             InitializeComponent();
             InitializeComboBox();
             var materialSkinManager = MaterialSkinManager.Instance;
-            
+
             materialSkinManager.AddFormToManage(this);
             if (IsDarkThemeEnabled())
             {
@@ -60,7 +60,7 @@ namespace HL7Tester
                 Accent.Blue200,
                 TextShade.WHITE
                     );
-            
+
         }
         private static void SafeSetClipboardText(string text)
         {
@@ -87,21 +87,21 @@ namespace HL7Tester
                 {
                     MessageBox.Show("Auto-update is disabled.\n", "Auto-Update Disabled", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     logger.Info("\nAuto-update is disabled.\n");
-                    return; 
+                    return;
                 }
 
                 try
                 {
                     using var client = new HttpClient();
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd("request"); 
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("request");
                     var response = await client.GetStringAsync(GitHubApiUrl);
 
                     using var doc = JsonDocument.Parse(response);
-                    var latestVersionString = doc.RootElement.GetProperty("tag_name").GetString(); 
+                    var latestVersionString = doc.RootElement.GetProperty("tag_name").GetString();
 
                     var latestVersion = new Version(latestVersionString.TrimStart('v'));
                     var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
-                    
+
 
 
                     if (latestVersion > currentVersion)
@@ -167,7 +167,7 @@ namespace HL7Tester
                 }
                 catch (Exception ex)
                 {
-                    
+
                     Console.WriteLine("Update check failed : " + ex.Message);
                     logger.Error($"\nUpdate check: \nFailed: {ex.Message}\n");
                 }
@@ -871,7 +871,7 @@ namespace HL7Tester
                         using (var reader = new StreamReader(stream))
                         {
                             var ackMessage = await reader.ReadLineAsync();
-                            logger.Info($"Server acknowledgement:\n{ackMessage}\n");                            
+                            logger.Info($"Server acknowledgement:\n{ackMessage}\n");
                         }
                     }
                 }
@@ -916,5 +916,7 @@ namespace HL7Tester
                                 MessageBoxIcon.Error);
             }
         }
+
+
     }
 }

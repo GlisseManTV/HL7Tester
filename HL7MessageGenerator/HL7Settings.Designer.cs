@@ -16,6 +16,7 @@ partial class HL7Settings
 
     private void InitializeComponent()
     {
+        components = new System.ComponentModel.Container();
         System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(HL7Settings));
         txtIpAddress = new RoundedMaterialTextBox();
         txtPort = new RoundedMaterialTextBox();
@@ -24,6 +25,8 @@ partial class HL7Settings
         IPLabel = new MaterialLabel();
         PortLabel = new MaterialLabel();
         CheckUpdateBox = new CheckBox();
+        toolTipUpdate = new ToolTip(components);
+        pubLabel = new MaterialLabel();
         SuspendLayout();
         // 
         // txtIpAddress
@@ -116,13 +119,14 @@ partial class HL7Settings
         IPLabel.AutoSize = true;
         IPLabel.Depth = 0;
         IPLabel.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-        IPLabel.Location = new Point(8, 73);
+        IPLabel.Location = new Point(7, 74);
         IPLabel.Margin = new Padding(4, 0, 4, 0);
         IPLabel.MouseState = MaterialSkin.MouseState.HOVER;
         IPLabel.Name = "IPLabel";
         IPLabel.Size = new Size(75, 19);
         IPLabel.TabIndex = 4;
         IPLabel.Text = "IP address";
+        IPLabel.Click += IPLabel_Click;
         // 
         // PortLabel
         // 
@@ -148,11 +152,24 @@ partial class HL7Settings
         CheckUpdateBox.UseVisualStyleBackColor = true;
         CheckUpdateBox.CheckedChanged += CheckUpdateBox_CheckedChanged;
         // 
+        // pubLabel
+        // 
+        pubLabel.AutoSize = true;
+        pubLabel.Depth = 0;
+        pubLabel.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
+        pubLabel.Location = new Point(89, 74);
+        pubLabel.MouseState = MaterialSkin.MouseState.HOVER;
+        pubLabel.Name = "pubLabel";
+        pubLabel.Size = new Size(137, 19);
+        pubLabel.TabIndex = 8;
+        pubLabel.Text = "<=Try to click here !";
+        // 
         // HL7Settings
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         ClientSize = new Size(347, 252);
+        Controls.Add(pubLabel);
         Controls.Add(CheckUpdateBox);
         Controls.Add(PortLabel);
         Controls.Add(IPLabel);
@@ -177,4 +194,6 @@ partial class HL7Settings
     private MaterialLabel IPLabel;
     private MaterialLabel PortLabel;
     private CheckBox CheckUpdateBox;
+    private ToolTip toolTipUpdate;
+    private MaterialLabel pubLabel;
 }

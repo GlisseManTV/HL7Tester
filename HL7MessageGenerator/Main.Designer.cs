@@ -69,10 +69,10 @@ namespace HL7Tester
             OBXTypeLabel3 = new MaterialLabel();
             OBXReason3TextBox = new RoundedMaterialTextBox();
             OBXReasonLabel3 = new MaterialLabel();
-            panel4 = new Panel();
+            LogsButton = new RoundedMaterialButton();
             panel1 = new Panel();
             panel2 = new Panel();
-            LogsButton = new RoundedMaterialButton();
+            panel4 = new Panel();
             SuspendLayout();
             // 
             // comboMessageType
@@ -94,7 +94,7 @@ namespace HL7Tester
             comboMessageType.MaxDropDownItems = 4;
             comboMessageType.MouseState = MaterialSkin.MouseState.OUT;
             comboMessageType.Name = "comboMessageType";
-            comboMessageType.Size = new Size(447, 49);
+            comboMessageType.Size = new Size(491, 49);
             comboMessageType.StartIndex = 0;
             comboMessageType.TabIndex = 0;
             // 
@@ -126,7 +126,7 @@ namespace HL7Tester
             txtPatientID.MouseState = MaterialSkin.MouseState.OUT;
             txtPatientID.Multiline = false;
             txtPatientID.Name = "txtPatientID";
-            txtPatientID.Size = new Size(157, 50);
+            txtPatientID.Size = new Size(213, 50);
             txtPatientID.TabIndex = 2;
             txtPatientID.Text = "";
             txtPatientID.TrailingIcon = null;
@@ -136,7 +136,7 @@ namespace HL7Tester
             lblNewPatientID.AutoSize = true;
             lblNewPatientID.Depth = 0;
             lblNewPatientID.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            lblNewPatientID.Location = new Point(171, 577);
+            lblNewPatientID.Location = new Point(232, 576);
             lblNewPatientID.Margin = new Padding(4, 0, 4, 0);
             lblNewPatientID.MouseState = MaterialSkin.MouseState.HOVER;
             lblNewPatientID.Name = "lblNewPatientID";
@@ -152,13 +152,13 @@ namespace HL7Tester
             txtNewPatientID.Depth = 0;
             txtNewPatientID.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             txtNewPatientID.LeadingIcon = null;
-            txtNewPatientID.Location = new Point(173, 599);
+            txtNewPatientID.Location = new Point(235, 599);
             txtNewPatientID.Margin = new Padding(4, 3, 4, 3);
             txtNewPatientID.MaxLength = 50;
             txtNewPatientID.MouseState = MaterialSkin.MouseState.OUT;
             txtNewPatientID.Multiline = false;
             txtNewPatientID.Name = "txtNewPatientID";
-            txtNewPatientID.Size = new Size(179, 50);
+            txtNewPatientID.Size = new Size(207, 50);
             txtNewPatientID.TabIndex = 2;
             txtNewPatientID.Text = "";
             txtNewPatientID.TrailingIcon = null;
@@ -192,7 +192,7 @@ namespace HL7Tester
             txtPatientName.MouseState = MaterialSkin.MouseState.OUT;
             txtPatientName.Multiline = false;
             txtPatientName.Name = "txtPatientName";
-            txtPatientName.Size = new Size(157, 50);
+            txtPatientName.Size = new Size(213, 50);
             txtPatientName.TabIndex = 6;
             txtPatientName.Text = "";
             txtPatientName.TrailingIcon = null;
@@ -203,7 +203,7 @@ namespace HL7Tester
             lblPatGivenName.AutoSize = true;
             lblPatGivenName.Depth = 0;
             lblPatGivenName.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            lblPatGivenName.Location = new Point(185, 235);
+            lblPatGivenName.Location = new Point(233, 235);
             lblPatGivenName.Margin = new Padding(4, 0, 4, 0);
             lblPatGivenName.MouseState = MaterialSkin.MouseState.HOVER;
             lblPatGivenName.Name = "lblPatGivenName";
@@ -220,13 +220,13 @@ namespace HL7Tester
             txtPatGivenName.Depth = 0;
             txtPatGivenName.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             txtPatGivenName.LeadingIcon = null;
-            txtPatGivenName.Location = new Point(185, 257);
+            txtPatGivenName.Location = new Point(233, 257);
             txtPatGivenName.Margin = new Padding(4, 3, 4, 3);
             txtPatGivenName.MaxLength = 50;
             txtPatGivenName.MouseState = MaterialSkin.MouseState.OUT;
             txtPatGivenName.Multiline = false;
             txtPatGivenName.Name = "txtPatGivenName";
-            txtPatGivenName.Size = new Size(153, 50);
+            txtPatGivenName.Size = new Size(209, 50);
             txtPatGivenName.TabIndex = 8;
             txtPatGivenName.Text = "";
             txtPatGivenName.TrailingIcon = null;
@@ -237,7 +237,7 @@ namespace HL7Tester
             lblBirthDate.AutoSize = true;
             lblBirthDate.Depth = 0;
             lblBirthDate.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            lblBirthDate.Location = new Point(185, 317);
+            lblBirthDate.Location = new Point(233, 317);
             lblBirthDate.Margin = new Padding(4, 0, 4, 0);
             lblBirthDate.MouseState = MaterialSkin.MouseState.HOVER;
             lblBirthDate.Name = "lblBirthDate";
@@ -254,13 +254,13 @@ namespace HL7Tester
             txtBirthDate.Depth = 0;
             txtBirthDate.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             txtBirthDate.LeadingIcon = null;
-            txtBirthDate.Location = new Point(185, 339);
+            txtBirthDate.Location = new Point(233, 339);
             txtBirthDate.Margin = new Padding(4, 3, 4, 3);
             txtBirthDate.MaxLength = 50;
             txtBirthDate.MouseState = MaterialSkin.MouseState.OUT;
             txtBirthDate.Multiline = false;
             txtBirthDate.Name = "txtBirthDate";
-            txtBirthDate.Size = new Size(153, 50);
+            txtBirthDate.Size = new Size(209, 50);
             txtBirthDate.TabIndex = 12;
             txtBirthDate.Text = "";
             txtBirthDate.TrailingIcon = null;
@@ -294,7 +294,7 @@ namespace HL7Tester
             txtSex.MouseState = MaterialSkin.MouseState.OUT;
             txtSex.Multiline = false;
             txtSex.Name = "txtSex";
-            txtSex.Size = new Size(157, 50);
+            txtSex.Size = new Size(213, 50);
             txtSex.TabIndex = 10;
             txtSex.Text = "";
             txtSex.TrailingIcon = null;
@@ -305,7 +305,7 @@ namespace HL7Tester
             lblRoom.AutoSize = true;
             lblRoom.Depth = 0;
             lblRoom.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            lblRoom.Location = new Point(173, 414);
+            lblRoom.Location = new Point(235, 414);
             lblRoom.Margin = new Padding(4, 0, 4, 0);
             lblRoom.MouseState = MaterialSkin.MouseState.HOVER;
             lblRoom.Name = "lblRoom";
@@ -322,13 +322,13 @@ namespace HL7Tester
             txtRoom.Depth = 0;
             txtRoom.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             txtRoom.LeadingIcon = null;
-            txtRoom.Location = new Point(173, 436);
+            txtRoom.Location = new Point(235, 436);
             txtRoom.Margin = new Padding(4, 3, 4, 3);
             txtRoom.MaxLength = 50;
             txtRoom.MouseState = MaterialSkin.MouseState.OUT;
             txtRoom.Multiline = false;
             txtRoom.Name = "txtRoom";
-            txtRoom.Size = new Size(152, 50);
+            txtRoom.Size = new Size(206, 50);
             txtRoom.TabIndex = 18;
             txtRoom.Text = "";
             txtRoom.TrailingIcon = null;
@@ -363,7 +363,7 @@ namespace HL7Tester
             txtBed.Multiline = false;
             txtBed.Name = "txtBed";
             txtBed.ScrollBars = RichTextBoxScrollBars.None;
-            txtBed.Size = new Size(152, 50);
+            txtBed.Size = new Size(206, 50);
             txtBed.TabIndex = 20;
             txtBed.Text = "";
             txtBed.TrailingIcon = null;
@@ -374,7 +374,7 @@ namespace HL7Tester
             lblAdmissionNumber.AutoSize = true;
             lblAdmissionNumber.Depth = 0;
             lblAdmissionNumber.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            lblAdmissionNumber.Location = new Point(185, 154);
+            lblAdmissionNumber.Location = new Point(233, 154);
             lblAdmissionNumber.Margin = new Padding(4, 0, 4, 0);
             lblAdmissionNumber.MouseState = MaterialSkin.MouseState.HOVER;
             lblAdmissionNumber.Name = "lblAdmissionNumber";
@@ -391,13 +391,13 @@ namespace HL7Tester
             txtAdmissionNumber.Depth = 0;
             txtAdmissionNumber.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             txtAdmissionNumber.LeadingIcon = null;
-            txtAdmissionNumber.Location = new Point(185, 176);
+            txtAdmissionNumber.Location = new Point(233, 176);
             txtAdmissionNumber.Margin = new Padding(4, 3, 4, 3);
             txtAdmissionNumber.MaxLength = 50;
             txtAdmissionNumber.MouseState = MaterialSkin.MouseState.OUT;
             txtAdmissionNumber.Multiline = false;
             txtAdmissionNumber.Name = "txtAdmissionNumber";
-            txtAdmissionNumber.Size = new Size(153, 50);
+            txtAdmissionNumber.Size = new Size(209, 50);
             txtAdmissionNumber.TabIndex = 4;
             txtAdmissionNumber.Text = "";
             txtAdmissionNumber.TrailingIcon = null;
@@ -411,7 +411,7 @@ namespace HL7Tester
             btnGenerate.FlatStyle = FlatStyle.Flat;
             btnGenerate.HighEmphasis = true;
             btnGenerate.Icon = null;
-            btnGenerate.Location = new Point(590, 25);
+            btnGenerate.Location = new Point(724, 25);
             btnGenerate.Margin = new Padding(4, 3, 4, 3);
             btnGenerate.MouseState = MaterialSkin.MouseState.HOVER;
             btnGenerate.Name = "btnGenerate";
@@ -437,7 +437,7 @@ namespace HL7Tester
             btnGenerateAndSend.FlatStyle = FlatStyle.Flat;
             btnGenerateAndSend.HighEmphasis = true;
             btnGenerateAndSend.Icon = null;
-            btnGenerateAndSend.Location = new Point(464, 838);
+            btnGenerateAndSend.Location = new Point(682, 839);
             btnGenerateAndSend.Margin = new Padding(4, 3, 4, 3);
             btnGenerateAndSend.MouseState = MaterialSkin.MouseState.HOVER;
             btnGenerateAndSend.Name = "btnGenerateAndSend";
@@ -471,12 +471,12 @@ namespace HL7Tester
             txtGeneratedMessage.Name = "txtGeneratedMessage";
             txtGeneratedMessage.PasswordChar = '\0';
             txtGeneratedMessage.ReadOnly = false;
-            txtGeneratedMessage.ScrollBars = ScrollBars.None;
+            txtGeneratedMessage.ScrollBars = ScrollBars.Vertical;
             txtGeneratedMessage.SelectedText = "";
             txtGeneratedMessage.SelectionLength = 0;
             txtGeneratedMessage.SelectionStart = 0;
             txtGeneratedMessage.ShortcutsEnabled = true;
-            txtGeneratedMessage.Size = new Size(677, 144);
+            txtGeneratedMessage.Size = new Size(811, 144);
             txtGeneratedMessage.TabIndex = 50;
             txtGeneratedMessage.TabStop = false;
             txtGeneratedMessage.TextAlign = HorizontalAlignment.Left;
@@ -487,7 +487,7 @@ namespace HL7Tester
             lblDischargeReason.AutoSize = true;
             lblDischargeReason.Depth = 0;
             lblDischargeReason.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            lblDischargeReason.Location = new Point(171, 577);
+            lblDischargeReason.Location = new Point(233, 577);
             lblDischargeReason.Margin = new Padding(4, 0, 4, 0);
             lblDischargeReason.MouseState = MaterialSkin.MouseState.HOVER;
             lblDischargeReason.Name = "lblDischargeReason";
@@ -503,13 +503,13 @@ namespace HL7Tester
             txtDischargeReason.Depth = 0;
             txtDischargeReason.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             txtDischargeReason.LeadingIcon = null;
-            txtDischargeReason.Location = new Point(171, 599);
+            txtDischargeReason.Location = new Point(233, 599);
             txtDischargeReason.Margin = new Padding(4, 3, 4, 3);
             txtDischargeReason.MaxLength = 50;
             txtDischargeReason.MouseState = MaterialSkin.MouseState.OUT;
             txtDischargeReason.Multiline = false;
             txtDischargeReason.Name = "txtDischargeReason";
-            txtDischargeReason.Size = new Size(181, 50);
+            txtDischargeReason.Size = new Size(209, 50);
             txtDischargeReason.TabIndex = 16;
             txtDischargeReason.Text = "";
             txtDischargeReason.TrailingIcon = null;
@@ -520,7 +520,7 @@ namespace HL7Tester
             lblLeaveOfAbsenceReason.AutoSize = true;
             lblLeaveOfAbsenceReason.Depth = 0;
             lblLeaveOfAbsenceReason.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            lblLeaveOfAbsenceReason.Location = new Point(169, 575);
+            lblLeaveOfAbsenceReason.Location = new Point(231, 575);
             lblLeaveOfAbsenceReason.Margin = new Padding(4, 0, 4, 0);
             lblLeaveOfAbsenceReason.MouseState = MaterialSkin.MouseState.HOVER;
             lblLeaveOfAbsenceReason.Name = "lblLeaveOfAbsenceReason";
@@ -537,13 +537,13 @@ namespace HL7Tester
             txtLeaveOfAbsenceReason.Depth = 0;
             txtLeaveOfAbsenceReason.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             txtLeaveOfAbsenceReason.LeadingIcon = null;
-            txtLeaveOfAbsenceReason.Location = new Point(171, 597);
+            txtLeaveOfAbsenceReason.Location = new Point(233, 597);
             txtLeaveOfAbsenceReason.Margin = new Padding(4, 3, 4, 3);
             txtLeaveOfAbsenceReason.MaxLength = 50;
             txtLeaveOfAbsenceReason.MouseState = MaterialSkin.MouseState.OUT;
             txtLeaveOfAbsenceReason.Multiline = false;
             txtLeaveOfAbsenceReason.Name = "txtLeaveOfAbsenceReason";
-            txtLeaveOfAbsenceReason.Size = new Size(167, 50);
+            txtLeaveOfAbsenceReason.Size = new Size(209, 50);
             txtLeaveOfAbsenceReason.TabIndex = 50;
             txtLeaveOfAbsenceReason.TabStop = false;
             txtLeaveOfAbsenceReason.Text = "";
@@ -587,7 +587,7 @@ namespace HL7Tester
             CopyButton.Font = new Font("Segoe UI", 9F);
             CopyButton.HighEmphasis = true;
             CopyButton.Icon = null;
-            CopyButton.Location = new Point(109, 838);
+            CopyButton.Location = new Point(469, 839);
             CopyButton.Margin = new Padding(4, 6, 4, 6);
             CopyButton.MouseState = MaterialSkin.MouseState.HOVER;
             CopyButton.Name = "CopyButton";
@@ -690,7 +690,7 @@ namespace HL7Tester
             UnitTextBox.MouseState = MaterialSkin.MouseState.OUT;
             UnitTextBox.Multiline = false;
             UnitTextBox.Name = "UnitTextBox";
-            UnitTextBox.Size = new Size(154, 50);
+            UnitTextBox.Size = new Size(208, 50);
             UnitTextBox.TabIndex = 16;
             UnitTextBox.Text = "";
             UnitTextBox.TrailingIcon = null;
@@ -707,7 +707,7 @@ namespace HL7Tester
             FloorTextBox.MouseState = MaterialSkin.MouseState.OUT;
             FloorTextBox.Multiline = false;
             FloorTextBox.Name = "FloorTextBox";
-            FloorTextBox.Size = new Size(152, 50);
+            FloorTextBox.Size = new Size(206, 50);
             FloorTextBox.TabIndex = 24;
             FloorTextBox.Text = "";
             FloorTextBox.TrailingIcon = null;
@@ -720,13 +720,13 @@ namespace HL7Tester
             txtEVENT.Depth = 0;
             txtEVENT.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             txtEVENT.LeadingIcon = null;
-            txtEVENT.Location = new Point(468, 89);
+            txtEVENT.Location = new Point(512, 89);
             txtEVENT.Margin = new Padding(4, 3, 4, 3);
             txtEVENT.MaxLength = 50;
             txtEVENT.MouseState = MaterialSkin.MouseState.OUT;
             txtEVENT.Multiline = false;
             txtEVENT.Name = "txtEVENT";
-            txtEVENT.Size = new Size(208, 50);
+            txtEVENT.Size = new Size(303, 50);
             txtEVENT.TabIndex = 1;
             txtEVENT.Text = "";
             txtEVENT.TrailingIcon = null;
@@ -737,7 +737,7 @@ namespace HL7Tester
             lblEVENT.AutoSize = true;
             lblEVENT.Depth = 0;
             lblEVENT.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            lblEVENT.Location = new Point(468, 67);
+            lblEVENT.Location = new Point(563, 67);
             lblEVENT.Margin = new Padding(4, 0, 4, 0);
             lblEVENT.MouseState = MaterialSkin.MouseState.HOVER;
             lblEVENT.Name = "lblEVENT";
@@ -753,12 +753,12 @@ namespace HL7Tester
             TxtFacility.Depth = 0;
             TxtFacility.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             TxtFacility.LeadingIcon = null;
-            TxtFacility.Location = new Point(173, 518);
+            TxtFacility.Location = new Point(235, 518);
             TxtFacility.MaxLength = 50;
             TxtFacility.MouseState = MaterialSkin.MouseState.OUT;
             TxtFacility.Multiline = false;
             TxtFacility.Name = "TxtFacility";
-            TxtFacility.Size = new Size(153, 50);
+            TxtFacility.Size = new Size(207, 50);
             TxtFacility.TabIndex = 22;
             TxtFacility.Text = "";
             TxtFacility.TrailingIcon = null;
@@ -768,7 +768,7 @@ namespace HL7Tester
             LblFacility.AutoSize = true;
             LblFacility.Depth = 0;
             LblFacility.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            LblFacility.Location = new Point(173, 496);
+            LblFacility.Location = new Point(235, 496);
             LblFacility.MouseState = MaterialSkin.MouseState.HOVER;
             LblFacility.Name = "LblFacility";
             LblFacility.Size = new Size(122, 19);
@@ -783,13 +783,13 @@ namespace HL7Tester
             OBXReason1TextBox.Depth = 0;
             OBXReason1TextBox.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             OBXReason1TextBox.LeadingIcon = null;
-            OBXReason1TextBox.Location = new Point(371, 257);
+            OBXReason1TextBox.Location = new Point(469, 257);
             OBXReason1TextBox.Margin = new Padding(4, 3, 4, 3);
             OBXReason1TextBox.MaxLength = 50;
             OBXReason1TextBox.MouseState = MaterialSkin.MouseState.OUT;
             OBXReason1TextBox.Multiline = false;
             OBXReason1TextBox.Name = "OBXReason1TextBox";
-            OBXReason1TextBox.Size = new Size(304, 50);
+            OBXReason1TextBox.Size = new Size(346, 50);
             OBXReason1TextBox.TabIndex = 26;
             OBXReason1TextBox.Text = "";
             OBXReason1TextBox.TrailingIcon = null;
@@ -800,7 +800,7 @@ namespace HL7Tester
             OBXReasonLabel1.AutoSize = true;
             OBXReasonLabel1.Depth = 0;
             OBXReasonLabel1.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            OBXReasonLabel1.Location = new Point(371, 235);
+            OBXReasonLabel1.Location = new Point(469, 235);
             OBXReasonLabel1.Margin = new Padding(4, 0, 4, 0);
             OBXReasonLabel1.MouseState = MaterialSkin.MouseState.HOVER;
             OBXReasonLabel1.Name = "OBXReasonLabel1";
@@ -817,13 +817,13 @@ namespace HL7Tester
             OBXType1TextBox.Depth = 0;
             OBXType1TextBox.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             OBXType1TextBox.LeadingIcon = null;
-            OBXType1TextBox.Location = new Point(372, 176);
+            OBXType1TextBox.Location = new Point(470, 176);
             OBXType1TextBox.Margin = new Padding(4, 3, 4, 3);
             OBXType1TextBox.MaxLength = 50;
             OBXType1TextBox.MouseState = MaterialSkin.MouseState.OUT;
             OBXType1TextBox.Multiline = false;
             OBXType1TextBox.Name = "OBXType1TextBox";
-            OBXType1TextBox.Size = new Size(303, 50);
+            OBXType1TextBox.Size = new Size(345, 50);
             OBXType1TextBox.TabIndex = 28;
             OBXType1TextBox.Text = "";
             OBXType1TextBox.TrailingIcon = null;
@@ -834,7 +834,7 @@ namespace HL7Tester
             OBX1TypeLabel.AutoSize = true;
             OBX1TypeLabel.Depth = 0;
             OBX1TypeLabel.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            OBX1TypeLabel.Location = new Point(371, 154);
+            OBX1TypeLabel.Location = new Point(469, 154);
             OBX1TypeLabel.Margin = new Padding(4, 0, 4, 0);
             OBX1TypeLabel.MouseState = MaterialSkin.MouseState.HOVER;
             OBX1TypeLabel.Name = "OBX1TypeLabel";
@@ -851,13 +851,13 @@ namespace HL7Tester
             OBXType2TextBox.Depth = 0;
             OBXType2TextBox.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             OBXType2TextBox.LeadingIcon = null;
-            OBXType2TextBox.Location = new Point(371, 339);
+            OBXType2TextBox.Location = new Point(469, 339);
             OBXType2TextBox.Margin = new Padding(4, 3, 4, 3);
             OBXType2TextBox.MaxLength = 50;
             OBXType2TextBox.MouseState = MaterialSkin.MouseState.OUT;
             OBXType2TextBox.Multiline = false;
             OBXType2TextBox.Name = "OBXType2TextBox";
-            OBXType2TextBox.Size = new Size(304, 50);
+            OBXType2TextBox.Size = new Size(346, 50);
             OBXType2TextBox.TabIndex = 32;
             OBXType2TextBox.Text = "";
             OBXType2TextBox.TrailingIcon = null;
@@ -868,7 +868,7 @@ namespace HL7Tester
             OBX2TypeLabel.AutoSize = true;
             OBX2TypeLabel.Depth = 0;
             OBX2TypeLabel.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            OBX2TypeLabel.Location = new Point(371, 317);
+            OBX2TypeLabel.Location = new Point(469, 317);
             OBX2TypeLabel.Margin = new Padding(4, 0, 4, 0);
             OBX2TypeLabel.MouseState = MaterialSkin.MouseState.HOVER;
             OBX2TypeLabel.Name = "OBX2TypeLabel";
@@ -885,13 +885,13 @@ namespace HL7Tester
             OBXReason2TextBox.Depth = 0;
             OBXReason2TextBox.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             OBXReason2TextBox.LeadingIcon = null;
-            OBXReason2TextBox.Location = new Point(371, 436);
+            OBXReason2TextBox.Location = new Point(469, 436);
             OBXReason2TextBox.Margin = new Padding(4, 3, 4, 3);
             OBXReason2TextBox.MaxLength = 50;
             OBXReason2TextBox.MouseState = MaterialSkin.MouseState.OUT;
             OBXReason2TextBox.Multiline = false;
             OBXReason2TextBox.Name = "OBXReason2TextBox";
-            OBXReason2TextBox.Size = new Size(304, 50);
+            OBXReason2TextBox.Size = new Size(346, 50);
             OBXReason2TextBox.TabIndex = 30;
             OBXReason2TextBox.Text = "";
             OBXReason2TextBox.TrailingIcon = null;
@@ -902,7 +902,7 @@ namespace HL7Tester
             OBXReasonLabel2.AutoSize = true;
             OBXReasonLabel2.Depth = 0;
             OBXReasonLabel2.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            OBXReasonLabel2.Location = new Point(371, 414);
+            OBXReasonLabel2.Location = new Point(469, 414);
             OBXReasonLabel2.Margin = new Padding(4, 0, 4, 0);
             OBXReasonLabel2.MouseState = MaterialSkin.MouseState.HOVER;
             OBXReasonLabel2.Name = "OBXReasonLabel2";
@@ -919,13 +919,13 @@ namespace HL7Tester
             OBXType3TextBox.Depth = 0;
             OBXType3TextBox.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             OBXType3TextBox.LeadingIcon = null;
-            OBXType3TextBox.Location = new Point(371, 518);
+            OBXType3TextBox.Location = new Point(469, 518);
             OBXType3TextBox.Margin = new Padding(4, 3, 4, 3);
             OBXType3TextBox.MaxLength = 50;
             OBXType3TextBox.MouseState = MaterialSkin.MouseState.OUT;
             OBXType3TextBox.Multiline = false;
             OBXType3TextBox.Name = "OBXType3TextBox";
-            OBXType3TextBox.Size = new Size(304, 50);
+            OBXType3TextBox.Size = new Size(346, 50);
             OBXType3TextBox.TabIndex = 36;
             OBXType3TextBox.Text = "";
             OBXType3TextBox.TrailingIcon = null;
@@ -936,7 +936,7 @@ namespace HL7Tester
             OBXTypeLabel3.AutoSize = true;
             OBXTypeLabel3.Depth = 0;
             OBXTypeLabel3.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            OBXTypeLabel3.Location = new Point(371, 494);
+            OBXTypeLabel3.Location = new Point(469, 494);
             OBXTypeLabel3.Margin = new Padding(4, 0, 4, 0);
             OBXTypeLabel3.MouseState = MaterialSkin.MouseState.HOVER;
             OBXTypeLabel3.Name = "OBXTypeLabel3";
@@ -953,13 +953,13 @@ namespace HL7Tester
             OBXReason3TextBox.Depth = 0;
             OBXReason3TextBox.Font = new Font("Roboto", 16F, FontStyle.Regular, GraphicsUnit.Pixel);
             OBXReason3TextBox.LeadingIcon = null;
-            OBXReason3TextBox.Location = new Point(371, 597);
+            OBXReason3TextBox.Location = new Point(469, 597);
             OBXReason3TextBox.Margin = new Padding(4, 3, 4, 3);
             OBXReason3TextBox.MaxLength = 50;
             OBXReason3TextBox.MouseState = MaterialSkin.MouseState.OUT;
             OBXReason3TextBox.Multiline = false;
             OBXReason3TextBox.Name = "OBXReason3TextBox";
-            OBXReason3TextBox.Size = new Size(304, 50);
+            OBXReason3TextBox.Size = new Size(346, 50);
             OBXReason3TextBox.TabIndex = 34;
             OBXReason3TextBox.Text = "";
             OBXReason3TextBox.TrailingIcon = null;
@@ -970,7 +970,7 @@ namespace HL7Tester
             OBXReasonLabel3.AutoSize = true;
             OBXReasonLabel3.Depth = 0;
             OBXReasonLabel3.Font = new Font("Roboto", 14F, FontStyle.Regular, GraphicsUnit.Pixel);
-            OBXReasonLabel3.Location = new Point(371, 577);
+            OBXReasonLabel3.Location = new Point(469, 577);
             OBXReasonLabel3.Margin = new Padding(4, 0, 4, 0);
             OBXReasonLabel3.MouseState = MaterialSkin.MouseState.HOVER;
             OBXReasonLabel3.Name = "OBXReasonLabel3";
@@ -979,46 +979,20 @@ namespace HL7Tester
             OBXReasonLabel3.Text = "OBX 3 Reason (OBX-5-1):";
             OBXReasonLabel3.Visible = false;
             // 
-            // panel4
-            // 
-            panel4.BackColor = Color.Transparent;
-            panel4.BorderStyle = BorderStyle.FixedSingle;
-            panel4.Location = new Point(9, 403);
-            panel4.Name = "panel4";
-            panel4.Size = new Size(348, 249);
-            panel4.TabIndex = 50;
-            // 
-            // panel1
-            // 
-            panel1.BackColor = Color.Transparent;
-            panel1.BorderStyle = BorderStyle.FixedSingle;
-            panel1.Location = new Point(8, 144);
-            panel1.Name = "panel1";
-            panel1.Size = new Size(349, 252);
-            panel1.TabIndex = 48;
-            // 
-            // panel2
-            // 
-            panel2.BackColor = Color.Transparent;
-            panel2.BorderStyle = BorderStyle.FixedSingle;
-            panel2.Location = new Point(363, 144);
-            panel2.Name = "panel2";
-            panel2.Size = new Size(322, 508);
-            panel2.TabIndex = 51;
-            // 
             // LogsButton
             // 
+            LogsButton.AutoSize = false;
             LogsButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             LogsButton.Density = MaterialButton.MaterialButtonDensity.Default;
             LogsButton.Depth = 0;
             LogsButton.HighEmphasis = true;
             LogsButton.Icon = null;
-            LogsButton.Location = new Point(364, 25);
+            LogsButton.Location = new Point(8, 839);
             LogsButton.Margin = new Padding(4, 3, 4, 3);
             LogsButton.MouseState = MaterialSkin.MouseState.HOVER;
             LogsButton.Name = "LogsButton";
             LogsButton.NoAccentTextColor = Color.Empty;
-            LogsButton.Size = new Size(64, 36);
+            LogsButton.Size = new Size(138, 47);
             LogsButton.TabIndex = 52;
             LogsButton.Text = "Logs";
             LogsButton.Type = MaterialButton.MaterialButtonType.Contained;
@@ -1030,12 +1004,39 @@ namespace HL7Tester
             LogsButton.MouseLeave += LogsButton_MouseLeave;
             LogsButton.MouseUp += LogsButton_MouseUp;
             // 
+            // panel1
+            // 
+            panel1.BackColor = Color.Transparent;
+            panel1.BorderStyle = BorderStyle.FixedSingle;
+            panel1.Location = new Point(6, 144);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(444, 253);
+            panel1.TabIndex = 53;
+            // 
+            // panel2
+            // 
+            panel2.BackColor = Color.Transparent;
+            panel2.BorderStyle = BorderStyle.FixedSingle;
+            panel2.Location = new Point(6, 410);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(444, 253);
+            panel2.TabIndex = 54;
+            // 
+            // panel4
+            // 
+            panel4.BackColor = Color.Transparent;
+            panel4.BorderStyle = BorderStyle.FixedSingle;
+            panel4.Location = new Point(456, 145);
+            panel4.Name = "panel4";
+            panel4.Size = new Size(364, 518);
+            panel4.TabIndex = 54;
+            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ButtonShadow;
-            ClientSize = new Size(692, 892);
+            ClientSize = new Size(826, 892);
             Controls.Add(LogsButton);
             Controls.Add(OBXType1TextBox);
             Controls.Add(OBX1TypeLabel);
@@ -1089,8 +1090,8 @@ namespace HL7Tester
             Controls.Add(lblNewPatientID);
             Controls.Add(comboMessageType);
             Controls.Add(panel1);
-            Controls.Add(panel4);
             Controls.Add(panel2);
+            Controls.Add(panel4);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(4, 3, 4, 3);
             MaximizeBox = false;
@@ -1152,10 +1153,10 @@ namespace HL7Tester
         private MaterialLabel OBXTypeLabel3;
         private RoundedMaterialTextBox OBXReason3TextBox;
         private MaterialLabel OBXReasonLabel3;
-        private Panel panel1;
         private Panel panel3;
-        private Panel panel4;
-        private Panel panel2;
         private RoundedMaterialButton LogsButton;
+        private Panel panel1;
+        private Panel panel2;
+        private Panel panel4;
     }
 }

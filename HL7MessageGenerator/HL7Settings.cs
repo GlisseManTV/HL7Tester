@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 using NHapi.Base.Model;
 using HL7Tester;
 using NHapi.Model.V23.Message;
@@ -8,9 +7,6 @@ using MaterialSkin.Controls;
 using Microsoft.Win32;
 using MaterialSkin;
 using NLog;
-using System.Text;
-
-
 
 public partial class HL7Settings : MaterialForm
 {
@@ -18,7 +14,6 @@ public partial class HL7Settings : MaterialForm
     private bool isInitializing = true;
     public HL7Settings()
     {
-
         InitializeComponent();
         isInitializing = true;
         if (HL7Tester.Properties.Settings.Default.Properties["AutoUpdateCheck"] != null &&
@@ -54,7 +49,6 @@ public partial class HL7Settings : MaterialForm
         isInitializing = false;
 
     }
-
     private bool IsDarkThemeEnabled()
     {
         // W10 before 2003
@@ -157,7 +151,15 @@ public partial class HL7Settings : MaterialForm
 
         if (txtIpAddress.Text != currentIpAddress || txtPort.Text != currentPort)
         {
+            HL7Tester.Properties.Settings.Default.LastIpAddress5 = HL7Tester.Properties.Settings.Default.LastIpAddress4;
+            HL7Tester.Properties.Settings.Default.LastIpAddress4 = HL7Tester.Properties.Settings.Default.LastIpAddress3;
+            HL7Tester.Properties.Settings.Default.LastIpAddress3 = HL7Tester.Properties.Settings.Default.LastIpAddress2;
+            HL7Tester.Properties.Settings.Default.LastIpAddress2 = HL7Tester.Properties.Settings.Default.LastIpAddress;
             HL7Tester.Properties.Settings.Default.LastIpAddress = txtIpAddress.Text;
+            HL7Tester.Properties.Settings.Default.LastPort5 = HL7Tester.Properties.Settings.Default.LastPort4;
+            HL7Tester.Properties.Settings.Default.LastPort4 = HL7Tester.Properties.Settings.Default.LastPort3;
+            HL7Tester.Properties.Settings.Default.LastPort3 = HL7Tester.Properties.Settings.Default.LastPort2;
+            HL7Tester.Properties.Settings.Default.LastPort2 = HL7Tester.Properties.Settings.Default.LastPort;
             HL7Tester.Properties.Settings.Default.LastPort = txtPort.Text;
             HL7Tester.Properties.Settings.Default.Save();
             logger.Info($"\nChanging IP to {txtIpAddress.Text}:{txtPort.Text}\n");
@@ -165,33 +167,6 @@ public partial class HL7Settings : MaterialForm
 
         this.Close();
     }
-    /// future improvements
-    /*private void btnSend_Click(object sender, EventArgs e)
-    {
-        string newIpAddress = cmbIpAddress.Text.Trim();
-        string selectedIpAddress = cmbIpAddress.SelectedItem?.ToString() ?? string.Empty;
-        string currentIpAddress = HL7Tester.Properties.Settings.Default.LastIpAddress;
-        string currentPort = HL7Tester.Properties.Settings.Default.LastPort;
-        if (string.IsNullOrEmpty(newIpAddress))
-        {
-            MessageBox.Show("Please enter a valid IP address.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        if (newIpAddress != currentIpAddress || txtPort.Text != currentPort)
-        {
-            HL7Tester.Properties.Settings.Default.LastIpAddress3 = HL7Tester.Properties.Settings.Default.LastIpAddress2;
-            HL7Tester.Properties.Settings.Default.LastIpAddress2 = HL7Tester.Properties.Settings.Default.LastIpAddress;
-            HL7Tester.Properties.Settings.Default.LastIpAddress = selectedIpAddress;
-            HL7Tester.Properties.Settings.Default.LastPort = txtPort.Text;
-            HL7Tester.Properties.Settings.Default.Save();
-
-            logger.Info($"\nChanging IP to {selectedIpAddress}:{txtPort.Text}\n");
-        }
-        this.Close();
-    }*/
-
-
     private void CheckUpdateBox_CheckedChanged(object sender, EventArgs e)
     {
         if (isInitializing)
@@ -201,4 +176,18 @@ public partial class HL7Settings : MaterialForm
         logger.Info($"\nUpdate check setting changed to {CheckUpdateBox.Checked}\n");
     }
 
+    private void IPLabel_Click(object sender, EventArgs e)
+    {
+        if (Application.OpenForms.OfType<history>().Any())
+        {
+            history existingForm = Application.OpenForms.OfType<history>().First();
+
+            existingForm.BringToFront();
+        }
+        else
+        {
+            history historyForm = new history();
+            historyForm.Show();
+        }
+    }
 }

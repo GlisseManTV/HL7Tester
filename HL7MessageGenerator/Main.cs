@@ -211,7 +211,10 @@ namespace HL7Tester
                 logger.Info("Both IP and port are not configured, please fix it in AppSettings");
             }
         }
-
+        ///future improvement 
+        //public string loggingGlobal
+        //public string loggingConfig
+        //public string loggingNetwork
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private bool IsDarkThemeEnabled()
         {
@@ -741,7 +744,7 @@ namespace HL7Tester
                             obx.ValueType.Value = "TX";
                             obx.ObservationIdentifier.Identifier.Value = type ?? "UNK"; obx.ObservationSubID.Value = "1";
                             var value = new NHapi.Model.V23.Datatype.TX(message);
-                            value.Value = reason ?? "Non spécifié";
+                            value.Value = reason ?? "Non spÃ©cifiÃ©";
                             obx.GetObservationValue(0).Data = value;
                             obx.ObservResultStatus.Value = "F";
                         }

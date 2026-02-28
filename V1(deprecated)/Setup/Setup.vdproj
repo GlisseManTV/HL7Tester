@@ -15,19 +15,13 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_8AA52B269D3E4CF0BF33CFC9499E8579"
+        "MsmKey" = "8:_65A8F22432384668AF6D1C56629DDFB7"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_9E35556CD8AA4511B6C6E2C72912E729"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_BC49348462AD44CE8559673A87960641"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -370,7 +364,7 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_8AA52B269D3E4CF0BF33CFC9499E8579"
+            "Target" = "8:"
             "Folder" = "8:_43C7483A22CB4308A1CF6623C0C647D4"
             "WorkingFolder" = "8:_59305C5D6DA4450F9406EDB561D58434"
             "Icon" = "8:_E8A4854D36634B8BB1CCE40713C6A3DB"
@@ -384,7 +378,7 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_8AA52B269D3E4CF0BF33CFC9499E8579"
+            "Target" = "8:"
             "Folder" = "8:_013090F9048E4A3CAF4E3B8B51F9C0A0"
             "WorkingFolder" = "8:_59305C5D6DA4450F9406EDB561D58434"
             "Icon" = "8:_9E35556CD8AA4511B6C6E2C72912E729"
@@ -789,9 +783,9 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_8AA52B269D3E4CF0BF33CFC9499E8579"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_0AF745A714D0462DA7B6A6DD36FB2D71"
             {
-            "SourcePath" = "8:..\\HL7MessageGenerator\\obj\\Release\\net8.0-windows\\apphost.exe"
+            "SourcePath" = "8:"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_59305C5D6DA4450F9406EDB561D58434"
@@ -811,15 +805,15 @@
             "ProjectOutputGroupRegister" = "3:1"
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:PublishItems"
-            "OutputProjectGuid" = "8:{7152C078-B49E-47BF-B049-DAC8477FD9A1}"
+            "OutputProjectGuid" = "8:{8264D066-96F0-12FD-6E93-3BDE8999EDB8}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {
                 }
             }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_BC49348462AD44CE8559673A87960641"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_65A8F22432384668AF6D1C56629DDFB7"
             {
-            "SourcePath" = "8:..\\HL7MessageGenerator\\obj\\Release\\net8.0-windows\\HL7Tester.dll"
+            "SourcePath" = "8:..\\..\\V2\\HL7Tester\\obj\\Release\\net10.0-android\\HL7Tester.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_59305C5D6DA4450F9406EDB561D58434"
@@ -839,7 +833,7 @@
             "ProjectOutputGroupRegister" = "3:1"
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{7152C078-B49E-47BF-B049-DAC8477FD9A1}"
+            "OutputProjectGuid" = "8:{8264D066-96F0-12FD-6E93-3BDE8999EDB8}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {

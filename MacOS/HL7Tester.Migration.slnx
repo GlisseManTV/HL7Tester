@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="HL7Tester.Core/HL7Tester.Core.csproj" />
+  <Project Path="HL7Tester.Tests/HL7Tester.Tests.csproj" />
+  <Project Path="HL7TesterMac/HL7TesterMac.csproj" />
+</Solution>

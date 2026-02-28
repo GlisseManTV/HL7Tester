@@ -96,7 +96,7 @@ public partial class HL7Settings : MaterialForm
         btnSend.UseAccentColor = false;
         btnSend.NoAccentTextColor = Color.White;
         btnSend.MouseState = MaterialSkin.MouseState.DOWN;
-        btnSend.Invalidate();
+        //btnSend.Invalidate();
     }
 
     private void btnSend_MouseUp(object sender, MouseEventArgs e)
@@ -104,7 +104,7 @@ public partial class HL7Settings : MaterialForm
         btnSend.UseAccentColor = true;
         btnSend.NoAccentTextColor = Color.Empty;
         btnSend.MouseState = MaterialSkin.MouseState.HOVER;
-        btnSend.Invalidate();
+        //btnSend.Invalidate();
     }
     private void btnCancel_MouseEnter(object sender, EventArgs e)
     {
@@ -125,7 +125,7 @@ public partial class HL7Settings : MaterialForm
         btnCancel.UseAccentColor = false;
         btnCancel.NoAccentTextColor = Color.White;
         btnCancel.MouseState = MaterialSkin.MouseState.DOWN;
-        btnCancel.Invalidate();
+        //btnCancel.Invalidate();
     }
 
     private void btnCancel_MouseUp(object sender, MouseEventArgs e)
@@ -133,7 +133,7 @@ public partial class HL7Settings : MaterialForm
         btnCancel.UseAccentColor = true;
         btnCancel.NoAccentTextColor = Color.Empty;
         btnCancel.MouseState = MaterialSkin.MouseState.HOVER;
-        btnCancel.Invalidate();
+        //btnCancel.Invalidate();
     }
 
 

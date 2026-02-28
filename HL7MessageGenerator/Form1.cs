@@ -1,50 +1,33 @@
 
-using MaterialSkin;
-using MaterialSkin.Controls;
+using System.Drawing.Drawing2D;
 using NHapi.Base.Model;
 using NHapi.Base.Parser;
 using NHapi.Model.V23.Message;
 using NHapi.Model.V23.Segment;
-using NLog;
-using NLog.Config;
-using System;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
-using System.Drawing.Drawing2D;
-using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Xml;
-using static HL7Tester.Main;
+using MaterialSkin;
+using MaterialSkin.Controls;
+using System.Net.Sockets;
+using System.Net;
+using NLog;
+using NLog.Config;
+using System.IO;
+using System.ComponentModel.DataAnnotations.Schema;
 
 
-namespace HL7Tester
+namespace HL7MessageGenerator
 {
-    public partial class Main : MaterialForm
+    public partial class Form1 : MaterialForm
     {
+        /*private readonly HL7MessageCache _messageCache = new HL7MessageCache();*/
 
-        private async void Form1_Shown(object sender, EventArgs e)
+        public Form1()
         {
-
-            await UpdateChecker.CheckForUpdateAsync();
-
-        }
-        public Main()
-        {
-
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             InitializeComponent();
+            CheckAndCreateLogDirectory();
             InitializeComboBox();
             var materialSkinManager = MaterialSkinManager.Instance;
-
             materialSkinManager.AddFormToManage(this);
             if (IsDarkThemeEnabled())
             {
@@ -61,122 +44,8 @@ namespace HL7Tester
                 Accent.Blue200,
                 TextShade.WHITE
                     );
-
         }
-        private static void SafeSetClipboardText(string text)
-        {
-            var thread = new Thread(() => Clipboard.SetText(text));
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
-            thread.Join();
-        }
-        public class UpdateChecker
-        {
-            private static readonly string GitHubApiUrl = "https://api.github.com/repos/GlisseManTV/HL7Tester/releases/latest";
-
-            private static void SafeSetClipboardText(string text)
-            {
-                var thread = new Thread(() => Clipboard.SetText(text));
-                thread.SetApartmentState(ApartmentState.STA);
-                thread.Start();
-                thread.Join();
-            }
-
-            public static async Task CheckForUpdateAsync()
-            {
-
-                if (Properties.Settings.Default.AutoUpdateCheck != true)
-                {
-                    MessageBox.Show("Auto-update is disabled.\n", "Auto-Update Disabled", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    logger.Info("\nAuto-update is disabled.\n");
-                    return;
-                }
-
-                try
-                {
-                    using var client = new HttpClient();
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd("request");
-                    var response = await client.GetStringAsync(GitHubApiUrl);
-
-                    using var doc = JsonDocument.Parse(response);
-                    var latestVersionString = doc.RootElement.GetProperty("tag_name").GetString();
-                    var releaseURL = doc.RootElement.GetProperty("html_url").GetString();
-                    var latestVersion = new Version(latestVersionString.TrimStart('v'));
-                    var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
-
-                    
-                    if (latestVersion > currentVersion)
-                    {
-                        string downloadUrl = "";
-                        foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
-                        {                            
-                            var name = asset.GetProperty("name").GetString();
-                            if (name != "")
-                            {
-                                downloadUrl = asset.GetProperty("browser_download_url").GetString();
-                                break;
-                            }
-                        }
-                        logger.Info($"\nUpdate check: \nCurrent version {currentVersion}\nLatest version {latestVersion}\n");
-                        var result = MessageBox.Show(
-                            $"A new version v{latestVersion} is available.\n" +
-                            $"You are currently using v{currentVersion}.\n\n" +
-                            "Would you like to be redirected to the download page?\n",
-                            "Update available",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Information);
-
-                        if (result == DialogResult.Yes)
-                        {
-                            if (downloadUrl == "")
-                            {
-                                downloadUrl = releaseURL;
-                            }
-                            try
-                            {
-                                var psi = new System.Diagnostics.ProcessStartInfo
-                                {
-                                    FileName = "cmd",
-                                    Arguments = $"/c start {downloadUrl}",
-                                    CreateNoWindow = true,
-                                    UseShellExecute = false
-                                };
-                                System.Diagnostics.Process.Start(psi);
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show("Unable to open browser. Please visit :\nhttps://github.com/GlisseManTV/HL7Tester/releases/latest",
-                                                "Error",
-                                                MessageBoxButtons.OK,
-                                                MessageBoxIcon.Error);
-                                logger.Error($"Browser opening:\nFailed: {ex.Message}\n");
-                            }
-                        }
-                    }
-                    else if (latestVersion < currentVersion)
-                    {
-                        MessageBox.Show($"You are using a development version {currentVersion}.\n" +
-                                        "This version may not be stable and is intended for testing purposes only.",
-                                        "Development Version",
-                                        MessageBoxButtons.OK,
-                                        MessageBoxIcon.Warning);
-                        logger.Warn($"\nUpdate check: \nCurrent version {currentVersion} is a development version.\n");
-                    }
-                    else
-                    {
-                        MessageBox.Show("You are using the latest version of the application.", "No Update Available", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        logger.Info("\nUpdate check: \nNo update available.\n");
-                    }
-                }
-                catch (Exception ex)
-                {
-
-                    Console.WriteLine("Update check failed : " + ex.Message);
-                    logger.Error($"\nUpdate check: \nFailed: {ex.Message}\n");
-                }
-            }
-        }
-        public static void CheckAndCreateLogDirectory()
+        private void CheckAndCreateLogDirectory()
         {
             string logDirectoryPath = @"C:\Users\Public\Documents\HL7_Logs\";
             string ipAddress = Properties.Settings.Default.LastIpAddress;
@@ -184,34 +53,19 @@ namespace HL7Tester
             if (!Directory.Exists(logDirectoryPath))
             {
                 Directory.CreateDirectory(logDirectoryPath);
-                MessageBox.Show($"Logs folder has been created at: {logDirectoryPath}\n\nConfigured IP: {ipAddress}, Port: {port}",
+                MessageBox.Show($"Logs folder has been created at: {logDirectoryPath}\nConfigured IP: {ipAddress}, Port: {port}",
                                 "Folder Created",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
-                logger.Info($"\nLogs folder has been created at: {logDirectoryPath}\nConfigured IP: {ipAddress}, Port: {port}\n");
             }
             else
             {
-                MessageBox.Show($"Logs folder is here: {logDirectoryPath}\n\nConfigured IP: {ipAddress}, Port: {port}",
+                MessageBox.Show($"Logs folder is here: {logDirectoryPath}\nConfigured IP: {ipAddress}, Port: {port}",
                                 "Folder Exists",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
-                logger.Info($"\nLogs folder found\nConfigured IP: {ipAddress}, Port: {port}\n");
-            }
-            if (ipAddress is "")
-            {
-                logger.Info("No configured IP, please fix it in App settings");
-            }
-            else if (port is "")
-            {
-                logger.Info("No configured Port, please fix it in App settings");
-            }
-            else if (ipAddress is "" && port is "")
-            {
-                logger.Info("Both IP and port are not configured, please fix it in AppSettings");
             }
         }
-
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private bool IsDarkThemeEnabled()
         {
@@ -225,7 +79,7 @@ namespace HL7Tester
                         return (int)theme == 0;
                 }
             }
-            //Windows 11
+            // Vï¿½rifiez pour Windows 11
             using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
             {
                 if (key != null)
@@ -272,14 +126,14 @@ namespace HL7Tester
             btnGenerate.UseAccentColor = false;
             btnGenerate.NoAccentTextColor = Color.White;
             btnGenerate.MouseState = MaterialSkin.MouseState.DOWN;
-            //btnGenerate.Invalidate();
+            btnGenerate.Invalidate();
         }
         private void btnGenerate_MouseUp(object sender, MouseEventArgs e)
         {
             btnGenerate.UseAccentColor = true;
             btnGenerate.NoAccentTextColor = Color.Empty;
             btnGenerate.MouseState = MaterialSkin.MouseState.HOVER;
-            //btnGenerate.Invalidate();
+            btnGenerate.Invalidate();
         }
         private void CopyButton_MouseEnter(object sender, EventArgs e)
         {
@@ -298,20 +152,22 @@ namespace HL7Tester
             CopyButton.UseAccentColor = false;
             CopyButton.NoAccentTextColor = Color.White;
             CopyButton.MouseState = MaterialSkin.MouseState.DOWN;
-            //CopyButton.Invalidate();
+            CopyButton.Invalidate();
         }
         private void CopyButton_MouseUp(object sender, MouseEventArgs e)
         {
             CopyButton.UseAccentColor = true;
             CopyButton.NoAccentTextColor = Color.Empty;
             CopyButton.MouseState = MaterialSkin.MouseState.HOVER;
-            //CopyButton.Invalidate();
+            CopyButton.Invalidate();
         }
         private void ResetButton_MouseEnter(object sender, EventArgs e)
         {
             ResetButton.UseAccentColor = false;
             ResetButton.NoAccentTextColor = Color.White;
             //btnGenerate.Invalidate(); 
+            
+            
         }
         private void ResetButton_MouseLeave(object sender, EventArgs e)
         {
@@ -324,40 +180,14 @@ namespace HL7Tester
             ResetButton.UseAccentColor = true;
             ResetButton.NoAccentTextColor = Color.White;
             ResetButton.MouseState = MaterialSkin.MouseState.DOWN;
-            //ResetButton.Invalidate();
+            ResetButton.Invalidate();
         }
         private void ResetButton_MouseUp(object sender, MouseEventArgs e)
         {
             ResetButton.UseAccentColor = false;
             ResetButton.NoAccentTextColor = Color.Empty;
             ResetButton.MouseState = MaterialSkin.MouseState.HOVER;
-            //ResetButton.Invalidate();
-        }
-        private void LogsButton_MouseEnter(object sender, EventArgs e)
-        {
-            LogsButton.UseAccentColor = true;
-            LogsButton.NoAccentTextColor = Color.White;
-            //btnGenerate.Invalidate(); 
-        }
-        private void LogsButton_MouseLeave(object sender, EventArgs e)
-        {
-            LogsButton.UseAccentColor = false;
-            LogsButton.NoAccentTextColor = Color.Empty;
-            //btnGenerate.Invalidate(); 
-        }
-        private void LogsButton_MouseDown(object sender, MouseEventArgs e)
-        {
-            LogsButton.UseAccentColor = false;
-            LogsButton.NoAccentTextColor = Color.White;
-            LogsButton.MouseState = MaterialSkin.MouseState.DOWN;
-            //LogsButton.Invalidate();
-        }
-        private void LogsButton_MouseUp(object sender, MouseEventArgs e)
-        {
-            LogsButton.UseAccentColor = true;
-            LogsButton.NoAccentTextColor = Color.Empty;
-            LogsButton.MouseState = MaterialSkin.MouseState.HOVER;
-            //LogsButton.Invalidate();
+            ResetButton.Invalidate();
         }
         private void SettingsButton_MouseEnter(object sender, EventArgs e)
         {
@@ -376,14 +206,14 @@ namespace HL7Tester
             SettingsButton.UseAccentColor = false;
             SettingsButton.NoAccentTextColor = Color.White;
             SettingsButton.MouseState = MaterialSkin.MouseState.DOWN;
-            //SettingsButton.Invalidate();
+            SettingsButton.Invalidate();
         }
         private void SettingsButton_MouseUp(object sender, MouseEventArgs e)
         {
             SettingsButton.UseAccentColor = true;
             SettingsButton.NoAccentTextColor = Color.Empty;
             SettingsButton.MouseState = MaterialSkin.MouseState.HOVER;
-            //SettingsButton.Invalidate();
+            SettingsButton.Invalidate();
         }
         private void btnGenerateAndSend_MouseEnter(object sender, EventArgs e)
         {
@@ -402,14 +232,41 @@ namespace HL7Tester
             btnGenerateAndSend.UseAccentColor = true;
             btnGenerateAndSend.NoAccentTextColor = Color.White;
             btnGenerateAndSend.MouseState = MaterialSkin.MouseState.DOWN;
-            //btnGenerateAndSend.Invalidate();
+            btnGenerateAndSend.Invalidate();
         }
         private void btnGenerateAndSend_MouseUp(object sender, MouseEventArgs e)
         {
             btnGenerateAndSend.UseAccentColor = false;
             btnGenerateAndSend.NoAccentTextColor = Color.Empty;
             btnGenerateAndSend.MouseState = MaterialSkin.MouseState.HOVER;
-            //btnGenerateAndSend.Invalidate();
+            btnGenerateAndSend.Invalidate();
+        }
+
+        private void historyButton_MouseEnter(object sender, EventArgs e)
+        {
+            historyButton.UseAccentColor = true;
+            historyButton.NoAccentTextColor = Color.White;
+            //btnGenerate.Invalidate(); 
+        }
+        private void historyButton_MouseLeave(object sender, EventArgs e)
+        {
+            historyButton.UseAccentColor = false;
+            historyButton.NoAccentTextColor = Color.Empty;
+            //btnGenerate.Invalidate(); 
+        }
+        private void historyButton_MouseDown(object sender, MouseEventArgs e)
+        {
+            historyButton.UseAccentColor = false;
+            historyButton.NoAccentTextColor = Color.White;
+            historyButton.MouseState = MaterialSkin.MouseState.DOWN;
+            historyButton.Invalidate();
+        }
+        private void historyButton_MouseUp(object sender, MouseEventArgs e)
+        {
+            historyButton.UseAccentColor = true;
+            historyButton.NoAccentTextColor = Color.Empty;
+            historyButton.MouseState = MaterialSkin.MouseState.HOVER;
+            historyButton.Invalidate();
         }
         public class RoundedMaterialTextBox : MaterialTextBox
         {
@@ -477,7 +334,6 @@ namespace HL7Tester
             comboMessageType.Items.Add("ADT A14 - Scheduled Admission in the Future (not used)");
             comboMessageType.Items.Add("ADT A15 - Scheduled Movement in the Future (not used)");
             comboMessageType.Items.Add("ADT A16 - Scheduled Discharge in the Future (not used)");
-            comboMessageType.Items.Add("ADT A18 - Merge Patient Records");
             comboMessageType.Items.Add("ADT A21 - Leave of Absence Departure");
             comboMessageType.Items.Add("ADT A22 - Return from Leave of Absence");
             comboMessageType.Items.Add("ADT A24 - Link between Two Patients (not used)");
@@ -499,13 +355,13 @@ namespace HL7Tester
         {
             using (SHA256 sha256Hash = SHA256.Create())
             {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.GetEncoding("windows-1252").GetBytes(message));
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(message));
                 StringBuilder builder = new StringBuilder();
                 for (int i = 0; i < bytes.Length; i++)
                 {
                     builder.Append(bytes[i].ToString("x2"));
                 }
-                return builder.ToString().Substring(0, 19);
+                return builder.ToString().Substring(0, 48);
             }
         }
 
@@ -535,21 +391,8 @@ namespace HL7Tester
             UnitTextBox.Visible = true;
             FloorLabel.Visible = true;
             FloorTextBox.Visible = true;
-            lblEVENT.Visible = true;
-            txtEVENT.Visible = true;
-            TxtFacility.Visible = true;
-            OBXReason1TextBox.Visible = true;
-            OBXReason2TextBox.Visible = true;
-            OBXReason3TextBox.Visible = true;
-            OBXType1TextBox.Visible = true;
-            OBXType2TextBox.Visible = true;
-            OBXType3TextBox.Visible = true;
-            OBXReasonLabel1.Visible = true;
-            OBXReasonLabel2.Visible = true;
-            OBXReasonLabel3.Visible = true;
-            OBX1TypeLabel.Visible = true;
-            OBX2TypeLabel.Visible = true;
-            OBXTypeLabel3.Visible = true;
+
+
             materialLabel1.Visible = true;
             string selectedType = comboMessageType.SelectedItem.ToString();
             lblPatientID.Text = $"Patient Nr ({selectedType.Split('-')[0].Trim()}):";
@@ -585,7 +428,7 @@ namespace HL7Tester
                 lblNewPatientID.Visible = false;
                 txtNewPatientID.Visible = false;
             }
-            if (selectedType.Contains("not used"))
+            if (selectedType.Contains("non utilisï¿½"))
             {
 
             }
@@ -647,9 +490,6 @@ namespace HL7Tester
                     case "ADT A16":
                         message = new ADT_A16();
                         break;
-                    case "ADT A18":
-                        message = new ADT_A18();
-                        break;
                     case "ADT A21":
                         message = new ADT_A21();
                         break;
@@ -695,7 +535,10 @@ namespace HL7Tester
                 var msh = (MSH)message.GetStructure("MSH");
                 msh.FieldSeparator.Value = "|";
                 msh.EncodingCharacters.Value = "^~\\&";
-                msh.SendingApplication.NamespaceID.Value = "Hl7Tester-" + Environment.UserName;
+                msh.SendingApplication.NamespaceID.Value = "HL7tester";
+                msh.SendingFacility.NamespaceID.Value = txtSendingFacility.Text;
+                msh.ReceivingApplication.NamespaceID.Value = txtReceivingApp.Text;
+                msh.ReceivingFacility.NamespaceID.Value = txtReceivingFacility.Text;
                 msh.MessageType.MessageType.Value = selectedType.Split(' ')[0].Trim();
                 msh.MessageType.TriggerEvent.Value = selectedType.Split(' ')[1].Trim();
                 msh.ProcessingID.ProcessingID.Value = "P";
@@ -708,7 +551,7 @@ namespace HL7Tester
 
                 msh.MessageControlID.Value = controlID;
 
-                if (!(message is ADT_A40 || message is ADT_A18))
+                if (!(message is ADT_A40))
                 {
                     var pid = (PID)message.GetStructure("PID");
                     pid.SetIDPatientID.Value = "1";
@@ -724,31 +567,10 @@ namespace HL7Tester
                     pv1.AssignedPatientLocation.PointOfCare.Value = UnitTextBox.Text;
                     pv1.AssignedPatientLocation.Room.Value = txtRoom.Text;
                     pv1.AssignedPatientLocation.Bed.Value = txtBed.Text;
-                    pv1.AssignedPatientLocation.Facility.NamespaceID.Value = TxtFacility.Text;
                     pv1.AssignedPatientLocation.Floor.Value = FloorTextBox.Text;
                     pv1.VisitNumber.ID.Value = txtAdmissionNumber.Text;
-                    int obxIndex = 0;
-
-                    for (int i = 1; i <= 3; i++)
-                    {
-                        string type = Controls.Find($"OBXType{i}TextBox", true).FirstOrDefault()?.Text;
-                        string reason = Controls.Find($"OBXReason{i}TextBox", true).FirstOrDefault()?.Text;
-
-                        if (!string.IsNullOrWhiteSpace(type) || !string.IsNullOrWhiteSpace(reason))
-                        {
-                            OBX obx = (OBX)message.GetStructure("OBX", obxIndex++);
-                            obx.SetIDOBX.Value = (obxIndex).ToString();
-                            obx.ValueType.Value = "TX";
-                            obx.ObservationIdentifier.Identifier.Value = type ?? "UNK"; obx.ObservationSubID.Value = "1";
-                            var value = new NHapi.Model.V23.Datatype.TX(message);
-                            value.Value = reason ?? "Non spécifié";
-                            obx.GetObservationValue(0).Data = value;
-                            obx.ObservResultStatus.Value = "F";
-                        }
-                    }
-
                 }
-                else if (message is ADT_A40)
+                else
                 {
                     var adtA40 = (ADT_A40)message;
 
@@ -763,32 +585,10 @@ namespace HL7Tester
                     var mrg = patient.MRG;
                     mrg.GetPriorPatientIDInternal(0).ID.Value = txtPatientID.Text;
                 }
-                else if (message is ADT_A18)
-                {
-                    var adtA18 = (ADT_A18)message;
-                    var pidA18 = (PID)message.GetStructure("PID");
-                    pidA18.SetIDPatientID.Value = "1";
-                    pidA18.GetPatientIDInternalID(0).ID.Value = txtNewPatientID.Text;
-                    pidA18.GetPatientName(0).FamilyName.Value = txtPatientName.Text;
-                    pidA18.GetPatientName(0).GivenName.Value = txtPatGivenName.Text;
-                    pidA18.DateOfBirth.TimeOfAnEvent.Value = txtBirthDate.Text;
-                    pidA18.Sex.Value = txtSex.Text;
-                    var mrg = (MRG)message.GetStructure("MRG");
-                    mrg.GetPriorPatientIDInternal(0).ID.Value = txtPatientID.Text;
-                }
-
                 var evn = (EVN)message.GetStructure("EVN");
                 string selectedEventType = comboMessageType.SelectedItem.ToString().Split(' ')[1].Trim();
                 evn.EventTypeCode.Value = selectedEventType;
-                evn.RecordedDateTime.TimeOfAnEvent.Value = DateTime.Now.ToString("yyyyMMddHHmm");
-                if (string.IsNullOrEmpty(txtEVENT.Text))
-                {
-                    evn.EventOccured.TimeOfAnEvent.Value = DateTime.Now.ToString("yyyyMMddHHmm");
-                }
-                else
-                {
-                    evn.EventOccured.TimeOfAnEvent.Value = txtEVENT.Text;
-                }
+                evn.RecordedDateTime.TimeOfAnEvent.Value = DateTime.Now.ToString("yyyyMMddHHmmss");
                 string hl7Message = new PipeParser().Encode(message);
                 hl7Message = hl7Message.Replace("\r", "\r\n");
                 txtGeneratedMessage.Text = hl7Message;
@@ -805,7 +605,7 @@ namespace HL7Tester
         {
             if (!string.IsNullOrEmpty(txtGeneratedMessage.Text))
             {
-                SafeSetClipboardText(txtGeneratedMessage.Text);
+                Clipboard.SetText(txtGeneratedMessage.Text);
             }
         }
 
@@ -823,35 +623,74 @@ namespace HL7Tester
             txtBed.Text = "";
             FloorTextBox.Text = "";
             txtAdmissionNumber.Text = "";
-            txtEVENT.Text = "";
-            TxtFacility.Text = "";
-            OBXReason1TextBox.Text = "";
-            OBXReason2TextBox.Text = "";
-            OBXReason3TextBox.Text = "";
-            OBXType1TextBox.Text = "";
-            OBXType2TextBox.Text = "";
-            OBXType3TextBox.Text = "";
         }
 
         private void SettingsButton_Click(object sender, EventArgs e)
         {
-            if (Application.OpenForms.OfType<HL7Settings>().Any())
-            {
-                HL7Settings existingForm = Application.OpenForms.OfType<HL7Settings>().First();
+            SendHL7Form sendHL7Form = new SendHL7Form();
+            sendHL7Form.Show();
+        }
 
-                existingForm.BringToFront();
+         private async void btnGenerateAndSend_Click(object sender, EventArgs e)
+         {
+            bool includeSpecialChars = mirthBox.Checked;
+
+            string lastIpAddress = Properties.Settings.Default.LastIpAddress;
+             string lastPort = Properties.Settings.Default.LastPort;
+             if (!IPAddress.TryParse(lastIpAddress, out var ip))
+             {
+                 logger.Error("Invalid IP address.");
+                 return;
+             }
+
+             if (!int.TryParse(lastPort, out int port) || port < 1 || port > 65535)
+             {
+                 logger.Error("Invalid network port.");
+                 return;
+             }
+
+            string message = txtGeneratedMessage.Text;
+
+            if (string.IsNullOrEmpty(message))
+             {
+                 logger.Warn("Nothing to send");
+                 return;
+             }
+            byte[] sendBytes = new byte[0];
+            if (includeSpecialChars)
+            {
+                /*sendBytes = Encoding.UTF8.GetBytes(message);*/
+                sendBytes = Encoding.ASCII.GetBytes(message);
             }
             else
             {
-                HL7Settings sendHL7Form = new HL7Settings();
-                sendHL7Form.Show();
+                sendBytes = Encoding.UTF8.GetBytes("\x0B" + message + "\x1C\r");
             }
-        }
-
-
-        private async void btnGenerateAndSend_Click(object sender, EventArgs e)
+            try
+             {
+                 using (TcpClient tcpClient = new TcpClient())
+                 {
+                     await tcpClient.ConnectAsync(ip, port);
+                     using (NetworkStream stream = tcpClient.GetStream())
+                     {
+                         await stream.WriteAsync(sendBytes, 0, sendBytes.Length);
+                         logger.Info($"Sent to: {lastIpAddress}:{lastPort}. Content: {message}");
+                         using (var reader = new StreamReader(stream))
+                         {
+                             var ackMessage = await reader.ReadLineAsync();
+                             logger.Info($"Server acknowledgement: {ackMessage}");
+                             //_messageCache.AddMessage(message);
+                         }
+                     }
+                 }
+             }
+             catch (Exception ex)
+             {
+                 logger.Error(ex, $"Error when sending message to: {lastIpAddress}:{lastPort}.");
+             }
+         }
+       /* private async void btnGenerateAndSend_Click(object sender, EventArgs e)
         {
-
             string lastIpAddress = Properties.Settings.Default.LastIpAddress;
             string lastPort = Properties.Settings.Default.LastPort;
             if (!IPAddress.TryParse(lastIpAddress, out var ip))
@@ -859,81 +698,126 @@ namespace HL7Tester
                 logger.Error("Invalid IP address.");
                 return;
             }
-
             if (!int.TryParse(lastPort, out int port) || port < 1 || port > 65535)
             {
                 logger.Error("Invalid network port.");
                 return;
             }
-            string message = txtGeneratedMessage.Text;
-            byte[] sendBytes = new byte[0];
-            if (string.IsNullOrEmpty(message))
+            string[] messages = txtGeneratedMessage.Text.Split('\n');
+            foreach (string message in messages)
             {
-                logger.Warn("Nothing to send");
-                return;
-            }
-            else
-            {
-                sendBytes = Encoding.GetEncoding("windows-1252").GetBytes("\x0B" + message + "\x1C\r");
-            }
-            try
-            {
-                using (TcpClient tcpClient = new TcpClient())
+                if (string.IsNullOrEmpty(message))
                 {
-                    await tcpClient.ConnectAsync(ip, port);
-                    using (NetworkStream stream = tcpClient.GetStream())
+                    logger.Warn("Nothing to send");
+                    continue;
+                }
+                byte[] sendBytes = Encoding.UTF8.GetBytes("\x0B" + message + "\x1C\r");
+                try
+                {
+                    using (TcpClient tcpClient = new TcpClient())
                     {
-                        await stream.WriteAsync(sendBytes, 0, sendBytes.Length);
-                        logger.Info($"Sent to: {lastIpAddress}:{lastPort}\nContent:\n{message}");
-                        using (var reader = new StreamReader(stream))
+                        await tcpClient.ConnectAsync(ip, port);
+                        using (NetworkStream stream = tcpClient.GetStream())
                         {
-                            var ackMessage = await reader.ReadLineAsync();
-                            logger.Info($"Server acknowledgement:\n{ackMessage}\n");
+                            await stream.WriteAsync(sendBytes, 0, sendBytes.Length);
+                            logger.Info($"Sent to: {lastIpAddress}:{lastPort}. Content: {message}");
+                            using (var reader = new StreamReader(stream))
+                            {
+                                var ackMessage = await reader.ReadLineAsync();
+                                logger.Info($"Server acknowledgement: {ackMessage}");
+                                _messageCache.AddMessage(message);
+                            }
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Error when sending message to: {lastIpAddress}:{lastPort}");
-            }
-        }
-
-        private void LogsButton_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                string logDirectoryPath = @"C:\Users\Public\Documents\HL7_Logs\";
-                string logFileName = "application.log";
-                string logFilePath = Path.Combine(logDirectoryPath, logFileName);
-
-                if (File.Exists(logFilePath))
+                catch (Exception ex)
                 {
-                    ProcessStartInfo psi = new ProcessStartInfo(logFilePath)
-                    {
-                        UseShellExecute = true,
-                        Verb = "open"
-                    };
-
-                    Process.Start(psi);
+                    logger.Error(ex, $"Error when sending message to: {lastIpAddress}:{lastPort}. Message content: {message}");
+                }
+            }
+        }*/
+       /* private async void btnGenerateAndSend_Click(object sender, EventArgs e)
+        {
+            bool includeSpecialChars = mirthBox.Checked;
+            string lastIpAddress = Properties.Settings.Default.LastIpAddress;
+            string lastPort = Properties.Settings.Default.LastPort;
+            if (!IPAddress.TryParse(lastIpAddress, out var ip))
+            {
+                logger.Error("Invalid IP address.");
+                return;
+            }
+            if (!int.TryParse(lastPort, out int port) || port < 1 || port > 65535)
+            {
+                logger.Error("Invalid network port.");
+                return;
+            }
+                        
+            string[] messages = txtGeneratedMessage.Text.Split('\n');
+            foreach (string message in messages)
+            {
+                if (string.IsNullOrEmpty(message))
+                {
+                    logger.Warn("Nothing to send");
+                    continue;
+                }
+                byte[] sendBytes = new byte[0];
+                if (includeSpecialChars)
+                {
+                    sendBytes = Encoding.UTF8.GetBytes(message);
                 }
                 else
                 {
-                    MessageBox.Show($"The log file '{logFileName}'was not found in the: {logDirectoryPath}",
-                                    "File not found",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Warning);
+                    sendBytes = Encoding.UTF8.GetBytes("\x0B" + message + "\x1C\r");
+                }
+                try
+                {
+                    using (TcpClient tcpClient = new TcpClient())
+                    {
+                        await tcpClient.ConnectAsync(ip, port);
+                        using (NetworkStream stream = tcpClient.GetStream())
+                        {
+                            await stream.WriteAsync(sendBytes, 0, sendBytes.Length);
+                            logger.Info($"Sent to: {lastIpAddress}:{lastPort}. Content: {message}");
+                            using (var reader = new StreamReader(stream))
+                            {
+                                var ackMessage = await reader.ReadLineAsync();
+                                logger.Info($"Server acknowledgement: {ackMessage}");
+                                _messageCache.AddMessage(message);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Error when sending message to: {lastIpAddress}:{lastPort}. Message content: {message}");
                 }
             }
-            catch (Exception ex)
+        }*/
+
+        /*public class HL7MessageCache
+        {
+            private readonly List<string> _messages = new List<string>();
+
+            public void AddMessage(string message)
             {
-                MessageBox.Show($"Error opening log file: {ex.Message}",
-                                "Error",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                _messages.Add(message);
             }
+
+            public IEnumerable<string> GetMessages()
+            {
+                return _messages;
+            }
+        }*/
+
+        /*private void historyButton_Click(object sender, EventArgs e)
+        {
+            history historyForm = new history(_messageCache);
+            historyForm.Show();
+        }*/
+
+        private void txtGeneratedMessage_Click(object sender, EventArgs e)
+        {
+
         }
-
-
     }
 }

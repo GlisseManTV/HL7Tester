@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="HL7Tester.Core/HL7Tester.Core.csproj" />
+  <Project Path="HL7Tester.Tests/HL7Tester.Tests.csproj" />
+  <Project Path="HL7Tester/HL7Tester.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+</Solution>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- NHapi: bibliothèque utilisée par l'application WinForms existante pour générer les messages HL7 -->
+    <PackageReference Include="nhapi" Version="3.2.4" />
+    <PackageReference Include="nhapi.base" Version="3.2.3" />
+    <!-- Fournit CodePagesEncodingProvider (windows-1252, etc.) de façon cross‑platform -->
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.3" />
+    <!-- Logging abstractions pour permettre l'injection d'ILogger<> depuis l'hôte MAUI/tests -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+  </ItemGroup>
+
+</Project>

@@ -5,20 +5,12 @@ Download the latest package [here](https://github.com/GlisseManTV/HL7Tester/rele
 
 # HL7Generator
 
-User Friendly HL7 Generator trought windows Form Material UI
+User Friendly HL7 Generator trought a great UI
 
-This Windows application allow you to generate and send HL7 V2 messages trought a user friendly UI.
+This Windows / MacOS application allow you to generate and send HL7 V2.3 messages trought a user friendly UI.
 
 
 ## Preview
-
-### Reminder of current settings (at each launch)
-
-![image](https://github.com/user-attachments/assets/4d7cb0a8-1608-4a5d-a607-e49f983370bc)
-
-### Up to date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update check disabled 
-![image](https://github.com/user-attachments/assets/73523919-7a84-4411-a416-eaed079b0ed0)
-![image](https://github.com/user-attachments/assets/f01488b7-dc43-4aca-a7fb-962f0e155a92)
 
 
 ### Main UI &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dark &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; light

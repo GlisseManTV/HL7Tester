@@ -110,10 +110,10 @@
                             <Label Grid.Row="2" Grid.Column="0" Text="New Patient ID (A18/A40)" IsVisible="{Binding IsNewPatientIdVisible}" />
                             <Entry Grid.Row="2" Grid.Column="1" Text="{Binding NewPatientId}" IsVisible="{Binding IsNewPatientIdVisible}" />
 
-                            <Label Grid.Row="3" Grid.Column="0" Text="Family name" />
+                            <Label Grid.Row="3" Grid.Column="0" Text="Family name (PID-5.1)" />
                             <Entry Grid.Row="3" Grid.Column="1" Text="{Binding PatientFamilyName}" />
 
-                            <Label Grid.Row="4" Grid.Column="0" Text="Given name" />
+                            <Label Grid.Row="4" Grid.Column="0" Text="Given name (PID-5.2)" />
                             <Entry Grid.Row="4" Grid.Column="1" Text="{Binding PatientGivenName}" />
 
                             <Label Grid.Row="5" Grid.Column="0" Text="Birth date (yyyyMMdd)" />
@@ -145,19 +145,19 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Text="Unit" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="Unit (PV1-3.1)" />
                             <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Unit}" />
 
-                            <Label Grid.Row="1" Grid.Column="0" Text="Room" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="Room (PV1-3.2)" />
                             <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Room}" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="Bed" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="Bed (PV1-3.3)" />
                             <Entry Grid.Row="2" Grid.Column="1" Text="{Binding Bed}" />
 
-                            <Label Grid.Row="3" Grid.Column="0" Text="Facility" />
+                            <Label Grid.Row="3" Grid.Column="0" Text="Facility (PV1-3.4)" />
                             <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Facility}" />
 
-                            <Label Grid.Row="4" Grid.Column="0" Text="Floor" />
+                            <Label Grid.Row="4" Grid.Column="0" Text="Floor (PV1-3.8)" />
                             <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Floor}" />
                         </Grid>
                     </VerticalStackLayout>
@@ -185,24 +185,24 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- OBX 1 -->
-                            <Label Grid.Row="0" Grid.Column="0" Text="OBX 1 - Type" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="OBX 1 - Type (OBX-3-1)" />
                             <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Obx1Type}" />
 
-                            <Label Grid.Row="1" Grid.Column="0" Text="OBX 1 - Reason" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="OBX 1 - Reason(OBX-5-1)" />
                             <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Obx1Reason}" />
 
                             <!-- OBX 2 -->
-                            <Label Grid.Row="2" Grid.Column="0" Text="OBX 2 - Type" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="OBX 2 - Type(OBX-3-1)" />
                             <Entry Grid.Row="2" Grid.Column="1" Text="{Binding Obx2Type}" />
 
-                            <Label Grid.Row="3" Grid.Column="0" Text="OBX 2 - Reason" />
+                            <Label Grid.Row="3" Grid.Column="0" Text="OBX 2 - Reason(OBX-5-1)" />
                             <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Obx2Reason}" />
 
                             <!-- OBX 3 -->
-                            <Label Grid.Row="4" Grid.Column="0" Text="OBX 3 - Type" />
+                            <Label Grid.Row="4" Grid.Column="0" Text="OBX 3 - Type(OBX-3-1)" />
                             <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Obx3Type}" />
 
-                            <Label Grid.Row="5" Grid.Column="0" Text="OBX 3 - Reason" />
+                            <Label Grid.Row="5" Grid.Column="0" Text="OBX 3 - Reason(OBX-5-1)" />
                             <Entry Grid.Row="5" Grid.Column="1" Text="{Binding Obx3Reason}" />
                         </Grid>
                     </VerticalStackLayout>

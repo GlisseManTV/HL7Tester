@@ -15,8 +15,9 @@ This Windows / MacOS application allow you to generate and send HL7 V2.3 message
 
 ### Main UI &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dark &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; light
 
-![Capture d'écran 2025-07-09 101214](https://github.com/user-attachments/assets/beac336c-2673-4782-97bb-6943316e3a58)
-![{FF29CBBC-572B-400B-AE9F-3BAAEA6E1A38}](https://github.com/user-attachments/assets/437b68de-30b6-4780-b491-28077f1f4e5e)
+<img width="454" height="462" alt="image" src="https://github.com/user-attachments/assets/8f5b61ae-8f93-4670-a068-1b96bf4390d2" />
+<img width="454" height="462" alt="image" src="https://github.com/user-attachments/assets/49006c1c-f29e-411b-9531-693402e0fa9e" />
+
 
 
 
@@ -24,8 +25,10 @@ This Windows / MacOS application allow you to generate and send HL7 V2.3 message
 ### Settings &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dark &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; light
 
 
-![image](https://github.com/user-attachments/assets/ec4b25da-06dd-4b42-a63c-6ba21889136c)
-![image](https://github.com/user-attachments/assets/fd1006ef-e9e5-4008-bed8-4f62508d9223)
+<img width="454" height="462" alt="image" src="https://github.com/user-attachments/assets/6cb6aa78-7b65-4c6e-9d0b-180813993b4e" />
+
+<img width="454" height="462" alt="image" src="https://github.com/user-attachments/assets/73d61442-3a51-42db-8eb4-5dd63ae57f3d" />
+
 
 
 

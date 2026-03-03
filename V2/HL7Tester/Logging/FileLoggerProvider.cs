@@ -55,10 +55,37 @@ public sealed class FileLoggerProvider : ILoggerProvider
                 return;
 
             var message = formatter(state, exception);
-            var line = $"{DateTimeOffset.Now:O} [{logLevel}] {_categoryName}: {message}";
+            
+            // Construire le log avec un saut de ligne après le préfixe pour les messages longs ou les erreurs
+            var timestamp = DateTimeOffset.Now;
+            var prefix = $"{timestamp} [{logLevel}] {_categoryName}:";
+            
+            string logLine;
+            
             if (exception != null)
             {
-                line += Environment.NewLine + exception;
+                // Pour les erreurs : saut de ligne après le préfixe, puis le message et la stack trace
+                logLine = $"{prefix}{Environment.NewLine}{message}{Environment.NewLine}{exception}";
+            }
+            else if (message.StartsWith("MSH|^~\\&") || message.Contains("\nMSH"))
+            {
+                // Pour les messages HL7 : saut de ligne après le préfixe, puis le contenu du message
+                logLine = $"{prefix}{Environment.NewLine}{message}";
+            }
+            else if (message.StartsWith("Received ACK from"))
+            {
+                // Pour l'ACK : saut de ligne après le préfixe, puis le contenu du message
+                logLine = $"{prefix}{Environment.NewLine}{message}";
+            }
+            else if (message.StartsWith("Sending HL7") || message.StartsWith("Connecting to"))
+            {
+                // Pour les messages d'envoi/connection : saut de ligne après le préfixe, puis le contenu
+                logLine = $"{prefix}{Environment.NewLine}{message}";
+            }
+            else
+            {
+                // Pour les autres messages : format standard sur une seule ligne
+                logLine = $"{prefix} {message}";
             }
 
             lock (_lock)
@@ -69,7 +96,7 @@ public sealed class FileLoggerProvider : ILoggerProvider
                 var filePath = Path.Combine(_directoryPath, fileName);
 
                 Directory.CreateDirectory(_directoryPath);
-                File.AppendAllText(filePath, line + Environment.NewLine);
+                File.AppendAllText(filePath, logLine + Environment.NewLine);
             }
         }
 

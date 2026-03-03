@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
+using HL7Tester.Core;
 using HL7Tester.ViewModels;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
@@ -58,6 +60,23 @@ public partial class MainPage : ContentPage
 		catch (Exception ex)
 		{
 			await DisplayAlert("Error", $"Unable to open log file: {ex.Message}", "OK");
+		}
+	}
+
+	private async void OnCopyMessageClicked(object? sender, EventArgs e)
+	{
+		try
+		{
+			var viewModel = BindingContext as MainViewModel;
+			if (viewModel?.GeneratedMessage != null)
+			{
+				// Copie dans le presse-papier système pour macOS et Windows
+				await Clipboard.SetTextAsync(viewModel.GeneratedMessage);
+			}
+		}
+		catch (Exception ex)
+		{
+			await DisplayAlert("Error", $"Unable to copy message: {ex.Message}", "OK");
 		}
 	}
 }

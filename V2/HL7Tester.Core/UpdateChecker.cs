@@ -14,15 +14,31 @@ public sealed class UpdateCheckResult
     public Version LatestVersion { get; init; } = new(0, 0, 0, 0);
 
     /// <summary>
-    /// true si une version plus récente que <see cref="CurrentVersion"/> est disponible.
+    /// Compare deux versions en ignorant le dernier chiffre (Revision).
+    /// Utilise seulement Major.Minor.Build pour la comparaison.
+    /// Cela permet de gérer correctement les différences entre Windows (2.0.0.0) et macOS (2.0.0).
     /// </summary>
-    public bool IsUpdateAvailable => LatestVersion > CurrentVersion;
+    private static bool CompareVersionWithoutRevision(Version v1, Version v2)
+    {
+        // Créer des versions normalisées avec seulement Major.Minor.Build
+        var v1Normalized = new Version(v1.Major, v1.Minor, v1.Build);
+        var v2Normalized = new Version(v2.Major, v2.Minor, v2.Build);
+        
+        return v1Normalized < v2Normalized;
+    }
+
+    /// <summary>
+    /// true si une version plus récente que <see cref="CurrentVersion"/> est disponible.
+    /// La comparaison ignore le 4ème chiffre (Revision) pour gérer les différences de format entre plateformes.
+    /// </summary>
+    public bool IsUpdateAvailable => CompareVersionWithoutRevision(CurrentVersion, LatestVersion);
 
     /// <summary>
     /// true si la version courante est strictement supérieure à la dernière release GitHub
     /// (cas typique d'une version de développement non encore publiée).
+    /// La comparaison ignore le 4ème chiffre (Revision).
     /// </summary>
-    public bool IsDevelopmentVersion => CurrentVersion > LatestVersion;
+    public bool IsDevelopmentVersion => CompareVersionWithoutRevision(LatestVersion, CurrentVersion);
 
     /// <summary>
     /// URL directe de téléchargement (si disponible dans les assets de la release).

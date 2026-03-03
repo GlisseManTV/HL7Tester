@@ -219,9 +219,22 @@
                         </Grid.RowDefinitions>
 
                         <!-- Zone message généré (éditable) -->
-                        <Label Grid.Row="0"
-                               Text="Generated HL7 message"
-                               FontAttributes="Bold" />
+                        <Grid Grid.Row="0" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Column="0"
+                                   Text="Generated HL7 message"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center" />
+
+                            <Button Grid.Column="1"
+                                    Text="Copy"
+                                    HorizontalOptions="End"
+                                    Clicked="OnCopyMessageClicked" />
+                        </Grid>
 
                         <Editor Grid.Row="1"
                                 Text="{Binding GeneratedMessage}"

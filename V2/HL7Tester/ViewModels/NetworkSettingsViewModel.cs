@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using HL7Tester.Core;
@@ -47,6 +48,11 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         set => SetField(ref _autoUpdateCheck, value);
     }
 
+    /// <summary>
+    /// Version de l'application extraite automatiquement de l'assembly.
+    /// </summary>
+    public string AssemblyVersion { get; }
+
     private string _selectedLogLevel = "Debug";
     public string SelectedLogLevel
     {
@@ -61,6 +67,13 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     {
 		_service = service;
 		_logger = logger;
+
+        // Extraire la version de l'assembly
+        var assembly = Assembly.GetExecutingAssembly();
+        var assemblyTitleAttribute = assembly.GetCustomAttribute<AssemblyTitleAttribute>();
+        var assemblyVersion = assembly.GetName().Version;
+        AssemblyVersion = $"{assemblyTitleAttribute?.Title} v{assemblyVersion?.ToString(3) ?? "1.0.0"}";
+
         SaveCommand = new Command(async () => await SaveAsync());
         SelectHistoryEntryCommand = new Command<string>(OnSelectHistoryEntry);
     }

@@ -83,6 +83,12 @@
             <Button Text="Home"
                     HorizontalOptions="End"
                     Clicked="OnHomeClicked" />
+
+            <!-- Version de l'application -->
+            <Label Text="{Binding AssemblyVersion}"
+                   HorizontalOptions="Center"
+                   FontSize="Small"
+                   TextColor="{DynamicResource Primary}" />
         </VerticalStackLayout>
     </ScrollView>
 

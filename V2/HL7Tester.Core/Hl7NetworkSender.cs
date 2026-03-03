@@ -42,7 +42,9 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
 
         try
         {
-            _logger.LogInformation("Connecting to {Ip}:{Port} for HL7 send", ipAddress, port);
+            // Log le contenu du message HL7 avant l'envoi
+            var msgContent = hl7Message.Replace("\r\n", Environment.NewLine).Replace("\n", Environment.NewLine);
+            _logger.LogInformation("Sending HL7 message to {Ip}:{Port}:\n{Message}", ipAddress, port, msgContent);
 
             await client.ConnectAsync(ipAddress, port, cts.Token).ConfigureAwait(false);
 
@@ -50,7 +52,8 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
             await stream.WriteAsync(bytes, 0, bytes.Length, cts.Token).ConfigureAwait(false);
             await stream.FlushAsync(cts.Token).ConfigureAwait(false);
 
-            _logger.LogInformation("HL7 message sent to {Ip}:{Port} (length={Length} bytes)", ipAddress, port, bytes.Length);
+            var msgSent = $"HL7 message sent to {ipAddress}:{port} ({bytes.Length} bytes)";
+            _logger.LogInformation(msgSent);
 
             // Optionnel : lecture d'un ACK en retour (non parsé pour l'instant)
             // On lit de manière best-effort, sans faire échouer l'envoi si rien n'arrive.
@@ -64,7 +67,9 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                     if (read > 0)
                     {
                         var ack = Encoding.Latin1.GetString(buffer, 0, read);
-                        _logger.LogInformation("Received ACK from {Ip}:{Port}: {Ack}", ipAddress, port, ack);
+                        // Formater l'ACK avec des sauts de ligne pour une meilleure lisibilité
+                        var ackClean = ack.Replace("\x0B", "").Replace("\x1C", "").Replace("\r", "\n").TrimEnd('\n');
+                        _logger.LogInformation("Received ACK from {Ip}:{Port}:\n{Ack}", ipAddress, port, ackClean);
                     }
                     else
                     {
@@ -73,13 +78,14 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error while reading ACK from {Ip}:{Port}", ipAddress, port);
+                    _logger.LogWarning(ex, "Error while reading ACK from {Ip}:{Port}.", ipAddress, port);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while sending HL7 message to {Ip}:{Port}", ipAddress, port);
+            var errorMsg = $"Error while sending HL7 message to {ipAddress}:{port}";
+            _logger.LogError(ex, $"{errorMsg}\n{ex.Message}");
             throw;
         }
     }

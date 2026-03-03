@@ -320,7 +320,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             }
 
             // 3. Envoyer via TCP/MLLP
-            _logger.LogInformation("Sending HL7 message to {Ip}:{Port}.", ip, port);
+            var sendMsg = $"Sending HL7 message to {ip}:{port}.";
+            _logger.LogInformation(sendMsg);
             _logger.LogDebug("HL7 message length: {Length} characters.", messageToSend.Length);
             await _networkSender.SendAsync(messageToSend, ip, port);
             _logger.LogInformation("HL7 message successfully sent to {Ip}:{Port}.", ip, port);
@@ -328,7 +329,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while sending HL7 message.");
+            var errorMsg = $"Error while sending HL7 message.";
+            _logger.LogError(ex, $"{errorMsg}\n{ex.Message}");
             AppendToSendLog($"[Send] Error: {ex.Message}");
         }
     }

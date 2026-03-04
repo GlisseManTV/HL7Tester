@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 #MacOS
 .DS_Store
+V2/HL7Tester/HL7Tester_Complete_Setup.exe
+V2/HL7Tester/HL7Tester_Complete_Setup_arm64.exe

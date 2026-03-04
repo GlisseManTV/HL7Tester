@@ -47,8 +47,12 @@
 		  on machines that do NOT have the Windows App Runtime installed.
 		-->
 		<WindowsAppSDKSelfContained Condition="$([MSBuild]::IsOSPlatform('windows'))">true</WindowsAppSDKSelfContained>
-		<!-- Default to x64 for installer builds. Override via -p:WindowsAppSDKRuntimeIdentifier=win-arm64 if needed. -->
-		<WindowsAppSDKRuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('windows'))">win-x64</WindowsAppSDKRuntimeIdentifier>
+		<!--
+		  Do NOT hardcode WindowsAppSDKRuntimeIdentifier here.
+		  Choose the architecture at publish time:
+		    -r win-x64   (most PCs / servers)
+		    -r win-arm64 (Windows on ARM)
+		-->
 		<CheckEolTargetFramework>false</CheckEolTargetFramework>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>

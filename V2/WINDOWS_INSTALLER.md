@@ -26,6 +26,16 @@ dotnet publish .\V2\HL7Tester\HL7Tester.csproj `
   -o .\artifacts\win-x64
 ```
 
+### Publish command (ARM64)
+
+```powershell
+dotnet publish .\V2\HL7Tester\HL7Tester.csproj `
+  -c Release -f net10.0-windows10.0.19041.0 `
+  -p:WindowsPackageType=None `
+  -r win-arm64 --self-contained true `
+  -o .\artifacts\win-arm64
+```
+
 Important properties:
 - `WindowsPackageType=None` => unpackaged (no MSIX)
 - `--self-contained true` => bundles the .NET runtime
@@ -62,6 +72,53 @@ At a high level your WiX project should:
 - optionally add Desktop shortcut
 
 Once your WiX project produces `HL7Tester.msi`, you can sign it.
+
+---
+
+## 3bis) Inno Setup (EXE installer) — what to package?
+
+Yes: **target the whole publish folder** (for example `artifacts\win-x64\`).
+
+For MAUI/WinUI apps, the `.exe` depends on many DLLs next to it.
+If you only include `HL7Tester.exe`, it will break on the target machine.
+
+### Minimal Inno Setup example
+
+```ini
+[Setup]
+AppId={{YOUR-GUID-HERE}}
+AppName=HL7Tester
+AppVersion=2.0.1
+AppPublisher=ItConsult4Care
+DefaultDirName={autopf}\HL7Tester
+DefaultGroupName=HL7Tester
+OutputBaseFilename=HL7Tester_Setup
+Compression=lzma
+SolidCompression=yes
+
+[Files]
+; include EVERYTHING from the publish folder
+Source: "..\artifacts\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; for ARM64 builds, point to artifacts\win-arm64 instead
+; Source: "..\artifacts\win-arm64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Icons]
+Name: "{group}\HL7Tester"; Filename: "{app}\HL7Tester.exe"; WorkingDir: "{app}"
+Name: "{commondesktop}\HL7Tester"; Filename: "{app}\HL7Tester.exe"; Tasks: desktopicon; WorkingDir: "{app}"
+
+[Tasks]
+Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Flags: unchecked
+```
+
+Notes:
+- Make the `Source:` path relative to your `.iss` file.
+- Your `AppId` should be stable across releases (so upgrades work).
+- Keep the install folder out of OneDrive paths.
+
+### Signing the Inno Setup output
+Inno Setup can run a post-compile step to sign the generated setup exe using `signtool`.
+You still need a **real code-signing certificate (PFX)**.
 
 ---
 

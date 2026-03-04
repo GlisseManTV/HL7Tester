@@ -38,6 +38,17 @@
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
+
+		<!--
+		  IMPORTANT (Windows unpackaged distribution):
+		  "SelfContained" in dotnet publish only covers the .NET runtime.
+		  MAUI Windows also depends on Windows App SDK / WinUI.
+		  Setting WindowsAppSDKSelfContained=true makes the publish output runnable
+		  on machines that do NOT have the Windows App Runtime installed.
+		-->
+		<WindowsAppSDKSelfContained Condition="$([MSBuild]::IsOSPlatform('windows'))">true</WindowsAppSDKSelfContained>
+		<!-- Default to x64 for installer builds. Override via -p:WindowsAppSDKRuntimeIdentifier=win-arm64 if needed. -->
+		<WindowsAppSDKRuntimeIdentifier Condition="$([MSBuild]::IsOSPlatform('windows'))">win-x64</WindowsAppSDKRuntimeIdentifier>
 		<CheckEolTargetFramework>false</CheckEolTargetFramework>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>

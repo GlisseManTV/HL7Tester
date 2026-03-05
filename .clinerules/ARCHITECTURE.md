@@ -79,7 +79,53 @@ Persists application settings to JSON:
 
 ---
 
-## v2.0.1 Changes (Latest Release)
+## v2.0.2 Changes (Latest Release)
+
+### UI Improvements
+
+1. **Fixed EVN-6-1 Field Alignment**
+   - Changed column 2 width from `"3*"` to `"400"` for consistent field sizing
+   - Entry now occupies fixed 400px width while remaining aligned properly
+
+2. **Enhanced Form Labels and Placeholders**
+   - Moved HL7 segment references from labels to placeholders for cleaner UI
+   - Applied to Patient identity, Patient location, and OBX segments sections
+
+3. **Global Hover Effects (Performance-Friendly)**
+   - Added `PointerOver` and `Pressed` visual states to all interactive controls via global styles
+   - Uses `VisualStateManager` only — no code-behind event handlers → zero performance impact
+   - Applied to:
+     | Control | Hover Effect | Pressed Effect |
+     |---------|--------------|----------------|
+     | Button | Darker background, opacity 0.97, scale 1.02 | Tertiary color, opacity 0.92, scale 0.98 |
+     | ImageButton | Opacity 0.9, scale 1.05, overlay tint | Opacity 0.8, scale 0.98 |
+     | Entry/Editor | Light hover background (light) / dark hover (dark) | Same as hover + `Focused` state |
+     | Picker | Light hover background | N/A |
+     | Switch | Opacity 0.9 | N/A |
+     | CheckBox/RadioButton | Opacity 0.9 / overlay background | N/A |
+     | DatePicker/TimePicker | Light hover background | N/A |
+     | SearchBar/SearchHandler | Light hover background | N/A |
+     | Border (Cards) | Stroke color change + hover background | N/A |
+
+   - Added `ClickableListItemBorder` style for list items with click feedback (e.g., connection history)
+   - Fixed ZIndex layering to prevent Editor background from overlapping header buttons (Copy, Logs)
+
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `MainPage.xaml` | Fixed EVN-6-1 column width (`Width="400"`), removed `HorizontalOptions="End"` from Entry |
+| `MainPage.xaml` | Moved HL7 references to placeholders: PID-5.1, PID-5.2, yyyyMMdd, PV1-3.1 through PV1-3.8, OBX-3-1, OBX-5-1 |
+| `MainPage.xaml` | Added `ZIndex="0"` to Editors, `ZIndex="1"` to header Grid, `ZIndex="2"` to Copy/Logs buttons |
+| `NetworkSettingsPage.xaml` | Changed history list items from `Grid` to `Border` with `ClickableListItemBorder` style |
+| `Resources/Styles/Colors.xaml` | Added hover colors (`SurfaceHoverLight`, `SurfaceHoverDark`, `HoverOverlayLight`, `HoverOverlayDark`) and brushes |
+| `Resources/Styles/Styles.xaml` | Enhanced Button, ImageButton, Entry, Editor, Picker, Switch, CheckBox, RadioButton, DatePicker, TimePicker, SearchBar, SearchHandler with PointerOver/Pressed/Focused states; added CardBorder hover feedback |
+
+---
+
+## v2.0.1 Changes
+
+### New Features
 
 ### New Features
 1. **Dynamic Version Display**
@@ -154,7 +200,7 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.1</ApplicationDisplayVersion>
+<ApplicationDisplayVersion>2.0.2</ApplicationDisplayVersion>
 <ApplicationVersion>0</ApplicationVersion>
 ```
 
@@ -169,4 +215,4 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
-*Last Updated: March 3, 2026*
+*Last Updated: March 5, 2026*

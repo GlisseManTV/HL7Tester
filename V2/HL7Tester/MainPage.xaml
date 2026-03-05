@@ -32,31 +32,16 @@
                 <Grid ColumnSpacing="6">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="200" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="400" />
+                        <ColumnDefinition Width="600" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- EVN-6-1 à gauche -->
-                    <Label Grid.Column="0"
-                           Text="EVN-6-1"
-                           TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
-                           FontAttributes="Bold"
-                           HorizontalTextAlignment="End"
-                           VerticalTextAlignment="Center" />
-                    <Entry Grid.Column="1"
-                           Text="{Binding EventDateTime}"
-                           Placeholder="yyyyMMddHHmm"
-                           BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
-
                     <!-- Type de message à droite -->
-                    <Label Grid.Column="2"
+                    <Label Grid.Column="0"
                            Text="Message Type"
                            TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
                            FontAttributes="Bold"
-                           HorizontalTextAlignment="End"
                            VerticalTextAlignment="Center" />
-                    <Picker Grid.Column="3"
+                    <Picker Grid.Column="1"
                             ItemsSource="{Binding AvailableMessageTypes}"
                             SelectedItem="{Binding SelectedMessageType}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
@@ -84,7 +69,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Patient identity"
                                Style="{StaticResource SubHeadline}"
-                               HorizontalOptions="Start" />
+                               HorizontalOptions="Start"/>
 
                         <Grid ColumnSpacing="10" RowSpacing="6">
                             <Grid.RowDefinitions>
@@ -101,38 +86,71 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding PatientIdLabel}" />
-                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding PatientId}" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding PatientIdLabel}" VerticalOptions="Center" />
+                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding PatientId}" Placeholder="Patient ID" />
 
-                            <Label Grid.Row="1" Grid.Column="0" Text="Admission number" />
-                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding AdmissionNumber}" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="Admission number" VerticalOptions="Center" />
+                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding AdmissionNumber}" Placeholder="Admission number" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="New Patient ID (A18/A40)" IsVisible="{Binding IsNewPatientIdVisible}" />
-                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding NewPatientId}" IsVisible="{Binding IsNewPatientIdVisible}" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="New Patient ID" IsVisible="{Binding IsNewPatientIdVisible}" VerticalOptions="Center" />
+                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding NewPatientId}" IsVisible="{Binding IsNewPatientIdVisible}" Placeholder="A18/A40" />
 
-                            <Label Grid.Row="3" Grid.Column="0" Text="Family name (PID-5.1)" />
-                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding PatientFamilyName}" />
+                            <Label Grid.Row="3" Grid.Column="0" Text="Family name" VerticalOptions="Center" />
+                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding PatientFamilyName}" Placeholder="PID-5.1" />
 
-                            <Label Grid.Row="4" Grid.Column="0" Text="Given name (PID-5.2)" />
-                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding PatientGivenName}" />
+                            <Label Grid.Row="4" Grid.Column="0" Text="Given name" VerticalOptions="Center" />
+                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding PatientGivenName}" Placeholder="PID-5.2" />
 
-                            <Label Grid.Row="5" Grid.Column="0" Text="Birth date (yyyyMMdd)" />
-                            <Entry Grid.Row="5" Grid.Column="1" Text="{Binding BirthDate}" />
+                            <Label Grid.Row="5" Grid.Column="0" Text="Birth date" VerticalOptions="Center" />
+                            <Entry Grid.Row="5" Grid.Column="1" Text="{Binding BirthDate}" Placeholder="yyyyMMdd" />
 
-                            <Label Grid.Row="6" Grid.Column="0" Text="Sex" />
-                            <Entry Grid.Row="6" Grid.Column="1" Text="{Binding Sex}" />
+                            <Label Grid.Row="6" Grid.Column="0" Text="Sex" VerticalOptions="Center" />
+                            <Entry Grid.Row="6" Grid.Column="1" Text="{Binding Sex}" Placeholder="Sex" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Informations de séjour / localisation -->
                 <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="Patient location"
-                               Style="{StaticResource SubHeadline}"
-                               HorizontalOptions="Start" />
+                        <VerticalStackLayout Spacing="8">
+           
 
-                        <Grid ColumnSpacing="10" RowSpacing="6">
+                        <Grid Grid.Row="0" ColumnSpacing="10" RowSpacing="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />                             
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" /> 
+                                <ColumnDefinition Width="400" />                                                                
+
+                            </Grid.ColumnDefinitions>
+                        <Label Grid.Row="0" Grid.Column="0" 
+                            Text="Event"
+                            Style="{StaticResource SubHeadline}"
+                            HorizontalOptions="Start" />
+                            <Label Grid.Row="0" Grid.Column="1"
+                                Text="EVN-6-1"
+                                TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="End"
+                                HorizontalOptions="End"
+                                VerticalTextAlignment="Center" />
+
+                            <Entry Grid.Row="0" Grid.Column="2"
+                                Text="{Binding EventDateTime}"
+                                Placeholder="yyyyMMddHHmm"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+
+                        </Grid>
+                            <BoxView Grid.Row="2"
+                                    HeightRequest="1"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />         
+                            <Label Text="Patient location"
+                                Style="{StaticResource SubHeadline}"
+                                HorizontalOptions="Start" />
+
+                        <Grid Grid.Row="1" ColumnSpacing="10" RowSpacing="6">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -145,20 +163,20 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Text="Unit (PV1-3.1)" />
-                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Unit}" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="Unit" VerticalOptions="Center"/>
+                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Unit}" Placeholder="PV1-3.1" />
 
-                            <Label Grid.Row="1" Grid.Column="0" Text="Room (PV1-3.2)" />
-                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Room}" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="Room" VerticalOptions="Center" />
+                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Room}" Placeholder="PV1-3.2" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="Bed (PV1-3.3)" />
-                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding Bed}" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="Bed" VerticalOptions="Center" />
+                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding Bed}" Placeholder="PV1-3.3" />
 
-                            <Label Grid.Row="3" Grid.Column="0" Text="Facility (PV1-3.4)" />
-                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Facility}" />
+                            <Label Grid.Row="3" Grid.Column="0" Text="Facility" VerticalOptions="Center" />
+                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Facility}" Placeholder="PV1-3.4" />
 
-                            <Label Grid.Row="4" Grid.Column="0" Text="Floor (PV1-3.8)" />
-                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Floor}" />
+                            <Label Grid.Row="4" Grid.Column="0" Text="Floor" VerticalOptions="Center" />
+                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Floor}" Placeholder="PV1-3.8" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -167,8 +185,8 @@
                 <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="OBX segments"
-                               FontAttributes="Bold"
-                               FontSize="16" />
+                               Style="{StaticResource SubHeadline}"
+                               HorizontalOptions="Start" />
 
                         <Grid ColumnSpacing="12" RowSpacing="4">
                             <Grid.RowDefinitions>
@@ -185,25 +203,25 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- OBX 1 -->
-                            <Label Grid.Row="0" Grid.Column="0" Text="OBX 1 - Type (OBX-3-1)" />
-                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Obx1Type}" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="OBX 1 - Type" />
+                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Obx1Type}" Placeholder="OBX-3-1" />
 
-                            <Label Grid.Row="1" Grid.Column="0" Text="OBX 1 - Reason(OBX-5-1)" />
-                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Obx1Reason}" />
+                            <Label Grid.Row="1" Grid.Column="0" Text="OBX 1 - Reason" />
+                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Obx1Reason}" Placeholder="OBX-5-1" />
 
                             <!-- OBX 2 -->
-                            <Label Grid.Row="2" Grid.Column="0" Text="OBX 2 - Type(OBX-3-1)" />
-                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding Obx2Type}" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="OBX 2 - Type" />
+                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding Obx2Type}" Placeholder="OBX-3-1" />
 
-                            <Label Grid.Row="3" Grid.Column="0" Text="OBX 2 - Reason(OBX-5-1)" />
-                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Obx2Reason}" />
+                            <Label Grid.Row="3" Grid.Column="0" Text="OBX 2 - Reason" />
+                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Obx2Reason}" Placeholder="OBX-5-1" />
 
                             <!-- OBX 3 -->
-                            <Label Grid.Row="4" Grid.Column="0" Text="OBX 3 - Type(OBX-3-1)" />
-                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Obx3Type}" />
+                            <Label Grid.Row="4" Grid.Column="0" Text="OBX 3 - Type" />
+                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Obx3Type}" Placeholder="OBX-3-1" />
 
-                            <Label Grid.Row="5" Grid.Column="0" Text="OBX 3 - Reason(OBX-5-1)" />
-                            <Entry Grid.Row="5" Grid.Column="1" Text="{Binding Obx3Reason}" />
+                            <Label Grid.Row="5" Grid.Column="0" Text="OBX 3 - Reason" />
+                            <Entry Grid.Row="5" Grid.Column="1" Text="{Binding Obx3Reason}" Placeholder="OBX-5-1" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -213,13 +231,13 @@
                     <Grid RowSpacing="10">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
                         <!-- Zone message généré (éditable) -->
-                        <Grid Grid.Row="0" ColumnSpacing="8">
+                        <Grid Grid.Row="0" ColumnSpacing="8" ZIndex="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -227,12 +245,13 @@
 
                             <Label Grid.Column="0"
                                    Text="Generated HL7 message"
-                                   FontAttributes="Bold"
-                                   VerticalOptions="Center" />
+                                   Style="{StaticResource SubHeadline}"
+                                   HorizontalOptions="Start" />
 
                             <Button Grid.Column="1"
                                     Text="Copy"
                                     HorizontalOptions="End"
+                                    ZIndex="2"
                                     Clicked="OnCopyMessageClicked" />
                         </Grid>
 
@@ -240,6 +259,7 @@
                                 Text="{Binding GeneratedMessage}"
                                 AutoSize="TextChanges"
                                 HeightRequest="200"
+                                ZIndex="0"
                                 IsReadOnly="False" />
 
                         <!-- Séparateur visuel -->
@@ -261,18 +281,21 @@
 
                             <Label Grid.Row="0" Grid.Column="0"
                                    Text="Send log"
-                                   FontAttributes="Bold" />
+                                   Style="{StaticResource SubHeadline}"
+                                   HorizontalOptions="Start" />
 
                             <!-- Bouton pour ouvrir le fichier de logs applicatifs -->
                             <Button Grid.Row="0" Grid.Column="2"
                                     Text="Logs"
                                     HorizontalOptions="End"
+                                    ZIndex="2"
                                     Clicked="OnOpenLogsClicked" />
 
                             <Editor Grid.Row="1" Grid.ColumnSpan="3"
                                     Text="{Binding SendLog}"
                                     AutoSize="TextChanges"
                                     HeightRequest="100"
+                                    ZIndex="0"
                                     IsReadOnly="True" />
                         </Grid>
                     </Grid>

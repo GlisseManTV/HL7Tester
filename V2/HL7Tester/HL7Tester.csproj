@@ -26,6 +26,10 @@
 		       <MauiXaml Update="MyPage.xaml" Inflator="Runtime" /> (force runtime inflation) -->
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
+		<!-- Disable IL trimming to avoid ILLink errors in Release mode -->
+		<TrimmerSingleWarn>false</TrimmerSingleWarn>
+		<EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+
 		<!-- Display name -->
 		<ApplicationTitle>HL7Tester</ApplicationTitle>
 
@@ -33,7 +37,7 @@
 		<ApplicationId>com.companyname.HL7Tester</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>2.0.1</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>2.0.2</ApplicationDisplayVersion>
 		<ApplicationVersion>0</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->

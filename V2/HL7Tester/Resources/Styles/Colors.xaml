@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary 
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
@@ -27,6 +27,12 @@
     <Color x:Key="Gray900">#212121</Color>
     <Color x:Key="Gray950">#141414</Color>
 
+    <!-- Hover / interaction helpers (desktop pointer devices) -->
+    <Color x:Key="SurfaceHoverLight">#F7F7F7</Color>
+    <Color x:Key="SurfaceHoverDark">#2A2A2A</Color>
+    <Color x:Key="HoverOverlayLight">#14000000</Color>
+    <Color x:Key="HoverOverlayDark">#26FFFFFF</Color>
+
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
     <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
     <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
@@ -41,4 +47,7 @@
     <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
     <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+
+    <SolidColorBrush x:Key="SurfaceHoverLightBrush" Color="{StaticResource SurfaceHoverLight}"/>
+    <SolidColorBrush x:Key="SurfaceHoverDarkBrush" Color="{StaticResource SurfaceHoverDark}"/>
 </ResourceDictionary>

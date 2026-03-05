@@ -26,9 +26,12 @@
 		       <MauiXaml Update="MyPage.xaml" Inflator="Runtime" /> (force runtime inflation) -->
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
-		<!-- Disable IL trimming to avoid ILLink errors in Release mode -->
-		<TrimmerSingleWarn>false</TrimmerSingleWarn>
-		<EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+		<!-- Disable IL trimming for MacCatalyst by setting MtouchLink=None -->
+		<MtouchLink>None</MtouchLink>
+
+		<!-- Disable code signing for development builds -->
+		<CodesignKey>None</CodesignKey>
+		<EnableCodeSigning>false</EnableCodeSigning>
 
 		<!-- Display name -->
 		<ApplicationTitle>HL7Tester</ApplicationTitle>

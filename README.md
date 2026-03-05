@@ -1,5 +1,12 @@
 # How to install
 
+## For Windows:
+Download the app directly from the [Microsoft Store](https://apps.microsoft.com/store/detail/9PJM3TWNDG20?cid=DevShareMCLPCS).
+Or download the latest package [here](https://github.com/GlisseManTV/HL7Tester/releases/latest)
+
+(Due to the certification process, there may be a delay between the publication of the GitHub release and its availability on the Ms Store.)
+
+
 ## For MacOS:
 Download the latest package [here](https://github.com/GlisseManTV/HL7Tester/releases/latest)
 
@@ -35,12 +42,6 @@ You can install and run it using one of the following options:
    ```
 
 After that, HL7Tester should launch normally.
-
-## For Windows:
-Download the app directly from the [Microsoft Store](https://apps.microsoft.com/store/detail/9PJM3TWNDG20?cid=DevShareMCLPCS).
-Or download the latest package [here](https://github.com/GlisseManTV/HL7Tester/releases/latest)
-
-(Due to the certification process, there may be a delay between the publication of the GitHub release and its availability on the Ms Store.)
 
 
 # HL7Generator

@@ -5,7 +5,7 @@
              Title="HL7Tester">
 
     <Grid RowDefinitions="Auto,*,Auto">
-        <!-- Bandeau supérieur avec titre + sélection du type de message + EVN-6-1 -->
+        <!-- Header -->
         <Grid Grid.Row="0"
               Padding="20,16"
               ColumnSpacing="20"
@@ -25,31 +25,41 @@
                        FontSize="14" />
             </VerticalStackLayout>
 
-            <VerticalStackLayout Grid.Column="1"
-                                 Spacing="6"
-                                 HorizontalOptions="End"
-                                 VerticalOptions="Center">
-                <Grid ColumnSpacing="6">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="600" />
-                    </Grid.ColumnDefinitions>
+            <Grid Grid.Column="1"
+                  ColumnSpacing="8"
+                  HorizontalOptions="End"
+                  VerticalOptions="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="420" />
+                </Grid.ColumnDefinitions>
 
-                    <!-- Type de message à droite -->
-                    <Label Grid.Column="0"
-                           Text="Message Type"
-                           TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
-                           FontAttributes="Bold"
-                           VerticalTextAlignment="Center" />
-                    <Picker Grid.Column="1"
-                            ItemsSource="{Binding AvailableMessageTypes}"
-                            SelectedItem="{Binding SelectedMessageType}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
-                </Grid>
-            </VerticalStackLayout>
+                <Label Grid.Column="0"
+                       Text="Message Family"
+                       TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                       FontAttributes="Bold"
+                       VerticalTextAlignment="Center" />
+                <Picker Grid.Column="1"
+                        ItemsSource="{Binding AvailableMessageFamilies}"
+                        SelectedItem="{Binding SelectedMessageFamily}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+
+                <Label Grid.Column="2"
+                       Text="Message Type"
+                       Margin="8,0,0,0"
+                       TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                       FontAttributes="Bold"
+                       VerticalTextAlignment="Center" />
+                <Picker Grid.Column="3"
+                        ItemsSource="{Binding AvailableMessageTypes}"
+                        SelectedItem="{Binding SelectedMessageType}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+            </Grid>
         </Grid>
 
-        <!-- Contenu principal en 2 colonnes -->
+        <!-- Main content -->
         <ScrollView Grid.Row="1">
             <Grid Padding="20"
                   RowSpacing="12"
@@ -64,12 +74,12 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Identité patient -->
+                <!-- Patient identity -->
                 <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Patient identity"
                                Style="{StaticResource SubHeadline}"
-                               HorizontalOptions="Start"/>
+                               HorizontalOptions="Start" />
 
                         <Grid ColumnSpacing="10" RowSpacing="6">
                             <Grid.RowDefinitions>
@@ -110,47 +120,46 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Informations de séjour / localisation -->
+                <!-- Event and location -->
                 <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
-                        <VerticalStackLayout Spacing="8">
-           
-
-                        <Grid Grid.Row="0" ColumnSpacing="10" RowSpacing="6">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />                             
-                            </Grid.RowDefinitions>
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnSpacing="10"
+                              RowSpacing="6"
+                              IsVisible="{Binding IsEventDateTimeVisible}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" /> 
-                                <ColumnDefinition Width="400" />                                                                
-
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="400" />
                             </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0" 
-                            Text="Event"
-                            Style="{StaticResource SubHeadline}"
-                            HorizontalOptions="Start" />
-                            <Label Grid.Row="0" Grid.Column="1"
-                                Text="EVN-6-1"
-                                TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="End"
-                                HorizontalOptions="End"
-                                VerticalTextAlignment="Center" />
 
-                            <Entry Grid.Row="0" Grid.Column="2"
-                                Text="{Binding EventDateTime}"
-                                Placeholder="yyyyMMddHHmm"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+                            <Label Grid.Column="0"
+                                   Text="Event"
+                                   Style="{StaticResource SubHeadline}"
+                                   VerticalOptions="Center" />
 
+                            <Label Grid.Column="1"
+                                   Text="EVN-6-1"
+                                   TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="End"
+                                   HorizontalOptions="End"
+                                   VerticalTextAlignment="Center" />
+
+                            <Entry Grid.Column="2"
+                                   Text="{Binding EventDateTime}"
+                                   Placeholder="yyyyMMddHHmm"
+                                   BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
                         </Grid>
-                            <BoxView Grid.Row="2"
-                                    HeightRequest="1"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />         
-                            <Label Text="Patient location"
-                                Style="{StaticResource SubHeadline}"
-                                HorizontalOptions="Start" />
 
-                        <Grid Grid.Row="1" ColumnSpacing="10" RowSpacing="6">
+                        <BoxView HeightRequest="1"
+                                 IsVisible="{Binding IsEventDateTimeVisible}"
+                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+
+                        <Label Text="Patient location"
+                               Style="{StaticResource SubHeadline}"
+                               HorizontalOptions="Start" />
+
+                        <Grid ColumnSpacing="10" RowSpacing="6">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -163,7 +172,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Text="Unit" VerticalOptions="Center"/>
+                            <Label Grid.Row="0" Grid.Column="0" Text="Unit" VerticalOptions="Center" />
                             <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Unit}" Placeholder="PV1-3.1" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Room" VerticalOptions="Center" />
@@ -181,8 +190,11 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Bloc OBX -->
-                <Border Grid.Row="1" Grid.ColumnSpan="2" Style="{StaticResource CardBorder}">
+                <!-- OBX full width in ADT mode -->
+                <Border Grid.Row="1"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource CardBorder}"
+                        IsVisible="{Binding IsAdtMode}">
                     <VerticalStackLayout Spacing="8">
                         <Label Text="OBX segments"
                                Style="{StaticResource SubHeadline}"
@@ -202,21 +214,18 @@
                                 <ColumnDefinition Width="3*" />
                             </Grid.ColumnDefinitions>
 
-                            <!-- OBX 1 -->
                             <Label Grid.Row="0" Grid.Column="0" Text="OBX 1 - Type" />
                             <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Obx1Type}" Placeholder="OBX-3-1" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="OBX 1 - Reason" />
                             <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Obx1Reason}" Placeholder="OBX-5-1" />
 
-                            <!-- OBX 2 -->
                             <Label Grid.Row="2" Grid.Column="0" Text="OBX 2 - Type" />
                             <Entry Grid.Row="2" Grid.Column="1" Text="{Binding Obx2Type}" Placeholder="OBX-3-1" />
 
                             <Label Grid.Row="3" Grid.Column="0" Text="OBX 2 - Reason" />
                             <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Obx2Reason}" Placeholder="OBX-5-1" />
 
-                            <!-- OBX 3 -->
                             <Label Grid.Row="4" Grid.Column="0" Text="OBX 3 - Type" />
                             <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Obx3Type}" Placeholder="OBX-3-1" />
 
@@ -226,7 +235,282 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Message généré + logs d'envoi -->
+                <!-- OBX half width in ORM/SIU mode -->
+                <Border Grid.Row="1"
+                        Grid.Column="0"
+                        Style="{StaticResource CardBorder}"
+                        IsVisible="{Binding IsNonAdtMode}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="OBX segments"
+                               Style="{StaticResource SubHeadline}"
+                               HorizontalOptions="Start" />
+
+                        <Grid ColumnSpacing="12" RowSpacing="4">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="3*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Text="OBX 1 - Type" />
+                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding Obx1Type}" Placeholder="OBX-3-1" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="OBX 1 - Reason" />
+                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Obx1Reason}" Placeholder="OBX-5-1" />
+
+                            <Label Grid.Row="2" Grid.Column="0" Text="OBX 2 - Type" />
+                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding Obx2Type}" Placeholder="OBX-3-1" />
+
+                            <Label Grid.Row="3" Grid.Column="0" Text="OBX 2 - Reason" />
+                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding Obx2Reason}" Placeholder="OBX-5-1" />
+
+                            <Label Grid.Row="4" Grid.Column="0" Text="OBX 3 - Type" />
+                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding Obx3Type}" Placeholder="OBX-3-1" />
+
+                            <Label Grid.Row="5" Grid.Column="0" Text="OBX 3 - Reason" />
+                            <Entry Grid.Row="5" Grid.Column="1" Text="{Binding Obx3Reason}" Placeholder="OBX-5-1" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ORM fields -->
+                <Border Grid.Row="1"
+                        Grid.Column="1"
+                        Style="{StaticResource CardBorder}"
+                        IsVisible="{Binding IsOrmSectionVisible}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="ORM fields"
+                               Style="{StaticResource SubHeadline}"
+                               HorizontalOptions="Start" />
+
+                        <Label Text="ORC segment"
+                               FontAttributes="Bold" />
+
+                        <Grid ColumnSpacing="10" RowSpacing="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Text="Order control (ORC-1)" VerticalOptions="Center" />
+                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding OrderControl}" Placeholder="NW" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="Placer order number (ORC-2)" VerticalOptions="Center" />
+                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding OrmPlacerOrderNumber}" Placeholder="ORC-2 / OBR-2" />
+
+                            <Label Grid.Row="2" Grid.Column="0" Text="Filler order number (ORC-3)" VerticalOptions="Center" />
+                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding OrmFillerOrderNumber}" Placeholder="ORC-3 / OBR-3" />
+
+                            <Label Grid.Row="3" Grid.Column="0" Text="Order status (ORC-5)" VerticalOptions="Center" />
+                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding OrmOrderStatus}" Placeholder="Final / OBR-25" />
+
+                            <Label Grid.Row="4" Grid.Column="0" Text="Requested date/time (ORC-7.4)" VerticalOptions="Center" />
+                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding OrmRequestedDateTime}" Placeholder="yyyyMMddHHmmss" />
+
+                            <Label Grid.Row="5" Grid.Column="0" Text="Ordering provider ID (ORC-12.1)" VerticalOptions="Center" />
+                            <Entry Grid.Row="5" Grid.Column="1" Text="{Binding OrmOrderingProviderId}" Placeholder="ORC-12.1" />
+
+                            <Label Grid.Row="6" Grid.Column="0" Text="Ordering provider family (ORC-12.2)" VerticalOptions="Center" />
+                            <Entry Grid.Row="6" Grid.Column="1" Text="{Binding OrmOrderingProviderFamilyName}" Placeholder="ORC-12.2" />
+
+                            <Label Grid.Row="7" Grid.Column="0" Text="Ordering provider given (ORC-12.3)" VerticalOptions="Center" />
+                            <Entry Grid.Row="7" Grid.Column="1" Text="{Binding OrmOrderingProviderGivenName}" Placeholder="ORC-12.3" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1"
+                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+
+                        <Label Text="OBR segment"
+                               FontAttributes="Bold" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Universal service ID (OBR-4)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding OrmUniversalServiceId}" Placeholder="OBR-4" />
+                        </Grid>
+
+                        <Label Text="OBR-2 / OBR-3 / OBR-16 / OBR-25 are synchronized from ORC values above."
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+
+                        <BoxView HeightRequest="1"
+                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+
+                        <Label Text="DG1 segment"
+                               FontAttributes="Bold" />
+
+                        <Grid ColumnSpacing="10" RowSpacing="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Text="Diagnosis code (DG1-3.1)" VerticalOptions="Center" />
+                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding OrmDiagnosisCode}" Placeholder="DG1-3.1" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="Diagnosis text (DG1-3.2)" VerticalOptions="Center" />
+                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding OrmDiagnosisText}" Placeholder="DG1-3.2" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- SIU fields -->
+                <Border Grid.Row="1"
+                        Grid.Column="1"
+                        Style="{StaticResource CardBorder}"
+                        IsVisible="{Binding IsSiuSectionVisible}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="SIU fields"
+                               Style="{StaticResource SubHeadline}"
+                               HorizontalOptions="Start" />
+
+                        <Label Text="SCH segment"
+                               FontAttributes="Bold" />
+
+                        <Grid ColumnSpacing="10" RowSpacing="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Text="Placer appointment ID (SCH-1)" VerticalOptions="Center" />
+                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding SiuPlacerAppointmentId}" Placeholder="SCH-1" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="Filler appointment ID (SCH-2)" VerticalOptions="Center" />
+                            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding SiuFillerAppointmentId}" Placeholder="SCH-2" />
+
+                            <Label Grid.Row="2" Grid.Column="0" Text="Occurrence number (SCH-6)" VerticalOptions="Center" />
+                            <Entry Grid.Row="2" Grid.Column="1" Text="{Binding SiuOccurrenceNumber}" Placeholder="SCH-6" />
+
+                            <Label Grid.Row="3" Grid.Column="0" Text="Appointment type (SCH-7)" VerticalOptions="Center" />
+                            <Entry Grid.Row="3" Grid.Column="1" Text="{Binding SiuAppointmentType}" Placeholder="SCH-7" />
+
+                            <Label Grid.Row="4" Grid.Column="0" Text="Appointment reason (SCH-8)" VerticalOptions="Center" />
+                            <Entry Grid.Row="4" Grid.Column="1" Text="{Binding SiuAppointmentReason}" Placeholder="SCH-8" />
+
+                            <Label Grid.Row="5" Grid.Column="0" Text="Start date/time (SCH-11.4)" VerticalOptions="Center" />
+                            <Entry Grid.Row="5" Grid.Column="1" Text="{Binding SiuAppointmentStartDateTime}" Placeholder="yyyyMMddHHmmss" />
+
+                            <Label Grid.Row="6" Grid.Column="0" Text="End date/time (SCH-11.5)" VerticalOptions="Center" />
+                            <Entry Grid.Row="6" Grid.Column="1" Text="{Binding SiuAppointmentEndDateTime}" Placeholder="yyyyMMddHHmmss" />
+
+                            <Label Grid.Row="7" Grid.Column="0" Text="Duration (SCH-10 / SCH-11.3)" VerticalOptions="Center" />
+                            <Entry Grid.Row="7" Grid.Column="1" Text="{Binding SiuAppointmentDuration}" Placeholder="SCH-10 / SCH-11.3" />
+
+                            <Label Grid.Row="8" Grid.Column="0" Text="Duration units (SCH-11.2)" VerticalOptions="Center" />
+                            <Entry Grid.Row="8" Grid.Column="1" Text="{Binding SiuAppointmentDurationUnits}" Placeholder="m" />
+
+                            <Label Grid.Row="9" Grid.Column="0" Text="Appointment status (SCH-22)" VerticalOptions="Center" />
+                            <Entry Grid.Row="9" Grid.Column="1" Text="{Binding SiuAppointmentStatus}" Placeholder="SCH-22" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1"
+                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+
+                        <Label Text="AIG segment"
+                               FontAttributes="Bold" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Resource ID (AIG-4.1)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuGeneralResourceId}" Placeholder="AIG-4.1" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Resource name (AIG-4.2)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuGeneralResourceName}" Placeholder="AIG-4.2" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Resource type (AIG-5.1)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuGeneralResourceType}" Placeholder="AIG-5.1" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1"
+                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+
+                        <Label Text="AIL segment"
+                               FontAttributes="Bold" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Location code (AIL-4.1)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuLocationCode}" Placeholder="AIL-4.1" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Location description (AIL-4.2)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuLocationDescription}" Placeholder="AIL-4.2" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Location site (AIL-4.3)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuLocationSite}" Placeholder="AIL-4.3" />
+                        </Grid>
+
+                        <BoxView HeightRequest="1"
+                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+
+                        <Label Text="AIP segment"
+                               FontAttributes="Bold" />
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Personnel ID (AIP-4.1)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelId}" Placeholder="AIP-4.1" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Personnel family (AIP-4.2)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelFamilyName}" Placeholder="AIP-4.2" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Personnel given (AIP-4.3)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelGivenName}" Placeholder="AIP-4.3" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Label Text="Personnel role (AIP-5.1)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelRole}" Placeholder="AIP-5.1" />
+                        </Grid>
+
+                        <Label Text="RGS segment is generated automatically from SIU resource groups."
+                               FontSize="12"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Generated message and send log -->
                 <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource CardBorder}">
                     <Grid RowSpacing="10">
                         <Grid.RowDefinitions>
@@ -236,7 +520,6 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <!-- Zone message généré (éditable) -->
                         <Grid Grid.Row="0" ColumnSpacing="8" ZIndex="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -262,12 +545,10 @@
                                 ZIndex="0"
                                 IsReadOnly="False" />
 
-                        <!-- Séparateur visuel -->
                         <BoxView Grid.Row="2"
                                  HeightRequest="1"
                                  BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
 
-                        <!-- Zone logs d'envoi séparée -->
                         <Grid Grid.Row="3" RowSpacing="4">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -284,7 +565,6 @@
                                    Style="{StaticResource SubHeadline}"
                                    HorizontalOptions="Start" />
 
-                            <!-- Bouton pour ouvrir le fichier de logs applicatifs -->
                             <Button Grid.Row="0" Grid.Column="2"
                                     Text="Logs"
                                     HorizontalOptions="End"
@@ -303,7 +583,7 @@
             </Grid>
         </ScrollView>
 
-        <!-- Bandeau inférieur avec actions principales + accès aux paramètres réseau -->
+        <!-- Bottom action bar -->
         <Grid Grid.Row="2"
               Padding="16,8"
               ColumnSpacing="12"
@@ -314,21 +594,17 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Button
-                Grid.Column="0"
-                Text="Generate HL7"
-                Command="{Binding GenerateCommand}" />
+            <Button Grid.Column="0"
+                    Text="Generate HL7"
+                    Command="{Binding GenerateCommand}" />
 
-            <Button
-                Grid.Column="1"
-                Text="Send HL7"
-                Command="{Binding SendCommand}" />
+            <Button Grid.Column="1"
+                    Text="Send HL7"
+                    Command="{Binding SendCommand}" />
 
-            <!-- Accès direct à la page de configuration réseau -->
-            <Button
-                Grid.Column="2"
-                Text="Settings"
-                Clicked="OnSettingsClicked" />
+            <Button Grid.Column="2"
+                    Text="Settings"
+                    Clicked="OnSettingsClicked" />
         </Grid>
     </Grid>
 

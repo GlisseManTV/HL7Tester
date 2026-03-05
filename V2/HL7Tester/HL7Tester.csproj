@@ -33,7 +33,7 @@
 		<ApplicationId>com.companyname.HL7Tester</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>2.0.2</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>2.0.3</ApplicationDisplayVersion>
 		<ApplicationVersion>0</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->

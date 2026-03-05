@@ -50,6 +50,16 @@ User Friendly HL7 Generator trought a great UI
 
 This Windows / MacOS application allow you to generate and send HL7 V2.3 messages trought a user friendly UI.
 
+## Supported message families
+
+HL7Tester now supports multiple HL7 v2.3 message families directly from the main UI:
+
+- **ADT**
+- **ORM**
+- **SIU**
+
+You can select the message family and message type in the header, then generate/send with the same workflow.
+
 
 ## Preview
 

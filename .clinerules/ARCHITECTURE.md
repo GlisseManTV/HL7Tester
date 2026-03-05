@@ -79,7 +79,69 @@ Persists application settings to JSON:
 
 ---
 
-## v2.0.2 Changes (Latest Release)
+## v2.0.3 Changes (Latest Release)
+
+### Message Families and Generation
+
+1. **Expanded Message Family Support**
+   - Added full UI selection flow for `ADT`, `ORM`, and `SIU` families
+   - Added dynamic message type lists per selected family
+
+2. **ORM/SIU Generation Support in Core**
+   - Added `ORM O01` message generation path using segment-based textual generation
+   - Added `SIU S12/S13/S14/S15` message generation path using segment-based textual generation
+   - Kept ADT generation on NHapi object-based flow for compatibility
+
+3. **Extended Automated Tests**
+   - Added/updated unit tests to cover `ADT A01`, `ORM O01`, and `SIU S12/S13/S14/S15`
+   - Adjusted assertions to remain robust while validating required segment content
+
+### UI and UX Improvements
+
+1. **Header Alignment Improvement**
+   - `Message Family` and `Message Type` pickers are now aligned on the same row in the header
+
+2. **ORM Section Grouping by Segment**
+   - Reorganized non-ADT right panel to clearly group ORM fields into:
+     - `ORC segment`
+     - `OBR segment`
+     - `DG1 segment`
+   - Added explicit field-position hints in labels (e.g. `ORC-5`, `DG1-3.1`)
+
+3. **SIU Section Grouping by Segment**
+   - Reorganized SIU fields into clear segment blocks:
+     - `SCH segment`
+     - `AIG segment`
+     - `AIL segment`
+     - `AIP segment`
+   - Added explicit field-position hints and note about `RGS` auto-generation
+
+### Stability and Robustness Fixes
+
+1. **UI Family Switch Crash Fix (ORM/SIU -> ADT)**
+   - Hardened `SelectedMessageFamily` handling with fallback to `ADT`
+   - Hardened `SelectedMessageType` handling with null-safe assignment
+   - Made family/type refresh path null-safe and consistent during picker transitions
+   - Prevented null-triggered failures in context update logic
+
+### Validation Summary
+
+- XAML compilation validated via MacCatalyst compile target
+- Manual runtime validation confirmed no crash when switching between ADT/ORM/SIU and back to ADT
+
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `MainPage.xaml` | Header pickers aligned on one row; ORM/SIU forms reorganized by HL7 segment groups with clearer labels |
+| `ViewModels/MainViewModel.cs` | Null-safe family/type transitions; ADT fallback; safer UI context updates |
+| `HL7Tester.Core/Class1.cs` | Routing and generation support for ORM O01 and SIU S12/S13/S14/S15 (segment-based generation) |
+| `HL7Tester.Tests/Test1.cs` | Added/updated tests for ORM/SIU plus ADT coverage alignment |
+| `HL7Tester.csproj` | Application display version incremented to `2.0.3` |
+
+---
+
+## v2.0.2 Changes
 
 ### UI Improvements
 
@@ -200,7 +262,7 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.2</ApplicationDisplayVersion>
+<ApplicationDisplayVersion>2.0.3</ApplicationDisplayVersion>
 <ApplicationVersion>0</ApplicationVersion>
 ```
 
@@ -215,4 +277,4 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
-*Last Updated: March 5, 2026*
+*Last Updated: March 5, 2026 (v2.0.3)*

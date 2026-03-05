@@ -7,11 +7,57 @@ using Microsoft.Extensions.Logging;
 
 namespace HL7Tester.ViewModels;
 
-/// <summary>
-/// ViewModel principal pour la page de génération de messages HL7.
-/// </summary>
 public sealed class MainViewModel : INotifyPropertyChanged
 {
+    private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> MessageTypesByFamily =
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ADT"] =
+            [
+                "ADT A01 - Inpatient or Day Hospital Admission",
+                "ADT A02 - Patient Movement",
+                "ADT A03 - Discharge",
+                "ADT A04 - Outpatient Admission",
+                "ADT A05 - Pre-admission",
+                "ADT A06 - Transformation of an Outpatient Visit into Admission",
+                "ADT A07 - Transformation of an Admission into Outpatient Visit",
+                "ADT A08 - Update Patient Stay",
+                "ADT A09 - Temporary Movement",
+                "ADT A10 - Return from Temporary Movement",
+                "ADT A11 - Admission Cancellation",
+                "ADT A12 - Movement Cancellation",
+                "ADT A13 - Discharge Cancellation",
+                "ADT A14 - Scheduled Admission in the Future (not used)",
+                "ADT A15 - Scheduled Movement in the Future (not used)",
+                "ADT A16 - Scheduled Discharge in the Future (not used)",
+                "ADT A18 - Merge Patient Records",
+                "ADT A21 - Leave of Absence Departure",
+                "ADT A22 - Return from Leave of Absence",
+                "ADT A24 - Link between Two Patients (not used)",
+                "ADT A25 - Cancellation of Future Scheduled Admission (not used)",
+                "ADT A26 - Cancellation of Future Scheduled Movement (not used)",
+                "ADT A27 - Cancellation of Future Scheduled Discharge (not used)",
+                "ADT A28 - Patient Creation",
+                "ADT A31 - Update Patient",
+                "ADT A32 - Cancellation of a Return from Temporary Movement",
+                "ADT A33 - Cancellation of Temporary Movement",
+                "ADT A37 - Cancellation of a Patient Link (not used)",
+                "ADT A38 - Pre-admission Cancellation",
+                "ADT A40 - Patient Record Merge"
+            ],
+            ["ORM"] =
+            [
+                "ORM O01 - General Order Message"
+            ],
+            ["SIU"] =
+            [
+                "SIU S12 - Notification of New Appointment Booking",
+                "SIU S13 - Notification of Appointment Rescheduling",
+                "SIU S14 - Notification of Appointment Modification",
+                "SIU S15 - Notification of Appointment Cancellation"
+            ]
+        };
+
     private readonly AdtMessageGenerator _generator;
     private readonly INetworkSettingsService _networkSettingsService;
     private readonly IHL7NetworkSender _networkSender;
@@ -19,49 +65,36 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ObservableCollection<string> AvailableMessageTypes { get; } =
-        new([
-            "ADT A01 - Inpatient or Day Hospital Admission",
-            "ADT A02 - Patient Movement",
-            "ADT A03 - Discharge",
-            "ADT A04 - Outpatient Admission",
-            "ADT A05 - Pre-admission",
-            "ADT A06 - Transformation of an Outpatient Visit into Admission",
-            "ADT A07 - Transformation of an Admission into Outpatient Visit",
-            "ADT A08 - Update Patient Stay",
-            "ADT A09 - Temporary Movement",
-            "ADT A10 - Return from Temporary Movement",
-            "ADT A11 - Admission Cancellation",
-            "ADT A12 - Movement Cancellation",
-            "ADT A13 - Discharge Cancellation",
-            "ADT A14 - Scheduled Admission in the Future (not used)",
-            "ADT A15 - Scheduled Movement in the Future (not used)",
-            "ADT A16 - Scheduled Discharge in the Future (not used)",
-            "ADT A18 - Merge Patient Records",
-            "ADT A21 - Leave of Absence Departure",
-            "ADT A22 - Return from Leave of Absence",
-            "ADT A24 - Link between Two Patients (not used)",
-            "ADT A25 - Cancellation of Future Scheduled Admission (not used)",
-            "ADT A26 - Cancellation of Future Scheduled Movement (not used)",
-            "ADT A27 - Cancellation of Future Scheduled Discharge (not used)",
-            "ADT A28 - Patient Creation",
-            "ADT A31 - Update Patient",
-            "ADT A32 - Cancellation of a Return from Temporary Movement",
-            "ADT A33 - Cancellation of Temporary Movement",
-            "ADT A37 - Cancellation of a Patient Link (not used)",
-            "ADT A38 - Pre-admission Cancellation",
-            "ADT A40 - Patient Record Merge"
-        ]);
+    public ObservableCollection<string> AvailableMessageFamilies { get; } = new(["ADT", "ORM", "SIU"]);
+    public ObservableCollection<string> AvailableMessageTypes { get; } = new();
 
-    private string _selectedMessageType;
+    private string _selectedMessageFamily = "ADT";
+    public string SelectedMessageFamily
+    {
+        get => _selectedMessageFamily;
+        set
+        {
+            var safeValue = string.IsNullOrWhiteSpace(value) ? "ADT" : value;
+
+            if (SetField(ref _selectedMessageFamily, safeValue))
+            {
+                RefreshMessageTypes();
+                UpdateUiForSelectedContext();
+            }
+        }
+    }
+
+    private string _selectedMessageType = string.Empty;
     public string SelectedMessageType
     {
         get => _selectedMessageType;
         set
         {
-            if (SetField(ref _selectedMessageType, value))
+            var safeValue = value ?? string.Empty;
+
+            if (SetField(ref _selectedMessageType, safeValue))
             {
-                UpdateUiForSelectedMessageType();
+                UpdateUiForSelectedContext();
             }
         }
     }
@@ -158,10 +191,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     private string? _eventDateTime;
-    /// <summary>
-    /// Date/heure d'événement EVN-6-1 au format HL7 (yyyyMMddHHmm).
-    /// Si null ou vide, la date courante sera utilisée côté Core.
-    /// </summary>
     public string? EventDateTime
     {
         get => _eventDateTime;
@@ -176,16 +205,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     private string _sendLog = string.Empty;
-    /// <summary>
-    /// Journal des envois (succès / erreurs), séparé du message HL7 lui-même.
-    /// </summary>
     public string SendLog
     {
         get => _sendLog;
         set => SetField(ref _sendLog, value);
     }
-
-    // OBX (jusqu'à 3 lignes comme dans l'UI WinForms actuelle)
 
     private string? _obx1Type;
     public string? Obx1Type
@@ -236,22 +260,326 @@ public sealed class MainViewModel : INotifyPropertyChanged
         private set => SetField(ref _isNewPatientIdVisible, value);
     }
 
+    private bool _isAdtMode;
+    public bool IsAdtMode
+    {
+        get => _isAdtMode;
+        private set => SetField(ref _isAdtMode, value);
+    }
+
+    private bool _isNonAdtMode;
+    public bool IsNonAdtMode
+    {
+        get => _isNonAdtMode;
+        private set => SetField(ref _isNonAdtMode, value);
+    }
+
+    private bool _isEventDateTimeVisible;
+    public bool IsEventDateTimeVisible
+    {
+        get => _isEventDateTimeVisible;
+        private set => SetField(ref _isEventDateTimeVisible, value);
+    }
+
+    private bool _isOrmSectionVisible;
+    public bool IsOrmSectionVisible
+    {
+        get => _isOrmSectionVisible;
+        private set => SetField(ref _isOrmSectionVisible, value);
+    }
+
+    private bool _isSiuSectionVisible;
+    public bool IsSiuSectionVisible
+    {
+        get => _isSiuSectionVisible;
+        private set => SetField(ref _isSiuSectionVisible, value);
+    }
+
+    private string _orderControl = "NW";
+    public string OrderControl
+    {
+        get => _orderControl;
+        set => SetField(ref _orderControl, value);
+    }
+
+    private string _ormPlacerOrderNumber = string.Empty;
+    public string OrmPlacerOrderNumber
+    {
+        get => _ormPlacerOrderNumber;
+        set => SetField(ref _ormPlacerOrderNumber, value);
+    }
+
+    private string _ormFillerOrderNumber = string.Empty;
+    public string OrmFillerOrderNumber
+    {
+        get => _ormFillerOrderNumber;
+        set => SetField(ref _ormFillerOrderNumber, value);
+    }
+
+    private string _ormOrderStatus = "Final";
+    public string OrmOrderStatus
+    {
+        get => _ormOrderStatus;
+        set => SetField(ref _ormOrderStatus, value);
+    }
+
+    private string _ormUniversalServiceId = string.Empty;
+    public string OrmUniversalServiceId
+    {
+        get => _ormUniversalServiceId;
+        set => SetField(ref _ormUniversalServiceId, value);
+    }
+
+    private string? _ormRequestedDateTime;
+    public string? OrmRequestedDateTime
+    {
+        get => _ormRequestedDateTime;
+        set => SetField(ref _ormRequestedDateTime, value);
+    }
+
+    private string _ormOrderingProviderId = string.Empty;
+    public string OrmOrderingProviderId
+    {
+        get => _ormOrderingProviderId;
+        set => SetField(ref _ormOrderingProviderId, value);
+    }
+
+    private string _ormOrderingProviderFamilyName = string.Empty;
+    public string OrmOrderingProviderFamilyName
+    {
+        get => _ormOrderingProviderFamilyName;
+        set => SetField(ref _ormOrderingProviderFamilyName, value);
+    }
+
+    private string _ormOrderingProviderGivenName = string.Empty;
+    public string OrmOrderingProviderGivenName
+    {
+        get => _ormOrderingProviderGivenName;
+        set => SetField(ref _ormOrderingProviderGivenName, value);
+    }
+
+    private string _ormDiagnosisCode = string.Empty;
+    public string OrmDiagnosisCode
+    {
+        get => _ormDiagnosisCode;
+        set => SetField(ref _ormDiagnosisCode, value);
+    }
+
+    private string _ormDiagnosisText = string.Empty;
+    public string OrmDiagnosisText
+    {
+        get => _ormDiagnosisText;
+        set => SetField(ref _ormDiagnosisText, value);
+    }
+
+    private string _siuPlacerAppointmentId = string.Empty;
+    public string SiuPlacerAppointmentId
+    {
+        get => _siuPlacerAppointmentId;
+        set => SetField(ref _siuPlacerAppointmentId, value);
+    }
+
+    private string _siuFillerAppointmentId = string.Empty;
+    public string SiuFillerAppointmentId
+    {
+        get => _siuFillerAppointmentId;
+        set => SetField(ref _siuFillerAppointmentId, value);
+    }
+
+    private string _siuOccurrenceNumber = "1";
+    public string SiuOccurrenceNumber
+    {
+        get => _siuOccurrenceNumber;
+        set => SetField(ref _siuOccurrenceNumber, value);
+    }
+
+    private string _siuAppointmentType = "OFFICE^Office visit";
+    public string SiuAppointmentType
+    {
+        get => _siuAppointmentType;
+        set => SetField(ref _siuAppointmentType, value);
+    }
+
+    private string _siuAppointmentReason = string.Empty;
+    public string SiuAppointmentReason
+    {
+        get => _siuAppointmentReason;
+        set => SetField(ref _siuAppointmentReason, value);
+    }
+
+    private string? _siuAppointmentStartDateTime;
+    public string? SiuAppointmentStartDateTime
+    {
+        get => _siuAppointmentStartDateTime;
+        set => SetField(ref _siuAppointmentStartDateTime, value);
+    }
+
+    private string? _siuAppointmentEndDateTime;
+    public string? SiuAppointmentEndDateTime
+    {
+        get => _siuAppointmentEndDateTime;
+        set => SetField(ref _siuAppointmentEndDateTime, value);
+    }
+
+    private string _siuAppointmentDuration = "60";
+    public string SiuAppointmentDuration
+    {
+        get => _siuAppointmentDuration;
+        set => SetField(ref _siuAppointmentDuration, value);
+    }
+
+    private string _siuAppointmentDurationUnits = "m";
+    public string SiuAppointmentDurationUnits
+    {
+        get => _siuAppointmentDurationUnits;
+        set => SetField(ref _siuAppointmentDurationUnits, value);
+    }
+
+    private string _siuAppointmentStatus = "Scheduled";
+    public string SiuAppointmentStatus
+    {
+        get => _siuAppointmentStatus;
+        set => SetField(ref _siuAppointmentStatus, value);
+    }
+
+    private string _siuGeneralResourceId = string.Empty;
+    public string SiuGeneralResourceId
+    {
+        get => _siuGeneralResourceId;
+        set => SetField(ref _siuGeneralResourceId, value);
+    }
+
+    private string _siuGeneralResourceName = string.Empty;
+    public string SiuGeneralResourceName
+    {
+        get => _siuGeneralResourceName;
+        set => SetField(ref _siuGeneralResourceName, value);
+    }
+
+    private string _siuGeneralResourceType = "D";
+    public string SiuGeneralResourceType
+    {
+        get => _siuGeneralResourceType;
+        set => SetField(ref _siuGeneralResourceType, value);
+    }
+
+    private string _siuLocationCode = string.Empty;
+    public string SiuLocationCode
+    {
+        get => _siuLocationCode;
+        set => SetField(ref _siuLocationCode, value);
+    }
+
+    private string _siuLocationDescription = string.Empty;
+    public string SiuLocationDescription
+    {
+        get => _siuLocationDescription;
+        set => SetField(ref _siuLocationDescription, value);
+    }
+
+    private string _siuLocationSite = string.Empty;
+    public string SiuLocationSite
+    {
+        get => _siuLocationSite;
+        set => SetField(ref _siuLocationSite, value);
+    }
+
+    private string _siuPersonnelId = string.Empty;
+    public string SiuPersonnelId
+    {
+        get => _siuPersonnelId;
+        set => SetField(ref _siuPersonnelId, value);
+    }
+
+    private string _siuPersonnelFamilyName = string.Empty;
+    public string SiuPersonnelFamilyName
+    {
+        get => _siuPersonnelFamilyName;
+        set => SetField(ref _siuPersonnelFamilyName, value);
+    }
+
+    private string _siuPersonnelGivenName = string.Empty;
+    public string SiuPersonnelGivenName
+    {
+        get => _siuPersonnelGivenName;
+        set => SetField(ref _siuPersonnelGivenName, value);
+    }
+
+    private string _siuPersonnelRole = "D";
+    public string SiuPersonnelRole
+    {
+        get => _siuPersonnelRole;
+        set => SetField(ref _siuPersonnelRole, value);
+    }
+
     public ICommand GenerateCommand { get; }
     public ICommand SendCommand { get; }
 
-    public MainViewModel(AdtMessageGenerator generator,
-                         INetworkSettingsService networkSettingsService,
-                         IHL7NetworkSender networkSender,
-                         ILogger<MainViewModel> logger)
+    public MainViewModel(
+        AdtMessageGenerator generator,
+        INetworkSettingsService networkSettingsService,
+        IHL7NetworkSender networkSender,
+        ILogger<MainViewModel> logger)
     {
         _generator = generator;
         _networkSettingsService = networkSettingsService;
         _networkSender = networkSender;
         _logger = logger;
-        _selectedMessageType = AvailableMessageTypes.First();
-        UpdateUiForSelectedMessageType();
+
+        RefreshMessageTypes();
+        UpdateUiForSelectedContext();
+
         GenerateCommand = new Command(OnGenerate);
         SendCommand = new Command(async () => await OnSendAsync());
+    }
+
+    private void RefreshMessageTypes()
+    {
+        AvailableMessageTypes.Clear();
+
+        var familyKey = string.IsNullOrWhiteSpace(SelectedMessageFamily) ? "ADT" : SelectedMessageFamily;
+
+        if (!MessageTypesByFamily.TryGetValue(familyKey, out var familyTypes))
+        {
+            familyTypes = MessageTypesByFamily["ADT"];
+        }
+
+        foreach (var type in familyTypes)
+        {
+            AvailableMessageTypes.Add(type);
+        }
+
+        if (!AvailableMessageTypes.Contains(SelectedMessageType) && AvailableMessageTypes.Count > 0)
+        {
+            SelectedMessageType = AvailableMessageTypes[0];
+        }
+        else if (AvailableMessageTypes.Count == 0)
+        {
+            SelectedMessageType = string.Empty;
+        }
+    }
+
+    private void UpdateUiForSelectedContext()
+    {
+        bool isAdt = string.Equals(SelectedMessageFamily, "ADT", StringComparison.OrdinalIgnoreCase);
+        bool isOrm = string.Equals(SelectedMessageFamily, "ORM", StringComparison.OrdinalIgnoreCase);
+        bool isSiu = string.Equals(SelectedMessageFamily, "SIU", StringComparison.OrdinalIgnoreCase);
+
+        IsAdtMode = isAdt;
+        IsNonAdtMode = !isAdt;
+        IsEventDateTimeVisible = isAdt;
+        IsOrmSectionVisible = isOrm;
+        IsSiuSectionVisible = isSiu;
+
+        string selectedType = SelectedMessageType ?? string.Empty;
+
+        bool isMergeAdtType =
+            isAdt &&
+            (selectedType.StartsWith("ADT A18", StringComparison.OrdinalIgnoreCase) ||
+             selectedType.StartsWith("ADT A40", StringComparison.OrdinalIgnoreCase));
+
+        PatientIdLabel = isMergeAdtType ? "Old Patient ID" : "Patient ID";
+        IsNewPatientIdVisible = isMergeAdtType;
     }
 
     private void OnGenerate()
@@ -261,6 +589,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var request = new AdtMessageRequest
             {
                 MessageTypeCode = SelectedMessageType,
+
                 PatientId = PatientId ?? string.Empty,
                 NewPatientId = NewPatientId,
                 PatientFamilyName = PatientFamilyName ?? string.Empty,
@@ -273,18 +602,48 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Facility = Facility ?? string.Empty,
                 Floor = Floor ?? string.Empty,
                 AdmissionNumber = AdmissionNumber ?? string.Empty,
-                EventDateTime = string.IsNullOrWhiteSpace(EventDateTime) ? null : EventDateTime
+                EventDateTime = IsEventDateTimeVisible && !string.IsNullOrWhiteSpace(EventDateTime) ? EventDateTime : null,
+
+                OrderControl = OrderControl ?? "NW",
+                OrmPlacerOrderNumber = OrmPlacerOrderNumber ?? string.Empty,
+                OrmFillerOrderNumber = OrmFillerOrderNumber ?? string.Empty,
+                OrmOrderStatus = OrmOrderStatus ?? "Final",
+                OrmUniversalServiceId = OrmUniversalServiceId ?? string.Empty,
+                OrmRequestedDateTime = string.IsNullOrWhiteSpace(OrmRequestedDateTime) ? null : OrmRequestedDateTime,
+                OrmOrderingProviderId = OrmOrderingProviderId ?? string.Empty,
+                OrmOrderingProviderFamilyName = OrmOrderingProviderFamilyName ?? string.Empty,
+                OrmOrderingProviderGivenName = OrmOrderingProviderGivenName ?? string.Empty,
+                OrmDiagnosisCode = OrmDiagnosisCode ?? string.Empty,
+                OrmDiagnosisText = OrmDiagnosisText ?? string.Empty,
+
+                SiuPlacerAppointmentId = SiuPlacerAppointmentId ?? string.Empty,
+                SiuFillerAppointmentId = SiuFillerAppointmentId ?? string.Empty,
+                SiuOccurrenceNumber = SiuOccurrenceNumber ?? "1",
+                SiuAppointmentType = SiuAppointmentType ?? "OFFICE^Office visit",
+                SiuAppointmentReason = SiuAppointmentReason ?? string.Empty,
+                SiuAppointmentStartDateTime = string.IsNullOrWhiteSpace(SiuAppointmentStartDateTime) ? null : SiuAppointmentStartDateTime,
+                SiuAppointmentEndDateTime = string.IsNullOrWhiteSpace(SiuAppointmentEndDateTime) ? null : SiuAppointmentEndDateTime,
+                SiuAppointmentDuration = SiuAppointmentDuration ?? "60",
+                SiuAppointmentDurationUnits = SiuAppointmentDurationUnits ?? "m",
+                SiuAppointmentStatus = SiuAppointmentStatus ?? "Scheduled",
+                SiuGeneralResourceId = SiuGeneralResourceId ?? string.Empty,
+                SiuGeneralResourceName = SiuGeneralResourceName ?? string.Empty,
+                SiuGeneralResourceType = SiuGeneralResourceType ?? "D",
+                SiuLocationCode = SiuLocationCode ?? string.Empty,
+                SiuLocationDescription = SiuLocationDescription ?? string.Empty,
+                SiuLocationSite = SiuLocationSite ?? string.Empty,
+                SiuPersonnelId = SiuPersonnelId ?? string.Empty,
+                SiuPersonnelFamilyName = SiuPersonnelFamilyName ?? string.Empty,
+                SiuPersonnelGivenName = SiuPersonnelGivenName ?? string.Empty,
+                SiuPersonnelRole = SiuPersonnelRole ?? "D"
             };
 
-            // OBX 1..3
             request.ObxEntries.Add(new ObxEntry { Type = Obx1Type, Reason = Obx1Reason });
             request.ObxEntries.Add(new ObxEntry { Type = Obx2Type, Reason = Obx2Reason });
             request.ObxEntries.Add(new ObxEntry { Type = Obx3Type, Reason = Obx3Reason });
 
-            var hl7 = _generator.Generate(request);
-
+            string hl7 = _generator.Generate(request);
             _logger.LogDebug("HL7 message generated. Type={MessageType}", request.MessageTypeCode);
-            // Pour l'affichage, on remplace les CR par des sauts de ligne de la plateforme.
             GeneratedMessage = hl7.Replace("\r", Environment.NewLine);
         }
         catch (Exception ex)
@@ -298,8 +657,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         try
         {
-            // On envoie simplement le message déjà généré dans l'UI (comme le WinForms)
-            var messageToSend = (_generatedMessage ?? string.Empty).Replace(Environment.NewLine, "\r");
+            string messageToSend = (GeneratedMessage ?? string.Empty).Replace(Environment.NewLine, "\r");
             if (string.IsNullOrWhiteSpace(messageToSend))
             {
                 _logger.LogWarning("Send requested but HL7 message is empty.");
@@ -307,10 +665,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
-            // 2. Récupérer la config réseau
             var settings = await _networkSettingsService.LoadAsync();
-            var ip = settings.LastIpAddress ?? string.Empty;
-            var portStr = settings.LastPort ?? string.Empty;
+            string ip = settings.LastIpAddress ?? string.Empty;
+            string portStr = settings.LastPort ?? string.Empty;
 
             if (!int.TryParse(portStr, out int port) || port < 1 || port > 65535)
             {
@@ -319,42 +676,19 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return;
             }
 
-            // 3. Envoyer via TCP/MLLP
-            var sendMsg = $"Sending HL7 message to {ip}:{port}.";
-            _logger.LogInformation(sendMsg);
+            _logger.LogInformation("Sending HL7 message to {Ip}:{Port}.", ip, port);
             _logger.LogDebug("HL7 message length: {Length} characters.", messageToSend.Length);
+
             await _networkSender.SendAsync(messageToSend, ip, port);
+
             _logger.LogInformation("HL7 message successfully sent to {Ip}:{Port}.", ip, port);
             AppendToSendLog($"[Send] Message sent to {ip}:{port}.");
         }
         catch (Exception ex)
         {
-            var errorMsg = $"Error while sending HL7 message.";
-            _logger.LogError(ex, $"{errorMsg}\n{ex.Message}");
+            _logger.LogError(ex, "Error while sending HL7 message.");
             AppendToSendLog($"[Send] Error: {ex.Message}");
         }
-    }
-
-    private void UpdateUiForSelectedMessageType()
-    {
-        var type = SelectedMessageType ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(type))
-        {
-            // Cas par défaut quand aucun type n'est sélectionné
-            PatientIdLabel = "Patient ID";
-            IsNewPatientIdVisible = false;
-            return;
-        }
-
-        // Pour A18 / A40 (merge), on affiche explicitement "Old PatientID" et le champ NewPatientId.
-        // Pour les autres types, le label reste simplement "Patient ID" et NewPatientId est caché.
-        var isMergeType =
-            type.StartsWith("ADT A40", StringComparison.OrdinalIgnoreCase) ||
-            type.StartsWith("ADT A18", StringComparison.OrdinalIgnoreCase);
-
-        PatientIdLabel = isMergeType ? "Old PatientID" : "Patient ID";
-        IsNewPatientIdVisible = isMergeType;
     }
 
     private void AppendToSendLog(string line)
@@ -375,7 +709,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
+        {
             return false;
+        }
 
         field = value!;
         OnPropertyChanged(propertyName);

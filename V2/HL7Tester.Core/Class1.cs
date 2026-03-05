@@ -10,22 +10,19 @@ using NHapi.Model.V23.Segment;
 namespace HL7Tester.Core;
 
 /// <summary>
-/// Représente les données nécessaires pour générer un message ADT.
-/// Cette classe est indépendante de toute UI (WinForms, MAUI, ...).
+/// Request model used by the main generator.
+/// It keeps backward compatibility with existing ADT fields and also contains ORM/SIU fields.
 /// </summary>
 public sealed class AdtMessageRequest
 {
-    /// <summary>
-    /// Code de message sous la forme "ADT A01", "ADT A03", ...
-    /// </summary>
     public string MessageTypeCode { get; set; } = "ADT A01";
 
+    // Common patient/location fields
     public string PatientId { get; set; } = string.Empty;
     public string PatientFamilyName { get; set; } = string.Empty;
     public string PatientGivenName { get; set; } = string.Empty;
-    public string BirthDate { get; set; } = string.Empty; // format attendu : yyyyMMdd
+    public string BirthDate { get; set; } = string.Empty;
     public string Sex { get; set; } = string.Empty;
-
     public string Unit { get; set; } = string.Empty;
     public string Room { get; set; } = string.Empty;
     public string Bed { get; set; } = string.Empty;
@@ -33,30 +30,59 @@ public sealed class AdtMessageRequest
     public string Floor { get; set; } = string.Empty;
     public string AdmissionNumber { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Nouvel identifiant patient utilisé pour les messages de type fusion / mise à jour
-    /// (ex. ADT A18 / ADT A40). Correspond à txtNewPatientID dans l'UI WinForms.
-    /// </summary>
+    // ADT-specific
     public string? NewPatientId { get; set; }
-
-    /// <summary>
-    /// Date/heure d'événement au format HL7 (yyyyMMddHHmm). Si null, la date courante sera utilisée.
-    /// </summary>
     public string? EventDateTime { get; set; }
 
-    /// <summary>
-    /// Nom de l'application émettrice (MSH-3).
-    /// </summary>
+    // MSH routing fields
     public string SendingApplication { get; set; } = "Hl7Tester-Core";
+    public string SendingFacility { get; set; } = "HL7Tester";
+    public string ReceivingApplication { get; set; } = "Receiver";
+    public string ReceivingFacility { get; set; } = "ReceiverFacility";
 
-    /// <summary>
-    /// Entrées OBX optionnelles (jusqu'à 3 dans l'UI actuelle, mais extensible côté Core).
-    /// </summary>
     public IList<ObxEntry> ObxEntries { get; } = new List<ObxEntry>();
+
+    // ORM-specific
+    public string OrderControl { get; set; } = "NW";
+    public string OrmPlacerOrderNumber { get; set; } = string.Empty;
+    public string OrmFillerOrderNumber { get; set; } = string.Empty;
+    public string OrmOrderStatus { get; set; } = "Final";
+    public string OrmUniversalServiceId { get; set; } = string.Empty;
+    public string? OrmRequestedDateTime { get; set; }
+    public string OrmOrderingProviderId { get; set; } = string.Empty;
+    public string OrmOrderingProviderFamilyName { get; set; } = string.Empty;
+    public string OrmOrderingProviderGivenName { get; set; } = string.Empty;
+    public string OrmDiagnosisCode { get; set; } = string.Empty;
+    public string OrmDiagnosisText { get; set; } = string.Empty;
+
+    // SIU-specific
+    public string SiuPlacerAppointmentId { get; set; } = string.Empty;
+    public string SiuFillerAppointmentId { get; set; } = string.Empty;
+    public string SiuOccurrenceNumber { get; set; } = "1";
+    public string SiuAppointmentType { get; set; } = "OFFICE^Office visit";
+    public string SiuAppointmentReason { get; set; } = string.Empty;
+    public string? SiuAppointmentStartDateTime { get; set; }
+    public string? SiuAppointmentEndDateTime { get; set; }
+    public string SiuAppointmentDuration { get; set; } = "60";
+    public string SiuAppointmentDurationUnits { get; set; } = "m";
+    public string SiuAppointmentStatus { get; set; } = "Scheduled";
+
+    public string SiuGeneralResourceId { get; set; } = string.Empty;
+    public string SiuGeneralResourceName { get; set; } = string.Empty;
+    public string SiuGeneralResourceType { get; set; } = "D";
+
+    public string SiuLocationCode { get; set; } = string.Empty;
+    public string SiuLocationDescription { get; set; } = string.Empty;
+    public string SiuLocationSite { get; set; } = string.Empty;
+
+    public string SiuPersonnelId { get; set; } = string.Empty;
+    public string SiuPersonnelFamilyName { get; set; } = string.Empty;
+    public string SiuPersonnelGivenName { get; set; } = string.Empty;
+    public string SiuPersonnelRole { get; set; } = "D";
 }
 
 /// <summary>
-/// Représente une observation OBX libre (type + raison/texte).
+/// Free OBX entry.
 /// </summary>
 public sealed class ObxEntry
 {
@@ -65,7 +91,7 @@ public sealed class ObxEntry
 }
 
 /// <summary>
-/// Service de génération de messages ADT (HL7 v2.3) basé sur NHapi.
+/// Main HL7 v2.3 message generator (ADT + ORM + SIU).
 /// </summary>
 public sealed class AdtMessageGenerator
 {
@@ -73,7 +99,6 @@ public sealed class AdtMessageGenerator
 
     static AdtMessageGenerator()
     {
-        // Permet d'utiliser des encodages codepages (windows-1252) sur .NET moderne / macOS.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
     }
 
@@ -85,29 +110,42 @@ public sealed class AdtMessageGenerator
     public string Generate(AdtMessageRequest request)
     {
         if (request is null)
+        {
             throw new ArgumentNullException(nameof(request));
+        }
 
+        var (messageCode, triggerEvent) = ParseMessageTypeCode(request.MessageTypeCode);
         _logger.LogInformation("Generating HL7 message for type {MessageType}", request.MessageTypeCode);
 
-        var message = CreateMessage(request.MessageTypeCode, out var messageCode, out var triggerEvent);
+        return messageCode.ToUpperInvariant() switch
+        {
+            "ADT" => GenerateAdtMessage(request, triggerEvent),
+            "ORM" => GenerateOrmMessage(request, messageCode, triggerEvent),
+            "SIU" => GenerateSiuMessage(request, messageCode, triggerEvent),
+            _ => throw new NotSupportedException($"Unsupported HL7 message family: '{messageCode}'.")
+        };
+    }
+
+    private string GenerateAdtMessage(AdtMessageRequest request, string triggerEvent)
+    {
+        var message = CreateAdtMessage(triggerEvent);
 
         var msh = (MSH)message.GetStructure("MSH");
         msh.FieldSeparator.Value = "|";
         msh.EncodingCharacters.Value = "^~\\&";
         msh.SendingApplication.NamespaceID.Value = request.SendingApplication;
-        msh.MessageType.MessageType.Value = messageCode;
+        msh.SendingFacility.NamespaceID.Value = request.SendingFacility;
+        msh.ReceivingApplication.NamespaceID.Value = request.ReceivingApplication;
+        msh.ReceivingFacility.NamespaceID.Value = request.ReceivingFacility;
+        msh.MessageType.MessageType.Value = "ADT";
         msh.MessageType.TriggerEvent.Value = triggerEvent;
         msh.ProcessingID.ProcessingID.Value = "P";
         msh.VersionID.Value = "2.3";
         msh.DateTimeOfMessage.TimeOfAnEvent.Value = DateTime.Now.ToString("yyyyMMddHHmmss");
         msh.CharacterSet.Value = "ASCII";
 
-        // Remplissage des segments dépendant du type de message
         if (message is ADT_A40 adtA40)
         {
-            // Cas fusion de dossiers patients (A40) :
-            // - PID contient le "nouveau" patient (NewPatientId)
-            // - MRG contient l'ancien identifiant (PatientId)
             var patient = adtA40.GetPATIENT();
             var pidA40 = patient.PID;
             pidA40.SetIDPatientID.Value = "1";
@@ -122,7 +160,6 @@ public sealed class AdtMessageGenerator
         }
         else if (message is ADT_A18)
         {
-            // Cas "merge"/mise à jour A18 : PID = nouveau, MRG = ancien
             var pidA18 = (PID)message.GetStructure("PID");
             pidA18.SetIDPatientID.Value = "1";
             pidA18.GetPatientIDInternalID(0).ID.Value = request.NewPatientId ?? request.PatientId;
@@ -136,7 +173,6 @@ public sealed class AdtMessageGenerator
         }
         else
         {
-            // Cas "classique" (A01, A03, ...): PID + PV1 "visite" complète
             var pid = (PID)message.GetStructure("PID");
             pid.SetIDPatientID.Value = "1";
             pid.GetPatientIDInternalID(0).ID.Value = request.PatientId;
@@ -155,11 +191,9 @@ public sealed class AdtMessageGenerator
             pv1.AssignedPatientLocation.Floor.Value = request.Floor;
             pv1.VisitNumber.ID.Value = request.AdmissionNumber;
 
-            // OBX optionnels
-            FillObxSegments(message, request.ObxEntries);
+            FillAdtObxSegments(message, request.ObxEntries);
         }
 
-        // EVN
         var evn = (EVN)message.GetStructure("EVN");
         evn.EventTypeCode.Value = triggerEvent;
         evn.RecordedDateTime.TimeOfAnEvent.Value = DateTime.Now.ToString("yyyyMMddHHmm");
@@ -169,19 +203,341 @@ public sealed class AdtMessageGenerator
                 : request.EventDateTime;
 
         var parser = new PipeParser();
-
-        // Premier encodage pour calculer le Control ID à partir du message.
         string encoded = parser.Encode(message);
         string controlId = GenerateControlIdFromMessage(encoded);
         msh.MessageControlID.Value = controlId;
 
-        // Ré-encodage avec le Control ID en place.
         var finalMessage = parser.Encode(message);
-        _logger.LogInformation("HL7 message generated successfully (ControlID={ControlId})", controlId);
+        _logger.LogInformation("ADT message generated successfully (ControlID={ControlId})", controlId);
         return finalMessage;
     }
 
-    private static void FillObxSegments(IMessage message, IEnumerable<ObxEntry> entries)
+    private string GenerateOrmMessage(AdtMessageRequest request, string messageCode, string triggerEvent)
+    {
+        if (!string.Equals(triggerEvent, "O01", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new NotSupportedException($"Unsupported ORM trigger event: '{triggerEvent}'.");
+        }
+
+        var now = DateTime.Now;
+        string timestamp = now.ToString("yyyyMMddHHmmss");
+        string requestedDateTime = string.IsNullOrWhiteSpace(request.OrmRequestedDateTime)
+            ? timestamp
+            : request.OrmRequestedDateTime;
+
+        var tempSegments = BuildOrmSegments(request, messageCode, triggerEvent, timestamp, string.Empty, requestedDateTime);
+        string controlId = GenerateControlIdFromMessage(string.Join("\r", tempSegments));
+        var segments = BuildOrmSegments(request, messageCode, triggerEvent, timestamp, controlId, requestedDateTime);
+
+        var finalMessage = string.Join("\r", segments);
+        _logger.LogInformation("ORM message generated successfully (ControlID={ControlId})", controlId);
+        return finalMessage;
+    }
+
+    private string GenerateSiuMessage(AdtMessageRequest request, string messageCode, string triggerEvent)
+    {
+        if (triggerEvent is not ("S12" or "S13" or "S14" or "S15"))
+        {
+            throw new NotSupportedException($"Unsupported SIU trigger event: '{triggerEvent}'.");
+        }
+
+        var now = DateTime.Now;
+        string timestamp = now.ToString("yyyyMMddHHmmss");
+        string startDateTime = string.IsNullOrWhiteSpace(request.SiuAppointmentStartDateTime)
+            ? now.AddMinutes(30).ToString("yyyyMMddHHmmss")
+            : request.SiuAppointmentStartDateTime;
+
+        string endDateTime = string.IsNullOrWhiteSpace(request.SiuAppointmentEndDateTime)
+            ? now.AddMinutes(90).ToString("yyyyMMddHHmmss")
+            : request.SiuAppointmentEndDateTime;
+
+        var tempSegments = BuildSiuSegments(request, messageCode, triggerEvent, timestamp, string.Empty, startDateTime, endDateTime);
+        string controlId = GenerateControlIdFromMessage(string.Join("\r", tempSegments));
+        var segments = BuildSiuSegments(request, messageCode, triggerEvent, timestamp, controlId, startDateTime, endDateTime);
+
+        var finalMessage = string.Join("\r", segments);
+        _logger.LogInformation("SIU message generated successfully (ControlID={ControlId})", controlId);
+        return finalMessage;
+    }
+
+    private List<string> BuildOrmSegments(
+        AdtMessageRequest request,
+        string messageCode,
+        string triggerEvent,
+        string timestamp,
+        string controlId,
+        string requestedDateTime)
+    {
+        var segments = new List<string>
+        {
+            BuildMshSegment(request, messageCode, triggerEvent, timestamp, controlId),
+            BuildPidSegment(request),
+            BuildPv1Segment(request, patientClass: "I", includeVisitNumber: true),
+            BuildSegment(
+                "ORC",
+                request.OrderControl,
+                request.OrmPlacerOrderNumber,
+                request.OrmFillerOrderNumber,
+                string.Empty,
+                request.OrmOrderStatus,
+                string.Empty,
+                $"^^^{requestedDateTime}^^^^",
+                string.Empty,
+                timestamp,
+                string.Empty,
+                BuildProviderField(request.OrmOrderingProviderId, request.OrmOrderingProviderFamilyName, request.OrmOrderingProviderGivenName)),
+            BuildSegment(
+                "OBR",
+                "1",
+                request.OrmPlacerOrderNumber,
+                request.OrmFillerOrderNumber,
+                request.OrmUniversalServiceId,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                BuildProviderField(request.OrmOrderingProviderId, request.OrmOrderingProviderFamilyName, request.OrmOrderingProviderGivenName),
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                request.OrmOrderStatus)
+        };
+
+        if (!string.IsNullOrWhiteSpace(request.OrmDiagnosisCode) || !string.IsNullOrWhiteSpace(request.OrmDiagnosisText))
+        {
+            segments.Add(
+                BuildSegment(
+                    "DG1",
+                    "1",
+                    string.Empty,
+                    $"{request.OrmDiagnosisCode}^{request.OrmDiagnosisText}"));
+        }
+
+        segments.AddRange(BuildObxSegments(request.ObxEntries));
+        return segments;
+    }
+
+    private List<string> BuildSiuSegments(
+        AdtMessageRequest request,
+        string messageCode,
+        string triggerEvent,
+        string timestamp,
+        string controlId,
+        string startDateTime,
+        string endDateTime)
+    {
+        var providerField = BuildProviderField(request.SiuPersonnelId, request.SiuPersonnelFamilyName, request.SiuPersonnelGivenName);
+
+        var segments = new List<string>
+        {
+            BuildMshSegment(request, messageCode, triggerEvent, timestamp, controlId),
+            BuildSegment(
+                "SCH",
+                request.SiuPlacerAppointmentId,
+                request.SiuFillerAppointmentId,
+                string.Empty,
+                string.Empty,
+                request.SiuOccurrenceNumber,
+                request.SiuAppointmentType,
+                request.SiuAppointmentReason,
+                "OFFICE",
+                request.SiuAppointmentDuration,
+                request.SiuAppointmentDurationUnits,
+                $"^^{request.SiuAppointmentDuration}^{startDateTime}^{endDateTime}",
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                providerField,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                request.SiuAppointmentStatus),
+            BuildPidSegment(request),
+            BuildPv1Segment(request, patientClass: "O", includeVisitNumber: false)
+        };
+
+        segments.AddRange(BuildObxSegments(request.ObxEntries));
+
+        segments.Add(BuildSegment("RGS", "1", "A"));
+        segments.Add(
+            BuildSegment(
+                "AIG",
+                "1",
+                "A",
+                $"{request.SiuGeneralResourceId}^{request.SiuGeneralResourceName}",
+                $"{request.SiuGeneralResourceType}^^",
+                string.Empty,
+                startDateTime,
+                string.Empty,
+                string.Empty,
+                request.SiuAppointmentDuration,
+                $"{request.SiuAppointmentDurationUnits}^Minutes",
+                string.Empty,
+                request.SiuAppointmentStatus));
+
+        segments.Add(
+            BuildSegment(
+                "AIL",
+                "1",
+                "A",
+                $"{request.SiuLocationCode}^{request.SiuLocationDescription}^{request.SiuLocationSite}",
+                "^Main Office",
+                string.Empty,
+                startDateTime,
+                string.Empty,
+                string.Empty,
+                request.SiuAppointmentDuration,
+                $"{request.SiuAppointmentDurationUnits}^Minutes",
+                string.Empty,
+                request.SiuAppointmentStatus));
+
+        segments.Add(
+            BuildSegment(
+                "AIP",
+                "1",
+                "A",
+                providerField,
+                $"{request.SiuPersonnelRole}^^",
+                string.Empty,
+                startDateTime,
+                string.Empty,
+                string.Empty,
+                request.SiuAppointmentDuration,
+                $"{request.SiuAppointmentDurationUnits}^Minutes",
+                string.Empty,
+                request.SiuAppointmentStatus));
+
+        return segments;
+    }
+
+    private static string BuildMshSegment(
+        AdtMessageRequest request,
+        string messageCode,
+        string triggerEvent,
+        string timestamp,
+        string controlId)
+    {
+        return BuildSegment(
+            "MSH",
+            "^~\\&",
+            request.SendingApplication,
+            request.SendingFacility,
+            request.ReceivingApplication,
+            request.ReceivingFacility,
+            timestamp,
+            string.Empty,
+            $"{messageCode}^{triggerEvent}",
+            controlId,
+            "P",
+            "2.3",
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            "ASCII");
+    }
+
+    private static string BuildPidSegment(AdtMessageRequest request)
+    {
+        return BuildSegment(
+            "PID",
+            "1",
+            string.Empty,
+            request.PatientId,
+            string.Empty,
+            $"{request.PatientFamilyName}^{request.PatientGivenName}",
+            string.Empty,
+            request.BirthDate,
+            request.Sex);
+    }
+
+    private static string BuildPv1Segment(AdtMessageRequest request, string patientClass, bool includeVisitNumber)
+    {
+        string location = $"{request.Unit}^{request.Room}^{request.Bed}^{request.Facility}^^^^^{request.Floor}";
+
+        if (!includeVisitNumber)
+        {
+            return BuildSegment("PV1", "1", patientClass, location);
+        }
+
+        return BuildSegment(
+            "PV1",
+            "1",
+            patientClass,
+            location,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            request.AdmissionNumber);
+    }
+
+    private static string BuildProviderField(string id, string familyName, string givenName)
+        => $"{id}^{familyName}^{givenName}";
+
+    private static IEnumerable<string> BuildObxSegments(IEnumerable<ObxEntry> entries)
+    {
+        if (entries is null)
+        {
+            yield break;
+        }
+
+        int index = 0;
+        foreach (var entry in entries)
+        {
+            string type = string.IsNullOrWhiteSpace(entry.Type) ? string.Empty : entry.Type;
+            string reason = string.IsNullOrWhiteSpace(entry.Reason) ? string.Empty : entry.Reason;
+
+            if (string.IsNullOrWhiteSpace(type) && string.IsNullOrWhiteSpace(reason))
+            {
+                continue;
+            }
+
+            index++;
+            yield return BuildSegment(
+                "OBX",
+                index.ToString(),
+                "TX",
+                string.IsNullOrWhiteSpace(type) ? "UNK" : type,
+                string.Empty,
+                string.IsNullOrWhiteSpace(reason) ? "Not specified" : reason,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                "F");
+        }
+    }
+
+    private static string BuildSegment(params string?[] fields)
+        => string.Join("|", fields.Select(static field => field ?? string.Empty));
+
+    private static void FillAdtObxSegments(IMessage message, IEnumerable<ObxEntry> entries)
     {
         if (entries is null)
         {
@@ -208,7 +564,7 @@ public sealed class AdtMessageGenerator
 
             var value = new NHapi.Model.V23.Datatype.TX(message)
             {
-                Value = string.IsNullOrWhiteSpace(reason) ? "Non spécifié" : reason
+                Value = string.IsNullOrWhiteSpace(reason) ? "Not specified" : reason
             };
 
             obx.GetObservationValue(0).Data = value;
@@ -216,71 +572,71 @@ public sealed class AdtMessageGenerator
         }
     }
 
-    private static IMessage CreateMessage(string messageTypeCode, out string messageCode, out string triggerEvent)
+    private static IMessage CreateAdtMessage(string triggerEvent)
+    {
+        return triggerEvent.ToUpperInvariant() switch
+        {
+            "A01" => new ADT_A01(),
+            "A02" => new ADT_A02(),
+            "A03" => new ADT_A03(),
+            "A04" => new ADT_A04(),
+            "A05" => new ADT_A05(),
+            "A06" => new ADT_A06(),
+            "A07" => new ADT_A07(),
+            "A08" => new ADT_A08(),
+            "A09" => new ADT_A09(),
+            "A10" => new ADT_A10(),
+            "A11" => new ADT_A11(),
+            "A12" => new ADT_A12(),
+            "A13" => new ADT_A13(),
+            "A14" => new ADT_A14(),
+            "A15" => new ADT_A15(),
+            "A16" => new ADT_A16(),
+            "A18" => new ADT_A18(),
+            "A21" => new ADT_A21(),
+            "A22" => new ADT_A22(),
+            "A24" => new ADT_A24(),
+            "A25" => new ADT_A25(),
+            "A26" => new ADT_A26(),
+            "A27" => new ADT_A27(),
+            "A28" => new ADT_A28(),
+            "A31" => new ADT_A31(),
+            "A32" => new ADT_A32(),
+            "A33" => new ADT_A33(),
+            "A37" => new ADT_A37(),
+            "A38" => new ADT_A38(),
+            "A40" => new ADT_A40(),
+            _ => throw new NotSupportedException($"Unsupported ADT trigger event: '{triggerEvent}'.")
+        };
+    }
+
+    private static (string messageCode, string triggerEvent) ParseMessageTypeCode(string messageTypeCode)
     {
         if (string.IsNullOrWhiteSpace(messageTypeCode))
-            throw new ArgumentException("MessageTypeCode ne peut pas être vide.", nameof(messageTypeCode));
+        {
+            throw new ArgumentException("MessageTypeCode cannot be empty.", nameof(messageTypeCode));
+        }
 
         var parts = messageTypeCode.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length < 2)
-            throw new ArgumentException("MessageTypeCode doit être de la forme 'ADT A01'.", nameof(messageTypeCode));
-
-        messageCode = parts[0].Trim();
-        triggerEvent = parts[1].Trim();
-
-        string key = $"{messageCode} {triggerEvent}";
-
-        return key switch
         {
-            "ADT A01" => new ADT_A01(),
-            "ADT A02" => new ADT_A02(),
-            "ADT A03" => new ADT_A03(),
-            "ADT A04" => new ADT_A04(),
-            "ADT A05" => new ADT_A05(),
-            "ADT A06" => new ADT_A06(),
-            "ADT A07" => new ADT_A07(),
-            "ADT A08" => new ADT_A08(),
-            "ADT A09" => new ADT_A09(),
-            "ADT A10" => new ADT_A10(),
-            "ADT A11" => new ADT_A11(),
-            "ADT A12" => new ADT_A12(),
-            "ADT A13" => new ADT_A13(),
-            "ADT A14" => new ADT_A14(),
-            "ADT A15" => new ADT_A15(),
-            "ADT A16" => new ADT_A16(),
-            "ADT A18" => new ADT_A18(),
-            "ADT A21" => new ADT_A21(),
-            "ADT A22" => new ADT_A22(),
-            "ADT A24" => new ADT_A24(),
-            "ADT A25" => new ADT_A25(),
-            "ADT A26" => new ADT_A26(),
-            "ADT A27" => new ADT_A27(),
-            "ADT A28" => new ADT_A28(),
-            "ADT A31" => new ADT_A31(),
-            "ADT A32" => new ADT_A32(),
-            "ADT A33" => new ADT_A33(),
-            "ADT A37" => new ADT_A37(),
-            "ADT A38" => new ADT_A38(),
-            "ADT A40" => new ADT_A40(),
-            _ => throw new NotSupportedException($"Type de message ADT non supporté : '{messageTypeCode}'")
-        };
+            throw new ArgumentException("MessageTypeCode must follow '<TYPE> <TRIGGER>' format.", nameof(messageTypeCode));
+        }
+
+        return (parts[0].Trim(), parts[1].Trim());
     }
 
     private static string GenerateControlIdFromMessage(string message)
     {
         using var sha256 = SHA256.Create();
-        // Sous macOS / .NET moderne, on s'appuie sur Latin1, très proche de Windows-1252
-        // et suffisant pour nos besoins HL7 (messages principalement ASCII).
         byte[] bytes = sha256.ComputeHash(Encoding.Latin1.GetBytes(message));
+
         var builder = new StringBuilder(bytes.Length * 2);
         foreach (byte b in bytes)
         {
             builder.Append(b.ToString("x2"));
         }
 
-        // On garde 19 caractères comme dans l'implémentation WinForms existante.
         return builder.ToString().Substring(0, 19);
     }
-
 }
-

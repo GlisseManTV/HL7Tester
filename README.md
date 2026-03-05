@@ -3,6 +3,39 @@
 ## For MacOS:
 Download the latest package [here](https://github.com/GlisseManTV/HL7Tester/releases/latest)
 
+### How to install on macOS (unsigned app)
+
+Because HL7Tester for macOS is currently **not signed / not notarized** by Apple, macOS Gatekeeper may block it after downloading from the internet.
+
+You can install and run it using one of the following options:
+
+#### Option 1 – Recommended for most users (no Terminal required)
+1. Download the latest `HL7Tester_MacOS_*.dmg` from the GitHub release page.
+2. Open the DMG.
+3. Drag `HL7Tester.app` into the `Applications` folder.
+4. Open the `Applications` folder.
+5. **Right‑click** (or Ctrl+click) on `HL7Tester.app` and select **Open**.
+6. macOS will show a warning that the app is from an unidentified developer – click **Open** again.
+7. Next launches can be done normally (double‑click), without the warning.
+
+#### Option 2 – For advanced users (Terminal)
+1. Download the latest `HL7Tester_MacOS_*.dmg`.
+2. Open the Terminal and remove the quarantine attribute from the DMG:
+
+   ```bash
+   cd ~/Downloads
+   xattr -d com.apple.quarantine HL7Tester_MacOS_*.dmg
+   ```
+
+3. Open the DMG and drag `HL7Tester.app` into `Applications`.
+4. If macOS still blocks the app in `Applications`, you can also remove the quarantine attribute from the app itself:
+
+   ```bash
+   sudo xattr -d -r com.apple.quarantine /Applications/HL7Tester.app
+   ```
+
+After that, HL7Tester should launch normally.
+
 ## For Windows:
 Download the app directly from the [Microsoft Store](https://apps.microsoft.com/store/detail/9PJM3TWNDG20?cid=DevShareMCLPCS).
 Or download the latest package [here](https://github.com/GlisseManTV/HL7Tester/releases/latest)

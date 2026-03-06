@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using HL7Tester.Core;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.ApplicationModel;
 
 namespace HL7Tester.ViewModels;
 
@@ -62,6 +63,13 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
 
     public ICommand SaveCommand { get; }
     public ICommand SelectHistoryEntryCommand { get; }
+    public ICommand OpenDocumentationCommand { get; }
+    public ICommand OpenOrmDocumentationCommand { get; }
+    public ICommand OpenSiuDocumentationCommand { get; }
+
+    private const string HL7_ADT_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH3.html#Heading3";
+    private const string HL7_ORM_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH4.html#Heading13";
+    private const string HL7_SIU_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH10.html#Heading53";
 
     public NetworkSettingsViewModel(INetworkSettingsService service, ILogger<NetworkSettingsViewModel> logger)
     {
@@ -76,6 +84,54 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
 
         SaveCommand = new Command(async () => await SaveAsync());
         SelectHistoryEntryCommand = new Command<string>(OnSelectHistoryEntry);
+        OpenDocumentationCommand = new Command(OpenAdtDocumentation);
+        OpenOrmDocumentationCommand = new Command(OpenOrmDocumentation);
+        OpenSiuDocumentationCommand = new Command(OpenSiuDocumentation);
+    }
+
+    private void OpenAdtDocumentation()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 ADT documentation: {Url}", HL7_ADT_DOCUMENTATION_URL);
+            
+            var uri = new Uri(HL7_ADT_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 ADT documentation URL: {Url}", HL7_ADT_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenOrmDocumentation()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 ORM documentation: {Url}", HL7_ORM_DOCUMENTATION_URL);
+            
+            var uri = new Uri(HL7_ORM_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 ORM documentation URL: {Url}", HL7_ORM_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenSiuDocumentation()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 SIU documentation: {Url}", HL7_SIU_DOCUMENTATION_URL);
+            
+            var uri = new Uri(HL7_SIU_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 SIU documentation URL: {Url}", HL7_SIU_DOCUMENTATION_URL);
+        }
     }
 
     public async Task LoadAsync()

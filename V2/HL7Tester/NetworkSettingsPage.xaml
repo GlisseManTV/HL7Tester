@@ -79,11 +79,32 @@
                 </VerticalStackLayout>
             </Border>
 
+
+
+            <!-- Carte documentation HL7 -->
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="HL7 Documentation" Style="{StaticResource SubHeadline}" />
+                    <HorizontalStackLayout Spacing="12">
+                        <Button Text="HL7 ADT v2.3 ↗"
+                                Command="{Binding OpenDocumentationCommand}"
+                                HorizontalOptions="FillAndExpand"
+                                Padding="12,8" />
+                        <Button Text="HL7 ORM v2.3 ↗"
+                                Command="{Binding OpenOrmDocumentationCommand}"
+                                HorizontalOptions="FillAndExpand"
+                                Padding="12,8" />
+                        <Button Text="HL7 SIU v2.3 ↗"
+                                Command="{Binding OpenSiuDocumentationCommand}"
+                                HorizontalOptions="FillAndExpand"
+                                Padding="12,8" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
             <!-- Bouton de retour à la page principale -->
             <Button Text="Home"
                     HorizontalOptions="End"
                     Clicked="OnHomeClicked" />
-
             <!-- Version de l'application -->
             <Label Text="{Binding AssemblyVersion}"
                    HorizontalOptions="Center"

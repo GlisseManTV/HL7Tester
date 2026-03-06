@@ -139,6 +139,27 @@ Persists application settings to JSON:
 | `HL7Tester.Tests/Test1.cs` | Added/updated tests for ORM/SIU plus ADT coverage alignment |
 | `HL7Tester.csproj` | Application display version incremented to `2.0.3` |
 
+### UI Improvements
+
+1. **HL7 Documentation Links in Network Settings**
+   - Added three clickable buttons in Network Settings page for quick access to HL7 v2.3 documentation
+   - Buttons: "HL7 ADT v2.3 ↗", "HL7 ORM v2.3 ↗", "HL7 SIU v2.3 ↗"
+   - Links point to official HL7 Europe documentation with specific section anchors:
+     | Message Type | URL Section |
+     |--------------|-------------|
+     | ADT | CH3.html#Heading3 |
+     | ORM | CH4.html#Heading13 |
+     | SIU | CH10.html#Heading53 |
+   - Implemented using `Launcher.Default.OpenAsync()` for cross-platform URL opening
+   - Buttons arranged horizontally in the documentation card with equal width distribution
+
+### Modified Files (Documentation Update)
+
+| File | Changes |
+|------|---------|
+| `NetworkSettingsPage.xaml` | Added horizontal stack layout with three documentation buttons in HL7 Documentation card |
+| `ViewModels/NetworkSettingsViewModel.cs` | Added `OpenDocumentationCommand`, `OpenOrmDocumentationCommand`, `OpenSiuDocumentationCommand` properties and handler methods with URL constants |
+
 ---
 
 ## v2.0.2 Changes

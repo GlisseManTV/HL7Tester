@@ -66,8 +66,9 @@ You can select the message family and message type in the header, then generate/
 
 ### Main UI &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dark &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; light
 
-<img width="341" height="347" alt="image" src="https://github.com/user-attachments/assets/8f5b61ae-8f93-4670-a068-1b96bf4390d2" />
-<img width="341" height="347" alt="image" src="https://github.com/user-attachments/assets/49006c1c-f29e-411b-9531-693402e0fa9e" />
+<img width="341" height="347" alt="Capture d&#39;écran 2026-03-06 090604" src="https://github.com/user-attachments/assets/1dd5d05d-342d-444a-986b-d573f6f1eefd" />
+<img width="341" height="347" alt="Capture d&#39;écran 2026-03-06 090634" src="https://github.com/user-attachments/assets/bad529ca-f49e-4e42-b813-8c7b7ca1a4a1" />
+
 
 
 
@@ -76,8 +77,9 @@ You can select the message family and message type in the header, then generate/
 ### Settings &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dark &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; light
 
 
-<img width="341" height="347" alt="image" src="https://github.com/user-attachments/assets/6cb6aa78-7b65-4c6e-9d0b-180813993b4e" />
-<img width="341" height="347" alt="image" src="https://github.com/user-attachments/assets/73d61442-3a51-42db-8eb4-5dd63ae57f3d" />
+<img width="341" height="347" alt="Capture d&#39;écran 2026-03-06 090610" src="https://github.com/user-attachments/assets/e420efac-48b7-4f5c-8c97-b10da8f6e721" />
+<img width="341" height="347" alt="Capture d&#39;écran 2026-03-06 090638" src="https://github.com/user-attachments/assets/b46e4dbc-c492-404b-91e6-623fa7a6c909" />
+
 
 
 

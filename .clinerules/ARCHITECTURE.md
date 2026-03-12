@@ -79,6 +79,45 @@ Persists application settings to JSON:
 
 ---
 
+## v2.0.4 Changes (Latest Release)
+
+### Enhanced UI Logging
+
+1. **Improved Send Log Format in Main View**
+   - Changed from generic "[Send] Message sent to IP:PORT." to detailed format with timestamp, message type, control ID, and ACK status
+   - New log format: `[HH:mm:ss] Message SEND ADT^A01|ControlID to IP:PORT. -> ACK`
+   - Message Code (MSH-9) extraction from HL7 messages for display in UI logs
+   - ACK/NACK status indicator appended to send confirmation
+
+2. **Message Code Extraction**
+   - Added `ExtractMessageCode()` method in `Hl7NetworkSender.cs`
+   - Parses MSH segment field 9 (MessageType^SubType format includes Control ID)
+   - Returns combined value like `ADT^A01|5fc50898e7633c4271b`
+
+3. **SendResult Class**
+   - Added to `Hl7NetworkSender.cs` to return detailed send results
+   - Properties: `Success`, `MessageCode`, `AckMessage`, `ErrorMessage`
+   - Replaces void return type for better information flow to UI
+
+4. **UI Log Display in MainViewModel**
+   - Updated `OnSendAsync()` method to format logs with timestamp and message details
+   - Removed ACK content from UI (already logged to file)
+   - Shows only status indicator: `ACK`, `NACK`, or `No ACK`
+
+**Example Output:**
+```
+[14:59:49] Message SEND ADT^A01|5fc50898e7633c4271b to 192.168.1.10:70. -> ACK
+```
+
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Hl7NetworkSender.cs` | Added `SendResult` class; changed `SendAsync()` return type to `Task<SendResult>`; added `ExtractMessageCode()` for MSH-9 parsing |
+| `ViewModels/MainViewModel.cs` | Updated `OnSendAsync()` with enhanced log formatting using timestamp, message code, and ACK status |
+
+---
+
 ## v2.0.3 Changes (Latest Release)
 
 ### Message Families and Generation
@@ -283,7 +322,7 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.3</ApplicationDisplayVersion>
+<ApplicationDisplayVersion>2.0.4</ApplicationDisplayVersion>
 <ApplicationVersion>0</ApplicationVersion>
 ```
 
@@ -298,4 +337,4 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
-*Last Updated: March 5, 2026 (v2.0.3)*
+*Last Updated: March 12, 2026 (v2.0.4)*

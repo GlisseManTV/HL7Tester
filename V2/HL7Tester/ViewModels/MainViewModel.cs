@@ -661,7 +661,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (string.IsNullOrWhiteSpace(messageToSend))
             {
                 _logger.LogWarning("Send requested but HL7 message is empty.");
-                AppendToSendLog("[Send] Nothing to send (HL7 message is empty).");
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message send cancelled - Nothing to send (HL7 message is empty).");
                 return;
             }
 
@@ -672,22 +672,38 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (!int.TryParse(portStr, out int port) || port < 1 || port > 65535)
             {
                 _logger.LogWarning("Invalid port configured: {Port}", portStr);
-                AppendToSendLog("[Send] Invalid port configured.");
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message send cancelled - Invalid port configured.");
                 return;
             }
 
             _logger.LogInformation("Sending HL7 message to {Ip}:{Port}.", ip, port);
             _logger.LogDebug("HL7 message length: {Length} characters.", messageToSend.Length);
 
-            await _networkSender.SendAsync(messageToSend, ip, port);
+            var result = await _networkSender.SendAsync(messageToSend, ip, port);
 
-            _logger.LogInformation("HL7 message successfully sent to {Ip}:{Port}.", ip, port);
-            AppendToSendLog($"[Send] Message sent to {ip}:{port}.");
+            string messageTypeStr = !string.IsNullOrWhiteSpace(result.MessageCode) 
+                ? result.MessageCode 
+                : "Unknown";
+
+            if (result.Success)
+            {
+                string ackStatus = result.AckMessage != null 
+                    ? (result.AckMessage.StartsWith("ERR") ? "NACK" : "ACK") 
+                    : "No ACK";
+
+                AppendToSendLog(
+                    $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> {ackStatus}");
+            }
+            else
+            {
+                _logger.LogError("Failed to send HL7 message to {Ip}:{Port}: {Error}", ip, port, result.ErrorMessage);
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED to {ip}:{port}. Error: {result.ErrorMessage}");
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error while sending HL7 message.");
-            AppendToSendLog($"[Send] Error: {ex.Message}");
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED - Error: {ex.Message}");
         }
     }
 

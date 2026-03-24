@@ -2,7 +2,11 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.MainPage"
+             xmlns:converters="clr-namespace:HL7Tester.Converters"
              Title="HL7Tester">
+    <ContentPage.Resources>
+        <converters:BoolToArrowConverter x:Key="BoolToArrowConverter" />
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto,Auto">
         <!-- Header -->
@@ -510,24 +514,31 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Send log card in scrollable area -->
+                <!-- Send log card - collapsible with arrow indicator -->
                 <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource CardBorder}">
                     <Grid RowSpacing="10">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0" ColumnSpacing="8" ZIndex="1">
+                        <!-- Header with arrow indicator and Logs button -->
+                        <Grid Grid.Row="0" ColumnSpacing="8">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnSendLogHeaderTapped" />
+                            </Grid.GestureRecognizers>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
+                            <!-- Clickable title with arrow indicator (▼ when expanded, ► when collapsed) -->
                             <Label Grid.Column="0"
-                                   Text="Send log"
+                                   Text="{Binding IsSendLogExpanded, Converter={StaticResource BoolToArrowConverter}}" 
+                                   TextColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray400}}"
                                    Style="{StaticResource SubHeadline}"
-                                   HorizontalOptions="Start" />
+                                   HorizontalOptions="Start"
+                                   VerticalOptions="Center" />
 
                             <Button Grid.Column="1"
                                     Text="Logs"
@@ -536,12 +547,14 @@
                                     Clicked="OnOpenLogsClicked" />
                         </Grid>
 
+                        <!-- Send log Editor - collapsible with dynamic height -->
                         <Editor Grid.Row="1"
                                 Text="{Binding SendLog}"
                                 AutoSize="TextChanges"
-                                HeightRequest="100"
-                                ZIndex="0"
-                                IsReadOnly="True" />
+                                HeightRequest="{Binding SendLogHeightRequest, Mode=OneWay}"
+                                IsReadOnly="True"
+                                IsVisible="{Binding IsSendLogExpanded}"
+                                Placeholder="Last send log messages will appear here..." />
                     </Grid>
                 </Border>
             </Grid>

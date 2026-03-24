@@ -79,7 +79,137 @@ Persists application settings to JSON:
 
 ---
 
-## v2.0.4 Changes (Latest Release)
+## v2.0.6 Changes (Latest release)
+
+### Collapsible Send Log Card with Dynamic Height
+
+1. **Collapsed by Default**
+   - Send log card is collapsed (reduced) by default to maximize form space
+   - User can toggle visibility via click on the title header
+   - Arrow indicator shows state: "► Send log" when collapsed, "▼ Send log" when expanded
+
+2. **Arrow Indicator with BoolToArrowConverter**
+   - Added new converter `Resources/Converters/BoolToArrowConverter.cs`
+   - Converts boolean property to arrow indicator text
+   - Binds to title label in XAML for visual feedback
+
+3. **Dynamic Height Behavior**
+   - Editor has auto-size behavior with maximum height constraint
+   - Displays up to 5 lines of log messages (configurable via MaxLogLines constant)
+   - Most recent logs appear at the top (newest first)
+   - Auto-expands when a new log message is added if previously collapsed
+
+4. **Toggle via Header Click**
+   - Clicking on the Send log header toggles between expanded/collapsed states
+   - Uses Tapped gesture recognizer on Grid header
+   - Maintains scroll position during toggle
+
+5. **Auto-Scroll to Recent Logs**
+   - When a new log is appended, it appears at the top
+   - Editor shows up to 5 most recent entries
+   - Older entries are automatically discarded when limit is exceeded
+
+**Example Log Output:**
+```
+[23:37:42] Message SEND ADT^A01|5fc50898e7633c4271b to 192.168.1.10:70. -> ACK
+[23:35:12] Message SEND ORC^O01|ABC123 to 192.168.1.10:70. -> NACK
+[23:30:45] Message SEND SIU^S12|XYZ789 to 192.168.1.10:70. -> No ACK
+```
+
+### Modified Files
+
+| File | Changes |
+|------|---------|
+| `HL7Tester.csproj` | Application display version incremented to `2.0.5` |
+| `MainPage.xaml` | Added BoolToArrowConverter resource; restructured Send log card with collapsible layout; added Tapped gesture on header; bound IsSendLogExpanded and SendLogHeightRequest properties |
+| `MainPage.xaml.cs` | Added `OnSendLogHeaderTapped()` handler for toggle functionality |
+| `ViewModels/MainViewModel.cs` | Added `IsSendLogExpanded` (bool), `SendLogHeightRequest` (double) properties; added `ToggleSendLog()` method; modified `AppendToSendLog()` to keep only 5 most recent lines and auto-expand on new entry |
+| `Resources/Converters/BoolToArrowConverter.cs` | New file - IValueConverter that converts boolean to arrow indicator (►/▼) |
+
+---
+
+## v2.0.5 Changes
+
+### UI Persistence - Generated Message Footer
+
+1. **Pinned Generated Message Location**
+   - Moved "Generated message" editor outside the ScrollView into a persistent footer
+   - Footer positioned above the bottom action bar (Generate/Send/Settings buttons)
+   - Grid layout: `RowDefinitions="Auto,*,Auto,Auto"` with footer in Row 3
+
+2. **Dynamic AutoSize Behavior**
+   - Removed fixed height from Generated message Editor
+   - Using `AutoSize="TextChanges"` to expand automatically as HL7 segments are added
+   - Each HL7 segment appears on a new line and the editor grows accordingly
+   - Added `MaxHeight` constraint for scrollability control
+
+3. **Footer Structure**
+   - Row 0: Generated message editor + Copy button
+   - Row 1: Action buttons (Generate HL7 / Send HL7 / Settings)
+   - Footer persists at bottom while main form scrolls in Row 1
+
+4. **Send Log Card Location**
+   - Send log card remains inside the ScrollView in Row 1
+   - Positioned after all form sections (Patient identity, Event/location, OBX, ORM, SIU)
+
+**Example Generated Message:**
+```
+MSH|^~\&|HL7Tester|TEST|ADT|A01|20240324|SECURITY|ADT^A01|MSG00001|P|2.3
+PID|1||PAT001^^^MRN|...
+```
+
+**Modified Files:**
+
+| File | Changes |
+|------|---------|
+| `MainPage.xaml` | Reorganized Grid layout with 4 rows; moved Generated message to footer (Grid.Row="3"); removed fixed height, added AutoSize="TextChanges" |
+| `MainPage.xaml.cs` | Added OnCopyMessageClicked event handler for clipboard copy |
+
+---
+
+## v2.0.6 Changes
+
+### Send Log Card - Compact UI Mode
+
+1. **Log Card Visibility Toggle**
+   - Added option to collapse/hide the "Send log" card for reduced visual impact
+   - Button in header toggles visibility: "🔽 Show Logs" / "🔼 Hide Logs"
+   - Preserves scroll position when toggling
+
+2. **Compact Footer Layout**
+   - Generated message editor positioned immediately above action buttons
+   - More vertical space available for form sections when logs are hidden
+   - AutoSize behavior maintained for generated message expansion
+
+3. **Smooth Transitions**
+   - Visibility changes use conditional binding: `IsVisible="{Binding IsLogCardVisible}"`
+   - Send log content persists while card is hidden
+   - Re-expands to previous state when shown again
+
+4. **ViewModel Integration**
+   - Added `IsLogCardVisible` property in MainViewModel with change notification
+   - Default value: `true` (logs visible)
+   - Toggled via command binding for consistency with MVVM pattern
+
+**Modified Files:**
+
+| File | Changes |
+|------|---------|
+| `MainPage.xaml` | Added visibility toggle button; bind to `IsLogCardVisible` property |
+| `ViewModels/MainViewModel.cs` | Added `IsLogCardVisible` property with getter/setter and PropertyChanged notification |
+
+---
+
+## Next Steps for Development
+
+1. **Maintain English-Only Policy**: All new code, comments, and UI text must be in English
+2. **Update Version**: Increment `<ApplicationDisplayVersion>` when preparing releases
+3. **Log Directory**: Logs are stored in `~/.HL7Tester/` (macOS) or `%USER%\.HL7Tester\` (Windows)
+4. **Daily Log Rotation**: One file per day (`yyyyMMdd.log`)
+
+---
+
+## v2.0.4 Changes
 
 ### Enhanced UI Logging
 
@@ -322,19 +452,10 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.4</ApplicationDisplayVersion>
+<ApplicationDisplayVersion>2.0.6</ApplicationDisplayVersion>
 <ApplicationVersion>0</ApplicationVersion>
 ```
 
 ---
 
-## Next Steps for Development
-
-1. **Maintain English-Only Policy**: All new code, comments, and UI text must be in English
-2. **Update Version**: Increment `<ApplicationDisplayVersion>` when preparing releases
-3. **Log Directory**: Logs are stored in `~/.HL7Tester/` (macOS) or `%USER%\.HL7Tester\` (Windows)
-4. **Daily Log Rotation**: One file per day (`yyyyMMdd.log`)
-
----
-
-*Last Updated: March 12, 2026 (v2.0.4)*
+*Last Updated: March 24, 2026 (v2.0.6)*

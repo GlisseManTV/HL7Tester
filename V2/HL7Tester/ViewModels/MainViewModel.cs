@@ -68,6 +68,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<string> AvailableMessageFamilies { get; } = new(["ADT", "ORM", "SIU"]);
     public ObservableCollection<string> AvailableMessageTypes { get; } = new();
 
+    // Liste des contrôles de commande pour ORC-1 (Order Control Code)
+    public IReadOnlyList<string> OrderControlList { get; } = new[]
+    {
+        "NW - New order",
+        "CA - Cancel order",
+        "XO - Cross-order"
+    };
+
     private string _selectedMessageFamily = "ADT";
     public string SelectedMessageFamily
     {
@@ -313,11 +321,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         private set => SetField(ref _isSiuSectionVisible, value);
     }
 
-    private string _orderControl = "NW";
-    public string OrderControl
+    private string _ormOrderControl = "NW";
+    public string OrmOrderControl
     {
-        get => _orderControl;
-        set => SetField(ref _orderControl, value);
+        get => _ormOrderControl;
+        set => SetField(ref _ormOrderControl, value);
     }
 
     private string _ormPlacerOrderNumber = string.Empty;
@@ -639,7 +647,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 AdmissionNumber = AdmissionNumber ?? string.Empty,
                 EventDateTime = IsEventDateTimeVisible && !string.IsNullOrWhiteSpace(EventDateTime) ? EventDateTime : null,
 
-                OrderControl = OrderControl ?? "NW",
+                OrderControl = OrmOrderControl ?? "NW",
                 OrmPlacerOrderNumber = OrmPlacerOrderNumber ?? string.Empty,
                 OrmFillerOrderNumber = OrmFillerOrderNumber ?? string.Empty,
                 OrmOrderStatus = OrmOrderStatus ?? "Final",

@@ -7,7 +7,6 @@
     <ContentPage.Resources>
         <converters:BoolToArrowConverter x:Key="BoolToArrowConverter" />
     </ContentPage.Resources>
-
     <Grid RowDefinitions="Auto,*,Auto,Auto">
         <!-- Header -->
         <Grid Grid.Row="0"
@@ -314,7 +313,10 @@
                             </Grid.ColumnDefinitions>
 
                             <Label Grid.Row="0" Grid.Column="0" Text="Order control (ORC-1)" VerticalOptions="Center" />
-                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding OrderControl}" Placeholder="NW" />
+                            <Picker Grid.Row="0" Grid.Column="1" 
+                                    ItemsSource="{Binding OrderControlList}"
+                                    SelectedItem="{Binding OrmOrderControl}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Placer order number (ORC-2)" VerticalOptions="Center" />
                             <Entry Grid.Row="1" Grid.Column="1" Text="{Binding OrmPlacerOrderNumber}" Placeholder="ORC-2 / OBR-2" />
@@ -514,7 +516,7 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Send log card - collapsible with arrow indicator -->
+                <!-- Send log card -->
                 <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource CardBorder}">
                     <Grid RowSpacing="10">
                         <Grid.RowDefinitions>
@@ -522,7 +524,7 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <!-- Header with arrow indicator and Logs button -->
+                        <!-- Header with Logs button -->
                         <Grid Grid.Row="0" ColumnSpacing="8">
                             <Grid.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnSendLogHeaderTapped" />

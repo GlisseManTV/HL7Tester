@@ -79,4 +79,14 @@ public partial class MainPage : ContentPage
 			await DisplayAlert("Error", $"Unable to copy message: {ex.Message}", "OK");
 		}
 	}
+
+	private void OnSendLogHeaderTapped(object? sender, TappedEventArgs e)
+	{
+		var viewModel = BindingContext as MainViewModel;
+		if (viewModel != null)
+		{
+			// Toggle the Send log visibility using dedicated method
+			viewModel.ToggleSendLog();
+		}
+	}
 }

@@ -68,6 +68,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<string> AvailableMessageFamilies { get; } = new(["ADT", "ORM", "SIU"]);
     public ObservableCollection<string> AvailableMessageTypes { get; } = new();
 
+    // Liste des contrôles de commande pour ORC-1 (Order Control Code)
+    public IReadOnlyList<string> OrderControlList { get; } = new[]
+    {
+        "NW - New order",
+        "CA - Cancel order",
+        "XO - Cross-order"
+    };
+
     private string _selectedMessageFamily = "ADT";
     public string SelectedMessageFamily
     {
@@ -211,6 +219,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
         set => SetField(ref _sendLog, value);
     }
 
+    private bool _isSendLogExpanded = false; // Collapsed by default as per user request
+    public bool IsSendLogExpanded
+    {
+        get => _isSendLogExpanded;
+        set => SetField(ref _isSendLogExpanded, value);
+    }
+
+    // Height calculation: ~23px per line (including padding) for up to 5 lines max
+    private const double LineHeight = 23;
+    private const int MaxLogLines = 5;
+    
+    private double _sendLogHeightRequest = LineHeight; // 1 line when collapsed
+    public double SendLogHeightRequest
+    {
+        get => _sendLogHeightRequest;
+        set => SetField(ref _sendLogHeightRequest, value);
+    }
+
     private string? _obx1Type;
     public string? Obx1Type
     {
@@ -295,11 +321,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         private set => SetField(ref _isSiuSectionVisible, value);
     }
 
-    private string _orderControl = "NW";
-    public string OrderControl
+    private string _ormOrderControl = "NW";
+    public string OrmOrderControl
     {
-        get => _orderControl;
-        set => SetField(ref _orderControl, value);
+        get => _ormOrderControl;
+        set => SetField(ref _ormOrderControl, value);
     }
 
     private string _ormPlacerOrderNumber = string.Empty;
@@ -582,6 +608,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IsNewPatientIdVisible = isMergeAdtType;
     }
 
+    // Toggle method for Send log visibility
+    public void ToggleSendLog()
+    {
+        IsSendLogExpanded = !IsSendLogExpanded;
+        
+        if (IsSendLogExpanded)
+        {
+            // Set height to show up to MaxLogLines when expanded
+            SendLogHeightRequest = LineHeight * Math.Min(MaxLogLines, 5);
+        }
+        else
+        {
+            // Set to minimal height when collapsed
+            SendLogHeightRequest = LineHeight;
+        }
+    }
+
     private void OnGenerate()
     {
         try
@@ -604,7 +647,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 AdmissionNumber = AdmissionNumber ?? string.Empty,
                 EventDateTime = IsEventDateTimeVisible && !string.IsNullOrWhiteSpace(EventDateTime) ? EventDateTime : null,
 
-                OrderControl = OrderControl ?? "NW",
+                OrderControl = OrmOrderControl ?? "NW",
                 OrmPlacerOrderNumber = OrmPlacerOrderNumber ?? string.Empty,
                 OrmFillerOrderNumber = OrmFillerOrderNumber ?? string.Empty,
                 OrmOrderStatus = OrmOrderStatus ?? "Final",
@@ -715,7 +758,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
         else
         {
-            SendLog = _sendLog + Environment.NewLine + line;
+            // Add new line at the beginning (most recent first)
+            SendLog = line + Environment.NewLine + _sendLog;
+
+            // Limit to MaxLogLines (keep only the most recent lines)
+            var lines = SendLog.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            if (lines.Length > MaxLogLines)
+            {
+                SendLog = string.Join(Environment.NewLine, lines.Take(MaxLogLines));
+            }
+        }
+
+        // Auto-expand when log is updated if collapsed
+        if (!_isSendLogExpanded)
+        {
+            IsSendLogExpanded = true;
+            // Set height to show up to MaxLogLines
+            SendLogHeightRequest = LineHeight * MaxLogLines;
         }
     }
 

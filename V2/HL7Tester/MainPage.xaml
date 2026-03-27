@@ -2,9 +2,12 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.MainPage"
+             xmlns:converters="clr-namespace:HL7Tester.Converters"
              Title="HL7Tester">
-
-    <Grid RowDefinitions="Auto,*,Auto">
+    <ContentPage.Resources>
+        <converters:BoolToArrowConverter x:Key="BoolToArrowConverter" />
+    </ContentPage.Resources>
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
         <!-- Header -->
         <Grid Grid.Row="0"
               Padding="20,16"
@@ -59,9 +62,9 @@
             </Grid>
         </Grid>
 
-        <!-- Main content -->
+        <!-- Main scrollable content -->
         <ScrollView Grid.Row="1">
-            <Grid Padding="20"
+            <Grid Padding="20,20,20,0"
                   RowSpacing="12"
                   ColumnSpacing="12">
                 <Grid.RowDefinitions>
@@ -310,7 +313,10 @@
                             </Grid.ColumnDefinitions>
 
                             <Label Grid.Row="0" Grid.Column="0" Text="Order control (ORC-1)" VerticalOptions="Center" />
-                            <Entry Grid.Row="0" Grid.Column="1" Text="{Binding OrderControl}" Placeholder="NW" />
+                            <Picker Grid.Row="0" Grid.Column="1" 
+                                    ItemsSource="{Binding OrderControlList}"
+                                    SelectedItem="{Binding OrmOrderControl}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Placer order number (ORC-2)" VerticalOptions="Center" />
                             <Entry Grid.Row="1" Grid.Column="1" Text="{Binding OrmPlacerOrderNumber}" Placeholder="ORC-2 / OBR-2" />
@@ -510,101 +516,94 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Generated message and send log -->
+                <!-- Send log card -->
                 <Border Grid.Row="2" Grid.ColumnSpan="2" Style="{StaticResource CardBorder}">
                     <Grid RowSpacing="10">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0" ColumnSpacing="8" ZIndex="1">
+                        <!-- Header with Logs button -->
+                        <Grid Grid.Row="0" ColumnSpacing="8">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnSendLogHeaderTapped" />
+                            </Grid.GestureRecognizers>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
+                            <!-- Clickable title with arrow indicator (▼ when expanded, ► when collapsed) -->
                             <Label Grid.Column="0"
-                                   Text="Generated HL7 message"
+                                   Text="{Binding IsSendLogExpanded, Converter={StaticResource BoolToArrowConverter}}" 
+                                   TextColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray400}}"
                                    Style="{StaticResource SubHeadline}"
-                                   HorizontalOptions="Start" />
+                                   HorizontalOptions="Start"
+                                   VerticalOptions="Center" />
 
                             <Button Grid.Column="1"
-                                    Text="Copy"
-                                    HorizontalOptions="End"
-                                    ZIndex="2"
-                                    Clicked="OnCopyMessageClicked" />
-                        </Grid>
-
-                        <Editor Grid.Row="1"
-                                Text="{Binding GeneratedMessage}"
-                                AutoSize="TextChanges"
-                                HeightRequest="200"
-                                ZIndex="0"
-                                IsReadOnly="False" />
-
-                        <BoxView Grid.Row="2"
-                                 HeightRequest="1"
-                                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
-
-                        <Grid Grid.Row="3" RowSpacing="4">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <Label Grid.Row="0" Grid.Column="0"
-                                   Text="Send log"
-                                   Style="{StaticResource SubHeadline}"
-                                   HorizontalOptions="Start" />
-
-                            <Button Grid.Row="0" Grid.Column="2"
                                     Text="Logs"
                                     HorizontalOptions="End"
                                     ZIndex="2"
                                     Clicked="OnOpenLogsClicked" />
-
-                            <Editor Grid.Row="1" Grid.ColumnSpan="3"
-                                    Text="{Binding SendLog}"
-                                    AutoSize="TextChanges"
-                                    HeightRequest="100"
-                                    ZIndex="0"
-                                    IsReadOnly="True" />
                         </Grid>
+
+                        <!-- Send log Editor - collapsible with dynamic height -->
+                        <Editor Grid.Row="1"
+                                Text="{Binding SendLog}"
+                                AutoSize="TextChanges"
+                                HeightRequest="{Binding SendLogHeightRequest, Mode=OneWay}"
+                                IsReadOnly="True"
+                                IsVisible="{Binding IsSendLogExpanded}"
+                                Placeholder="Last send log messages will appear here..." />
                     </Grid>
                 </Border>
             </Grid>
         </ScrollView>
 
-        <!-- Bottom action bar -->
-        <Grid Grid.Row="2"
-              Padding="16,8"
-              ColumnSpacing="12"
-              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <!-- Persistent footer with generated message and actions (generated message expands automatically with content lines) -->
+        <Grid Grid.Row="3" Padding="20,8" RowDefinitions="Auto,Auto">
+            <!-- Generated HL7 message editor (expands automatically with content lines) -->
+            <Grid Grid.Row="0" ColumnSpacing="8" ZIndex="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="0"
-                    Text="Generate HL7"
-                    Command="{Binding GenerateCommand}" />
+                <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="8">
+                    <Editor Text="{Binding GeneratedMessage}" 
+                            AutoSize="TextChanges"
+                            Placeholder="HL7 message will appear here after generation" />
+                </Border>
 
-            <Button Grid.Column="1"
-                    Text="Send HL7"
-                    Command="{Binding SendCommand}" />
+                <Button Grid.Column="1"
+                        Text="Copy"
+                        HorizontalOptions="End"
+                        ZIndex="2"
+                        Clicked="OnCopyMessageClicked" />
+            </Grid>
 
-            <Button Grid.Column="2"
-                    Text="Settings"
-                    Clicked="OnSettingsClicked" />
+            <!-- Bottom action bar (Generate / Send / Settings buttons) -->
+            <Grid Grid.Row="1" Padding="0,10,0,0" ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Text="Generate HL7"
+                        Command="{Binding GenerateCommand}" />
+
+                <Button Grid.Column="1"
+                        Text="Send HL7"
+                        Command="{Binding SendCommand}" />
+
+                <Button Grid.Column="2"
+                        Text="Settings"
+                        Clicked="OnSettingsClicked" />
+            </Grid>
         </Grid>
     </Grid>
 

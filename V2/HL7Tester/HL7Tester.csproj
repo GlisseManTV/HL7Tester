@@ -33,8 +33,8 @@
 		<ApplicationId>com.companyname.HL7Tester</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>2.0.4</ApplicationDisplayVersion>
-		<ApplicationVersion>2.0.4.0</ApplicationVersion>
+		<ApplicationDisplayVersion>2.0.6</ApplicationDisplayVersion>
+		<ApplicationVersion>2.0.6.0</ApplicationVersion>
 
 		<!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
 		<WindowsPackageType>None</WindowsPackageType>
@@ -54,6 +54,7 @@
 		    -r win-arm64 (Windows on ARM)
 		-->
 		<CheckEolTargetFramework>false</CheckEolTargetFramework>
+		<EnableCodeSigning Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">false</EnableCodeSigning>
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>

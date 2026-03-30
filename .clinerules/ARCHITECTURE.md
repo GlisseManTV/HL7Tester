@@ -79,7 +79,24 @@ Persists application settings to JSON:
 
 ---
 
-## v2.0.6 Changes (Latest release)
+## v2.0.7 Changes (Latest release)
+
+### ORM Order Control Code Sanitization
+
+1. **Order Control Value Normalization**
+   - ORC-1 now receives only the order control code (e.g., `NW`, `CA`, `XO`)
+   - UI remains user-friendly with descriptive labels (e.g., "NW - New order")
+   - Prevents full label text from being injected into HL7 ORM messages
+
+**Modified Files:**
+
+| File | Changes |
+|------|---------|
+| `ViewModels/MainViewModel.cs` | Extracts order control code before generating ORM messages |
+
+---
+
+## v2.0.6 Changes
 
 ### Collapsible Send Log Card with Dynamic Height
 
@@ -452,10 +469,10 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.6</ApplicationDisplayVersion>
-<ApplicationVersion>0</ApplicationVersion>
+<ApplicationDisplayVersion>2.0.7</ApplicationDisplayVersion>
+<ApplicationVersion>2.0.7.0</ApplicationVersion>
 ```
 
 ---
 
-*Last Updated: March 24, 2026 (v2.0.6)*
+*Last Updated: March 30, 2026 (v2.0.7)*

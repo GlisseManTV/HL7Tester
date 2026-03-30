@@ -647,7 +647,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 AdmissionNumber = AdmissionNumber ?? string.Empty,
                 EventDateTime = IsEventDateTimeVisible && !string.IsNullOrWhiteSpace(EventDateTime) ? EventDateTime : null,
 
-                OrderControl = OrmOrderControl ?? "NW",
+                OrderControl = ExtractOrderControlCode(OrmOrderControl),
                 OrmPlacerOrderNumber = OrmPlacerOrderNumber ?? string.Empty,
                 OrmFillerOrderNumber = OrmFillerOrderNumber ?? string.Empty,
                 OrmOrderStatus = OrmOrderStatus ?? "Final",
@@ -791,5 +791,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
         field = value!;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    private static string ExtractOrderControlCode(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "NW";
+        }
+
+        var parts = value.Split('-', 2, StringSplitOptions.RemoveEmptyEntries);
+        var code = parts.Length > 0 ? parts[0].Trim() : value.Trim();
+
+        return string.IsNullOrWhiteSpace(code) ? "NW" : code;
     }
 }

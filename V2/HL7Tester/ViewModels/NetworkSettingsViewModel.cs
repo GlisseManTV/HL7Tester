@@ -158,11 +158,13 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     }
 
     private async Task SaveAsync()
-    {
+	{
 		var oldIp = _settings.LastIpAddress ?? string.Empty;
 		var oldPort = _settings.LastPort ?? string.Empty;
-		var newIp = IpAddress ?? string.Empty;
-		var newPort = Port ?? string.Empty;
+        
+        // Trim to remove leading/trailing spaces from IP and port
+        var newIp = IpAddress?.Trim() ?? string.Empty;
+        var newPort = Port?.Trim() ?? string.Empty;
 		var oldLogLevel = _settings.LogLevel ?? "Debug";
 		var newLogLevel = SelectedLogLevel ?? "Debug";
 
@@ -197,8 +199,8 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         var parts = entry.Split(':', 2);
         if (parts.Length == 2)
         {
-            IpAddress = parts[0];
-            Port = parts[1];
+            IpAddress = parts[0].Trim();
+            Port = parts[1].Trim();
         }
     }
 

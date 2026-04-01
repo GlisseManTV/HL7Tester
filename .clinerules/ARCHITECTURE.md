@@ -79,7 +79,31 @@ Persists application settings to JSON:
 
 ---
 
-## v2.0.8 Changes (Latest Release)
+## v2.0.9 Changes (Latest Release)
+
+### IP and Port Space Trimming
+
+1. **Leading/Trailing Space Removal**
+   - Automatically trims leading and trailing spaces from IP address and port fields
+   - Applied during save operation in `NetworkSettingsViewModel.SaveAsync()`
+   - Also applied when selecting entries from connection history (`OnSelectHistoryEntry()`)
+   - Prevents silent failures when pasting IPs with surrounding whitespace
+
+**Example:**
+```
+User pastes: " 192.168.1.10 "
+Stored as:   "192.168.1.10"
+```
+
+### Modified Files:
+
+| File | Changes |
+|------|---------|
+| `ViewModels/NetworkSettingsViewModel.cs` | Added `.Trim()` calls in `SaveAsync()` method (lines 163-164) and `OnSelectHistoryEntry()` method (lines 200-201) |
+
+---
+
+## v2.0.8 Changes
 
 ### MSH Segment Fields Shortening with Username
 
@@ -508,4 +532,4 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
-*Last Updated: April 1, 2026 (v2.0.8)*
+*Last Updated: January 1, 2026 (v2.0.9)*

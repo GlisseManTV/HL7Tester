@@ -34,11 +34,11 @@ public sealed class AdtMessageRequest
     public string? NewPatientId { get; set; }
     public string? EventDateTime { get; set; }
 
-    // MSH routing fields
-    public string SendingApplication { get; set; } = "Hl7Tester-Core";
-    public string SendingFacility { get; set; } = "HL7Tester";
-    public string ReceivingApplication { get; set; } = "Receiver";
-    public string ReceivingFacility { get; set; } = "ReceiverFacility";
+    // MSH routing fields (shortened to reduce message length)
+    public string SendingApplication { get; set; } = "HL7Tester";
+    public string SendingFacility { get; set; } = $"{Environment.UserName}";
+    public string ReceivingApplication { get; set; } = "";
+    public string ReceivingFacility { get; set; } = "";
 
     public IList<ObxEntry> ObxEntries { get; } = new List<ObxEntry>();
 

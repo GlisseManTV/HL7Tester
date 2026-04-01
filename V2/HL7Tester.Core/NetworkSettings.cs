@@ -3,12 +3,13 @@ using System.Text.Json;
 namespace HL7Tester.Core;
 
 /// <summary>
-/// Représente la configuration réseau (IP/port + historique des connexions).
+/// Représente la configuration réseau (IP/port + nickname + historique des connexions).
 /// </summary>
 public sealed class NetworkSettings
 {
     public string? LastIpAddress { get; set; }
     public string? LastPort { get; set; }
+    public string? Nickname { get; set; }
 
     /// <summary>
     /// Indique si l'application doit vérifier automatiquement la présence
@@ -34,6 +35,7 @@ public sealed class ConnectionHistoryEntry
 {
     public string Ip { get; set; } = string.Empty;
     public string Port { get; set; } = string.Empty;
+    public string? Nickname { get; set; }
 }
 
 /// <summary>
@@ -48,7 +50,7 @@ public interface INetworkSettingsService
     /// <summary>
     /// Met à jour LastIp/LastPort et l'historique (liste bornée, sans doublons consécutifs).
     /// </summary>
-    void AddToHistory(NetworkSettings settings, string ip, string port, int maxEntries = 10);
+    void AddToHistory(NetworkSettings settings, string ip, string port, string? nickname = null, int maxEntries = int.MaxValue);
 }
 
 public sealed class FileNetworkSettingsService : INetworkSettingsService
@@ -94,7 +96,7 @@ public sealed class FileNetworkSettingsService : INetworkSettingsService
                           .ConfigureAwait(false);
     }
 
-    public void AddToHistory(NetworkSettings settings, string ip, string port, int maxEntries = 10)
+    public void AddToHistory(NetworkSettings settings, string ip, string port, string? nickname = null, int maxEntries = int.MaxValue)
     {
         if (settings is null) throw new ArgumentNullException(nameof(settings));
 
@@ -109,17 +111,35 @@ public sealed class FileNetworkSettingsService : INetworkSettingsService
             return;
         }
 
-        // Supprimer une éventuelle entrée identique en tête pour éviter les doublons consécutifs.
-        if (settings.History.Count > 0 &&
-            string.Equals(settings.History[0].Ip, ip, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(settings.History[0].Port, port, StringComparison.OrdinalIgnoreCase))
+        // Formater le nickname pour éviter les espaces superflus
+        var formattedNickname = string.IsNullOrWhiteSpace(nickname) ? null : nickname.Trim();
+
+        // Vérifier si l'entrée IP:Port existe déjà (sans tenir compte du nickname)
+        var existingEntryIndex = settings.History.FindIndex(e => 
+            string.Equals(e.Ip, ip, StringComparison.OrdinalIgnoreCase) && 
+            string.Equals(e.Port, port, StringComparison.OrdinalIgnoreCase));
+
+        if (existingEntryIndex >= 0)
         {
-            return;
+            // Entrée existe déjà, la supprimer et l'ajouter en tête avec le nouveau nickname
+            settings.History.RemoveAt(existingEntryIndex);
+            
+            // Garder le nickname existant si pas de nouveau fourni
+            if (string.IsNullOrEmpty(formattedNickname))
+            {
+                formattedNickname = settings.History.ElementAtOrDefault(existingEntryIndex)?.Nickname;
+            }
         }
 
-        settings.History.Insert(0, new ConnectionHistoryEntry { Ip = ip, Port = port });
+        settings.History.Insert(0, new ConnectionHistoryEntry 
+        { 
+            Ip = ip, 
+            Port = port,
+            Nickname = formattedNickname
+        });
 
-        if (settings.History.Count > maxEntries)
+        // Limiter la taille de l'historique si nécessaire (par défaut: illimité)
+        if (settings.History.Count > maxEntries && maxEntries > 0)
         {
             settings.History.RemoveRange(maxEntries, settings.History.Count - maxEntries);
         }

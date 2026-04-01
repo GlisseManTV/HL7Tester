@@ -2,20 +2,17 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.NetworkSettingsPage"
-             Title="Network Settings">
+             Title="Settings">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="12">
+        <VerticalStackLayout Padding="20" Spacing="16">
 
-            <Label Text="Network configuration" Style="{StaticResource Headline}" />
-
-            <!-- Carte paramètres réseau -->
+            <!-- Carte Network Settings (gauche) -->
             <Border Style="{StaticResource CardBorder}">
-                <VerticalStackLayout Spacing="8">
-                    <Grid RowSpacing="8" ColumnSpacing="10">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Network Settings" Style="{StaticResource SubHeadline}" />
+                    <Grid RowSpacing="10" ColumnSpacing="10">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -26,52 +23,60 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <Label Grid.Row="0" Grid.Column="0" Text="IP address" />
+                        <Label Grid.Row="0" Grid.Column="0" Text="IP (*)" VerticalOptions="Center" />
                         <Entry Grid.Row="0" Grid.Column="1"
                                Text="{Binding IpAddress}"
-                               Keyboard="Numeric" />
+                               Keyboard="Numeric"
+                               Placeholder="e.g., 192.168.1.10" />
 
-                        <Label Grid.Row="1" Grid.Column="0" Text="Port" />
+                        <Label Grid.Row="1" Grid.Column="0" Text="Port (*)" VerticalOptions="Center" />
                         <Entry Grid.Row="1" Grid.Column="1"
                                Text="{Binding Port}"
-                               Keyboard="Numeric" />
+                               Keyboard="Numeric"
+                               Placeholder="e.g., 70" />
 
-                        <Label Grid.Row="2" Grid.Column="0" Text="Log level" />
-                        <Picker Grid.Row="2" Grid.Column="1"
-                                ItemsSource="{Binding AvailableLogLevels}"
-                                SelectedItem="{Binding SelectedLogLevel}" />
+                        <Label Grid.Row="2" Grid.Column="0" Text="Nickname (optional)" VerticalOptions="Center" />
+                        <Entry Grid.Row="2" Grid.Column="1"
+                               Text="{Binding Nickname}"
+                               Placeholder="e.g., Server A, Test Lab" />
 
-                        <Label Grid.Row="3" Grid.Column="0" Text="Auto-update" />
-                        <Switch Grid.Row="3" Grid.Column="1"
-                                IsToggled="{Binding AutoUpdateCheck}" />
-
-                        <Button Grid.Row="4" Grid.ColumnSpan="2"
-                                Text="Save configuration"
-                                Command="{Binding SaveCommand}"
+                        <Button Grid.Row="3" Grid.ColumnSpan="2"
+                                Text="Save Network settings"
+                                Command="{Binding SaveNetworkSettingsCommand}"
                                 HorizontalOptions="Fill" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Carte historique des connexions -->
+            <!-- Carte Connection History (droite) -->
             <Border Style="{StaticResource CardBorder}">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="History" Style="{StaticResource SubHeadline}" HorizontalOptions="Start" />
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Text="Connection History" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
+                        <Button Grid.Column="1" Text="Delete History" 
+                                Command="{Binding DeleteHistoryCommand}"
+                                FontSize="Small"
+                                Padding="8,4" />
+                    </Grid>
                     <CollectionView ItemsSource="{Binding HistoryEntries}"
-                                    HeightRequest="160">
+                                    HeightRequest="160"
+                                    SelectionMode="Single">
                         <CollectionView.EmptyView>
-                            <Label Text="No previous connections yet." />
+                            <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
                         </CollectionView.EmptyView>
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <Border Padding="8" Style="{StaticResource ClickableListItemBorder}">
+                                <Border Padding="10" Style="{StaticResource ClickableListItemBorder}">
                                     <Grid.GestureRecognizers>
                                         <TapGestureRecognizer
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectHistoryEntryCommand}"
-                                            CommandParameter="{Binding .}" />
+                                            CommandParameter="{Binding DisplayText}" />
                                     </Grid.GestureRecognizers>
-
-                                    <Label Text="{Binding .}" />
+                                    <Label Text="{Binding DisplayText}" FontSize="Medium" />
                                 </Border>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
@@ -79,11 +84,41 @@
                 </VerticalStackLayout>
             </Border>
 
-
-
-            <!-- Carte documentation HL7 -->
+            <!-- Carte Application Settings -->
             <Border Style="{StaticResource CardBorder}">
-                <VerticalStackLayout Spacing="8">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Application Settings" Style="{StaticResource SubHeadline}" />
+                    <Grid RowSpacing="10" ColumnSpacing="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Label Grid.Row="0" Grid.Column="0" Text="Check updates" VerticalOptions="Center" />
+                        <Switch Grid.Row="0" Grid.Column="1"
+                                IsToggled="{Binding AutoUpdateCheck}" />
+
+                        <Label Grid.Row="1" Grid.Column="0" Text="Log level" VerticalOptions="Center" />
+                        <Picker Grid.Row="1" Grid.Column="1"
+                                ItemsSource="{Binding AvailableLogLevels}"
+                                SelectedItem="{Binding SelectedLogLevel}" />
+
+                        <Button Grid.Row="2" Grid.ColumnSpan="2"
+                                Text="Save Application settings"
+                                Command="{Binding SaveApplicationSettingsCommand}"
+                                HorizontalOptions="Fill" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Carte Documentation HL7 -->
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="12">
                     <Label Text="HL7 Documentation" Style="{StaticResource SubHeadline}" />
                     <HorizontalStackLayout Spacing="12">
                         <Button Text="HL7 ADT v2.3 ↗"
@@ -101,15 +136,18 @@
                     </HorizontalStackLayout>
                 </VerticalStackLayout>
             </Border>
+
             <!-- Bouton de retour à la page principale -->
             <Button Text="Home"
                     HorizontalOptions="End"
                     Clicked="OnHomeClicked" />
+
             <!-- Version de l'application -->
             <Label Text="{Binding AssemblyVersion}"
                    HorizontalOptions="Center"
                    FontSize="Small"
                    TextColor="{DynamicResource Primary}" />
+
         </VerticalStackLayout>
     </ScrollView>
 

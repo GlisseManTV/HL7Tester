@@ -79,9 +79,42 @@ Persists application settings to JSON:
 
 ---
 
+## v2.0.8 Changes (Latest Release)
+
+### MSH Segment Fields Shortening with Username
+
+1. **Reduced MSH Routing Fields Length**
+   - `SendingApplication`: Changed from `"Hl7Tester-Core"` to `"HL7Tester"`
+   - `SendingFacility`: Changed from empty string to `Environment.UserName` for user identification
+   - `ReceivingApplication`: Set to empty string `""` (was `"Receiver"`)
+   - `ReceivingFacility`: Set to empty string `""` (was `"ReceiverFacility"`)
+
+**Example before:**
+```
+MSH|^~\&|Hl7Tester-Core|HL7Tester|Receiver|ReceiverFacility|...
+```
+
+**Example after:**
+```
+MSH|^~\&|HL7Tester|Username|||20260401133300||ADT^A01|...
+```
+
+This reduces the MSH segment from 43 characters to approximately 20-25 characters, significantly shortening the generated HL7 message.
+
+**Modified Files:**
+
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Class1.cs` | Updated default values for `SendingApplication`, `SendingFacility`, `ReceivingApplication`, and `ReceivingFacility` in `AdtMessageRequest` class |
+| `HL7Tester.csproj` | Incremented version to `2.0.8` |
+| `Platforms/Windows/app.manifest` | Incremented version to `2.0.8.0` |
+| `Platforms/Windows/Package.appxmanifest` | Incremented version to `2.0.8.0` |
+
+---
+
 ## v2.0.7 Changes (Latest release)
 
-### ORM Order Control Code Sanitization
+### ORM order control code sanitization
 
 1. **Order Control Value Normalization**
    - ORC-1 now receives only the order control code (e.g., `NW`, `CA`, `XO`)
@@ -475,4 +508,4 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
-*Last Updated: March 30, 2026 (v2.0.7)*
+*Last Updated: April 1, 2026 (v2.0.8)*

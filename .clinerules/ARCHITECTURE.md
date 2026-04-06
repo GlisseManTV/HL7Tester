@@ -79,9 +79,148 @@ Persists application settings to JSON:
 
 ---
 
+## v2.0.11 Changes (Latest Development)
+
+### Enhanced Nickname Handling & History Management
+
+1. **Improved Nickname Parsing in History Selection**
+   - Fixed bug where nickname content went into Port field when clicking history entry
+   - Added proper parsing of "IP:Port (Nickname)" format in `OnSelectHistoryEntry()`
+   - Uses string indexing to extract IP, Port, and Nickname separately
+
+**Example:**
+```
+Entry: "192.168.1.10:70 (Server A)"
+- IpAddress → "192.168.1.10"
+- Port → "70"  
+- Nickname → "Server A"
+```
+
+2. **Delete History Button**
+   - Added "Delete History" button in Connection History card
+   - Clears entire connection history with single click
+   - Implemented via `OnDeleteHistory()` method and `DeleteHistoryCommand`
+
+3. **Historique Refresh While Preserving Values**
+   - Modified `SaveNetworkSettingsAsync()` to update HistoryEntries without clearing IP/Port/Nickname fields
+   - Sets `_settings.Nickname` before saving to ensure persistence
+   - Manually refreshes history collection after save instead of calling `LoadAsync()`
+
+### Modified Files:
+
+| File | Changes |
+|------|---------|
+| `ViewModels/NetworkSettingsViewModel.cs` | Enhanced `OnSelectHistoryEntry()` with proper nickname parsing; Added `OnDeleteHistory()` method and `DeleteHistoryCommand`; Modified `SaveNetworkSettingsAsync()` to preserve field values while updating history |
+
+---
+
+## v2.0.10 Changes (Latest Release)
+
+### Nickname Support & Unique History Entries
+
+1. **Nickname Field for IP Addresses**
+   - Added optional nickname field to label IP addresses with friendly names
+   - Stored in both `NetworkSettings.Nickname` and `ConnectionHistoryEntry.Nickname`
+   - Displayed as `"IP:Port (Nickname)"` in connection history
+   - Applied during save operation in `SaveNetworkSettingsAsync()`
+
+**Example:**
+```
+User enters: IP="192.168.1.10", Port="70", Nickname="Server A"
+Stored as:   "192.168.1.10:70 (Server A)" in history
+```
+
+2. **Unique History Entries (No Duplicates)**
+   - Connection history now prevents duplicate `IP:Port` combinations
+   - When the same IP:Port is saved again, it moves to the top of the list instead of creating a duplicate
+   - Unlimited history size (no maxEntries limit by default)
+   - Nickname updates are preserved when reusing an entry
+
+**Example:**
+```
+Before: 192.168.1.10:70, 192.168.1.20:70, 192.168.1.10:70 (duplicate)
+After:  192.168.1.10:70 (Server A), 192.168.1.20:70 (Office Server)
+```
+
+3. **Refactored Settings Page UI**
+   - Page title changed from "Network Settings" to "Settings"
+   - Network Settings card at top (IP, Port, Nickname fields + Save button)
+   - Connection History card next to it (displays unique IP:Port entries with nicknames)
+   - Application Settings card below (Auto-update toggle, Log level dropdown + Save button)
+   - HL7 Documentation card and Home button preserved at bottom
+   - Two separate save buttons: "Save Network settings" and "Save Application settings"
+
+**Modified Files:**
+
+| File | Changes |
+|------|---------|
+| `NetworkSettings.cs` | Added `Nickname` property to `NetworkSettings` class; Added `Nickname` property to `ConnectionHistoryEntry` class |
+| `NetworkSettingsService.AddToHistory()` | Updated to accept optional nickname parameter; Implemented duplicate detection and removal; Changed maxEntries default to int.MaxValue (unlimited) |
+| `ViewModels/NetworkSettingsViewModel.cs` | Added `Nickname` property with binding; Split into `SaveNetworkSettingsAsync()` and `SaveApplicationSettingsAsync()` methods; Updated `LoadAsync()` to load nickname; Added `HistoryEntryViewModel` class for formatted display |
+| `NetworkSettingsPage.xaml` | Refactored UI layout with separate Network Settings, Connection History, Application Settings cards; Changed title to "Settings"; Added two separate save buttons |
+
+---
+
+## v2.0.9 Changes
+
+### IP and Port Space Trimming
+
+1. **Leading/Trailing Space Removal**
+   - Automatically trims leading and trailing spaces from IP address and port fields
+   - Applied during save operation in `NetworkSettingsViewModel.SaveAsync()`
+   - Also applied when selecting entries from connection history (`OnSelectHistoryEntry()`)
+   - Prevents silent failures when pasting IPs with surrounding whitespace
+
+**Example:**
+```
+User pastes: " 192.168.1.10 "
+Stored as:   "192.168.1.10"
+```
+
+### Modified Files:
+
+| File | Changes |
+|------|---------|
+| `ViewModels/NetworkSettingsViewModel.cs` | Added `.Trim()` calls in `SaveAsync()` method (lines 163-164) and `OnSelectHistoryEntry()` method (lines 200-201) |
+
+---
+
+## v2.0.8 Changes
+
+### MSH Segment Fields Shortening with Username
+
+1. **Reduced MSH Routing Fields Length**
+   - `SendingApplication`: Changed from `"Hl7Tester-Core"` to `"HL7Tester"`
+   - `SendingFacility`: Changed from empty string to `Environment.UserName` for user identification
+   - `ReceivingApplication`: Set to empty string `""` (was `"Receiver"`)
+   - `ReceivingFacility`: Set to empty string `""` (was `"ReceiverFacility"`)
+
+**Example before:**
+```
+MSH|^~\&|Hl7Tester-Core|HL7Tester|Receiver|ReceiverFacility|...
+```
+
+**Example after:**
+```
+MSH|^~\&|HL7Tester|Username|||20260401133300||ADT^A01|...
+```
+
+This reduces the MSH segment from 43 characters to approximately 20-25 characters, significantly shortening the generated HL7 message.
+
+**Modified Files:**
+
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Class1.cs` | Updated default values for `SendingApplication`, `SendingFacility`, `ReceivingApplication`, and `ReceivingFacility` in `AdtMessageRequest` class |
+| `HL7Tester.csproj` | Incremented version to `2.0.8` |
+| `Platforms/Windows/app.manifest` | Incremented version to `2.0.8.0` |
+| `Platforms/Windows/Package.appxmanifest` | Incremented version to `2.0.8.0` |
+
+---
+
 ## v2.0.7 Changes (Latest release)
 
-### ORM Order Control Code Sanitization
+### ORM order control code sanitization
 
 1. **Order Control Value Normalization**
    - ORC-1 now receives only the order control code (e.g., `NW`, `CA`, `XO`)
@@ -475,4 +614,4 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
-*Last Updated: March 30, 2026 (v2.0.7)*
+*Last Updated: January 4, 2026 (v2.0.11)*

@@ -1,4 +1,40 @@
-## v2.0.11 Changes (Latest Development)
+## v2.0.12 Changes (Latest Development)
+
+### Settings Page UI Improvements
+
+1. **Static Footer with Home Button**
+   - Redesigned Network Settings page layout using `Grid` with `RowDefinitions="*,Auto"`
+   - Scrollable content area in Row 0 (ScrollView with all cards)
+   - Static footer in Row 1 that stays visible at the bottom
+   - Home button and app version displayed in the fixed footer
+   - Footer background matches app theme (`White` for light, `OffBlack` for dark)
+
+2. **Connection History Text Size Fix**
+   - Removed explicit `FontSize="Medium"` from history list item Label
+   - History entries now use the default font size (14) from the global Label style
+   - Consistent text sizing across the entire settings page
+
+3. **Deprecated API Replacements**
+   - Replaced all `DisplayAlert()` calls with `await DisplayAlertAsync()` in `MainPage.xaml.cs` and `App.xaml.cs`
+   - Replaced deprecated `Application.Current?.MainPage` with `Windows[0]?.Page` in `App.xaml.cs`
+   - Converted obsolete `Frame` style to `Border` in `Styles.xaml` (CardFrame)
+   - Replaced deprecated `LayoutOptions.FillAndExpand` with `Fill` in documentation buttons
+
+**Modified Files:**
+
+| File | Changes |
+|------|---------|
+| `NetworkSettingsPage.xaml` | Restructured with Grid layout (ScrollView + static footer); Moved Home button and version to footer; Fixed history item FontSize |
+| `MainPage.xaml.cs` | Replaced `DisplayAlert` with `DisplayAlertAsync` (4 occurrences) |
+| `App.xaml.cs` | Replaced `Application.Current?.MainPage.DisplayAlert` with `Windows[0]?.Page.DisplayAlertAsync`; Added null safety |
+| `Resources/Styles/Styles.xaml` | Converted `Frame` style to `Border` for CardFrame; Updated property names (BackgroundColor→Background, BorderColor→Stroke) |
+| `HL7Tester.csproj` | Version incremented to 2.0.12 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.12.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.12.0 |
+
+---
+
+## v2.0.11 Changes (Previous)
 
 ### Enhanced Nickname Handling & History Management
 

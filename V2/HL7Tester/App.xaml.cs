@@ -105,9 +105,10 @@ public partial class App : Application
 						url = "https://github.com/GlisseManTV/HL7Tester/releases/latest";
 					}
 
-					bool open = await Application.Current?.MainPage.DisplayAlert(
+					var mainWindow = Application.Current?.Windows[0]?.Page;
+					bool open = await mainWindow?.DisplayAlertAsync(
 						"Update available",
-						$"A new version v{result.LatestVersion} is available. You are currently using v{result.CurrentVersion}.\n\nDo you want to open the releases page?",
+						$"A new version v{result.LatestVersion} is available. You are currently using v{result.CurrentVersion}\n\nDo you want to open the releases page?",
 						"Yes",
 						"No")!;
 

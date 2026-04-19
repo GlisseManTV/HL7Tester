@@ -121,10 +121,32 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.7</ApplicationDisplayVersion>
-<ApplicationVersion>2.0.7.0</ApplicationVersion>
+<ApplicationDisplayVersion>2.0.12</ApplicationDisplayVersion>
+<ApplicationVersion>2.0.12.0</ApplicationVersion>
+```
+
+### Windows Package Manifest
+```xml
+<!-- app.manifest -->
+<assemblyIdentity version="2.0.12.0" name="HL7Tester.WinUI.app"/>
+
+<!-- Package.appxmanifest -->
+<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.12.0" />
 ```
 
 ---
 
-*Last Updated: January 4, 2026 (v2.0.11)*
+## Recent Changes (v2.0.12)
+
+### UI Improvements
+- **Static Footer in Settings Page**: Redesigned `NetworkSettingsPage.xaml` with `Grid` layout (`RowDefinitions="*,Auto"`) - scrollable content in Row 0, fixed footer with Home button and version in Row 1
+- **Connection History Text Size**: Fixed inconsistent font size by removing explicit `FontSize="Medium"` from history list items (now uses default 14)
+- **Deprecated API Replacements**:
+  - `DisplayAlert()` → `DisplayAlertAsync()` across all code-behind files
+  - `Application.Current?.MainPage` → `Windows[0]?.Page` for main window access
+  - `Frame` → `Border` for CardFrame style (Frame obsolete in .NET 9+)
+  - `LayoutOptions.FillAndExpand` → `Fill` for button layout
+
+---
+
+*Last Updated: April 19, 2026 (v2.0.12)*

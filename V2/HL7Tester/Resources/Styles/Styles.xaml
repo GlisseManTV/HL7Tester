@@ -524,14 +524,22 @@
         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource OffBlack}}" />
     </Style>
 
-    <!-- Carte générique pour regrouper des sections de formulaire (ancienne implémentation basée sur Frame) -->
-    <Style TargetType="Frame" x:Key="CardFrame">
-        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}" />
-        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
-        <Setter Property="CornerRadius" Value="10" />
+    <!-- Carte générique pour regrouper des sections de formulaire (remplacé par Border) -->
+    <Style TargetType="Border" x:Key="CardFrame">
+        <Setter Property="Background" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="10" />
+            </Setter.Value>
+        </Setter>
         <Setter Property="Padding" Value="16" />
-        <Setter Property="HasShadow" Value="True" />
         <Setter Property="Margin" Value="0,6" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow />
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- Nouvelle carte basée sur Border pour .NET 9+ -->

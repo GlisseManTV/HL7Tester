@@ -34,7 +34,7 @@ public partial class MainPage : ContentPage
 			{
 				if (!Directory.Exists(logDirectory))
 				{
-					await DisplayAlert("Logs", "The log folder does not exist yet. Perform some actions in the application to generate logs.", "OK");
+					await DisplayAlertAsync("Logs", "The log folder does not exist yet. Perform some actions in the application to generate logs.", "OK");
 					return;
 				}
 
@@ -48,7 +48,7 @@ public partial class MainPage : ContentPage
 
 			if (!File.Exists(logFilePath))
 			{
-				await DisplayAlert("Logs", "The log file for today does not exist yet. Perform some actions in the application to generate logs.", "OK");
+				await DisplayAlertAsync("Logs", "The log file for today does not exist yet. Perform some actions in the application to generate logs.", "OK");
 				return;
 			}
 
@@ -59,7 +59,7 @@ public partial class MainPage : ContentPage
 		}
 		catch (Exception ex)
 		{
-			await DisplayAlert("Error", $"Unable to open log file: {ex.Message}", "OK");
+			await DisplayAlertAsync("Error", $"Unable to open log file: {ex.Message}", "OK");
 		}
 	}
 
@@ -76,7 +76,7 @@ public partial class MainPage : ContentPage
 		}
 		catch (Exception ex)
 		{
-			await DisplayAlert("Error", $"Unable to copy message: {ex.Message}", "OK");
+			await DisplayAlertAsync("Error", $"Unable to copy message: {ex.Message}", "OK");
 		}
 	}
 

@@ -22,6 +22,16 @@ public sealed class SendResult
 public interface IHL7NetworkSender
 {
     Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Envoie un message HL7 avec un encodage spécifique.
+    /// </summary>
+    /// <param name="hl7Message">Le message HL7 à envoyer.</param>
+    /// <param name="ipAddress">L'adresse IP du serveur cible.</param>
+    /// <param name="port">Le port du serveur cible.</param>
+    /// <param name="cancellationToken">Token d'annulation.</param>
+    /// <param name="encodingName">Nom de l'encodage à utiliser (ex: "UTF-8", "CP1252", "ISO-8859-1"). Si null, utilise UTF-8 par défaut.</param>
+    Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null);
 }
 
 public sealed class Hl7NetworkSender : IHL7NetworkSender
@@ -35,6 +45,11 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
 
     public async Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default)
     {
+        return await SendAsync(hl7Message, ipAddress, port, cancellationToken, encodingName: null).ConfigureAwait(false);
+    }
+
+    public async Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null)
+    {
         if (string.IsNullOrWhiteSpace(hl7Message))
             throw new ArgumentException("HL7 message cannot be null or empty.", nameof(hl7Message));
         if (string.IsNullOrWhiteSpace(ipAddress))
@@ -44,9 +59,8 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
 
         // Framing MLLP : <VT>message<FS><CR>
         var payload = $"\x0B{hl7Message}\x1C\r";
-        // Pour rester cross‑platform sans dépendre de windows-1252, on utilise Latin1,
-        // suffisant pour nos besoins (principalement ASCII en pratique).
-        var bytes = Encoding.Latin1.GetBytes(payload);
+        var encoding = GetEncodingFromString(encodingName);
+        var bytes = encoding.GetBytes(payload);
 
         using var client = new TcpClient();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -66,7 +80,7 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
             await stream.WriteAsync(bytes, 0, bytes.Length, cts.Token).ConfigureAwait(false);
             await stream.FlushAsync(cts.Token).ConfigureAwait(false);
 
-            _logger.LogInformation("HL7 message sent to {Ip}:{Port} ({Bytes} bytes)", ipAddress, port, bytes.Length);
+            _logger.LogInformation("HL7 message sent to {Ip}:{Port} ({Bytes} bytes) with encoding {Encoding}", ipAddress, port, bytes.Length, encoding.EncodingName);
 
             // Optionnel : lecture d'un ACK en retour (non parsé pour l'instant)
             string? ackMessage = null;
@@ -81,7 +95,7 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                     int read = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), cts.Token).ConfigureAwait(false);
                     if (read > 0)
                     {
-                        ackMessage = Encoding.Latin1.GetString(buffer, 0, read);
+                        ackMessage = encoding.GetString(buffer, 0, read);
                         // Formater l'ACK avec des sauts de ligne pour une meilleure lisibilité
                         var ackClean = CleanAckMessage(ackMessage);
                         _logger.LogInformation("Received ACK from {Ip}:{Port}:\n{Ack}", ipAddress, port, ackClean);
@@ -170,5 +184,24 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
     private static string CleanAckMessage(string ack)
     {
         return ack.Replace("\x0B", "").Replace("\x1C", "").Replace("\r", "\n").TrimEnd('\n');
+    }
+
+    /// <summary>
+    /// Obtient un objet Encoding à partir d'une chaîne de caractères.
+    /// </summary>
+    /// <param name="encodingName">Nom de l'encodage (ex: "UTF-8", "CP1252", "ISO-8859-1"). Si null ou vide, retourne UTF-8.</param>
+    private static Encoding GetEncodingFromString(string? encodingName)
+    {
+        if (string.IsNullOrWhiteSpace(encodingName))
+            return Encoding.UTF8;
+
+        return encodingName.Trim() switch
+        {
+            "UTF-8" or "utf-8" => Encoding.UTF8,
+            "CP1252" or "Cp1252" or "windows-1252" or "Windows-1252" => Encoding.GetEncoding("Cp1252"),
+            "ISO-8859-1" or "Iso-8859-1" or "iso8859-1" or "ISO8859-1" => Encoding.GetEncoding("Iso-8859-1"),
+            "Latin1" or "latin1" => Encoding.Latin1,
+            _ => Encoding.GetEncoding(encodingName.Trim())
+        };
     }
 }

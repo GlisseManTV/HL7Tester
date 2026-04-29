@@ -722,7 +722,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _logger.LogInformation("Sending HL7 message to {Ip}:{Port}.", ip, port);
             _logger.LogDebug("HL7 message length: {Length} characters.", messageToSend.Length);
 
-            var result = await _networkSender.SendAsync(messageToSend, ip, port);
+            // Récupérer l'encodage configuré
+            string? encodingName = settings.MessageEncoding;
+            _logger.LogDebug("Using message encoding: {Encoding}", encodingName ?? "(default)");
+
+            var result = await _networkSender.SendAsync(messageToSend, ip, port, encodingName: encodingName);
 
             string messageTypeStr = !string.IsNullOrWhiteSpace(result.MessageCode) 
                 ? result.MessageCode 

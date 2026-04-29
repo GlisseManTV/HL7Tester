@@ -96,6 +96,9 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -111,7 +114,26 @@
                                     ItemsSource="{Binding AvailableLogLevels}"
                                     SelectedItem="{Binding SelectedLogLevel}" />
 
-                            <Button Grid.Row="2" Grid.ColumnSpan="2"
+                            <Label Grid.Row="2" Grid.Column="0" Text="Message encoding" VerticalOptions="Center" />
+                            <Picker Grid.Row="2" Grid.Column="1"
+                                    ItemsSource="{Binding AvailableEncodings}"
+                                    SelectedItem="{Binding SelectedEncoding}" />
+
+                            <Grid Grid.Row="3" Grid.ColumnSpan="2"
+                                  ColumnDefinitions="Auto,*"
+                                  IsVisible="{Binding UseCustomEncoding}">
+                                <Label Text="Use custom encoding" VerticalOptions="Center" />
+                                <Switch Grid.Column="1"
+                                        HorizontalOptions="End"
+                                        IsToggled="{Binding UseCustomEncoding}" />
+                            </Grid>
+
+                            <Entry Grid.Row="4" Grid.ColumnSpan="2"
+                                   Text="{Binding CustomEncoding}"
+                                   Placeholder="e.g., ISO-8859-2, KOI8-R..."
+                                   IsVisible="{Binding UseCustomEncoding}" />
+
+                            <Button Grid.Row="5" Grid.ColumnSpan="2"
                                     Text="Save Application settings"
                                     Command="{Binding SaveApplicationSettingsCommand}"
                                     HorizontalOptions="Fill" />

@@ -62,7 +62,7 @@
                             <Label Grid.Column="0" Text="Connection History" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
                             <Button Grid.Column="1" Text="Delete History" 
                                     Command="{Binding DeleteHistoryCommand}"
-                                    FontSize="Small"
+                                    FontSize="14"
                                     Padding="8,4" />
                         </Grid>
                         <CollectionView ItemsSource="{Binding HistoryEntries}"
@@ -181,7 +181,7 @@
             <Label Grid.Column="1"
                    Text="{Binding AssemblyVersion}"
                    HorizontalOptions="Center"
-                   FontSize="Small"
+                   FontSize="14"
                    TextColor="{DynamicResource Primary}" />
 
             <Button Grid.Column="2"

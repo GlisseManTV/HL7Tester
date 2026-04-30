@@ -11,6 +11,14 @@ public static class HL7KnowledgeBase
     // Segment descriptions
     // ─────────────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Returns the set of all known HL7 segment identifiers (e.g. "MSH", "PID", "OBX").
+    /// Used by the parser to distinguish segment boundaries from field values when
+    /// splitting single-line messages where segments are separated by spaces.
+    /// </summary>
+    public static IReadOnlyCollection<string> KnownSegmentIds
+        => SegmentNames.Keys.ToList();
+
     private static readonly Dictionary<string, string> SegmentNames
         = new(StringComparer.OrdinalIgnoreCase)
     {

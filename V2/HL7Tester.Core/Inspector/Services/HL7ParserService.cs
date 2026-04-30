@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using HL7Tester.Core.Inspector.Models;
 
 namespace HL7Tester.Core.Inspector.Services;
@@ -17,6 +18,25 @@ namespace HL7Tester.Core.Inspector.Services;
 /// </summary>
 public class HL7ParserService
 {
+    // ─────────────────────────────────────────────────────────────────────────
+    // Compiled regex to detect segment boundaries in single-line messages.
+    // Matches a space followed by a known HL7 segment ID + field separator,
+    // e.g. " EVN|", " PID|", " ZBE|".
+    // Using known segment IDs (not a generic [A-Z]{3}) prevents false positives
+    // on field values like "I ST PAU|" (where PAU is NOT a known segment).
+    // ─────────────────────────────────────────────────────────────────────────
+    private static readonly Regex _segmentSplitRegex = BuildSegmentSplitRegex();
+
+    private static Regex BuildSegmentSplitRegex()
+    {
+        // Escape each known segment ID and join with | for alternation
+        var knownIds = string.Join("|", HL7KnowledgeBase.KnownSegmentIds);
+        // Also match custom Z-segments (e.g. ZBE, ZBA, ZPD, ZNS)
+        return new Regex(
+            $@" (?=({knownIds}|Z[A-Z0-9]{{2}})\|)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    }
+
     // Default HL7 v2 separator characters
     private char _fieldSep      = '|';
     private char _componentSep  = '^';
@@ -46,11 +66,19 @@ public class HL7ParserService
             // 3. Detect HL7 version from MSH-12
             var version = HL7VersionDetector.Detect(clean);
 
-            // 4. Split into segment lines
-            var lines = clean
+            // 4. Normalize line endings, then handle single-line messages where
+            //    segments are separated by spaces (e.g. "...0249629226 EVN|A08|...").
+            //    Replace a space that is immediately followed by a known HL7 segment
+            //    ID + field separator with \r, so the standard split works correctly.
+            //    Using known IDs avoids false positives on field values such as
+            //    "I ST PAU|" where PAU is a Spanish city name, not a segment ID.
+            var normalized = clean
                 .Replace("\r\n", "\r")
-                .Replace("\n", "\r")
-                .Split('\r', StringSplitOptions.RemoveEmptyEntries);
+                .Replace("\n", "\r");
+
+            normalized = _segmentSplitRegex.Replace(normalized, "\r");
+
+            var lines = normalized.Split('\r', StringSplitOptions.RemoveEmptyEntries);
 
             var result = new ParsedHL7Message
             {

@@ -62,7 +62,7 @@
                             <Label Grid.Column="0" Text="Connection History" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
                             <Button Grid.Column="1" Text="Delete History" 
                                     Command="{Binding DeleteHistoryCommand}"
-                                    FontSize="Small"
+                                    FontSize="14"
                                     Padding="8,4" />
                         </Grid>
                         <CollectionView ItemsSource="{Binding HistoryEntries}"
@@ -96,6 +96,9 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -111,7 +114,26 @@
                                     ItemsSource="{Binding AvailableLogLevels}"
                                     SelectedItem="{Binding SelectedLogLevel}" />
 
-                            <Button Grid.Row="2" Grid.ColumnSpan="2"
+                            <Label Grid.Row="2" Grid.Column="0" Text="Message encoding" VerticalOptions="Center" />
+                            <Picker Grid.Row="2" Grid.Column="1"
+                                    ItemsSource="{Binding AvailableEncodings}"
+                                    SelectedItem="{Binding SelectedEncoding}" />
+
+                            <Grid Grid.Row="3" Grid.ColumnSpan="2"
+                                  ColumnDefinitions="Auto,*"
+                                  IsVisible="{Binding UseCustomEncoding}">
+                                <Label Text="Use custom encoding" VerticalOptions="Center" />
+                                <Switch Grid.Column="1"
+                                        HorizontalOptions="End"
+                                        IsToggled="{Binding UseCustomEncoding}" />
+                            </Grid>
+
+                            <Entry Grid.Row="4" Grid.ColumnSpan="2"
+                                   Text="{Binding CustomEncoding}"
+                                   Placeholder="e.g., ISO-8859-2, KOI8-R..."
+                                   IsVisible="{Binding UseCustomEncoding}" />
+
+                            <Button Grid.Row="5" Grid.ColumnSpan="2"
                                     Text="Save Application settings"
                                     Command="{Binding SaveApplicationSettingsCommand}"
                                     HorizontalOptions="Fill" />
@@ -143,20 +165,26 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Static footer with Home button -->
+        <!-- Static footer with buttons -->
         <Grid Grid.Row="1" Padding="20,12" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Label Grid.Column="0"
+            <Button Grid.Column="0"
+                    Text="Inspector"
+                    HorizontalOptions="Start"
+                    Clicked="OnInspectorClicked" />
+
+            <Label Grid.Column="1"
                    Text="{Binding AssemblyVersion}"
                    HorizontalOptions="Center"
-                   FontSize="Small"
+                   FontSize="14"
                    TextColor="{DynamicResource Primary}" />
 
-            <Button Grid.Column="1"
+            <Button Grid.Column="2"
                     Text="Home"
                     HorizontalOptions="End"
                     Clicked="OnHomeClicked" />

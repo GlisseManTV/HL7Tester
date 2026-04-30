@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:HL7Tester.ViewModels"
+             xmlns:converters="clr-namespace:HL7Tester.Converters"
+             x:Class="HL7Tester.Hl7InspectorPage"
+             Title="HL7 Inspector">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+            <converters:CollectionNotEmptyConverter x:Key="CollectionNotEmptyConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <!-- Main layout: input + status (top), tree (middle), footer (bottom) -->
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- ── Row 0: Input card ─────────────────────────────────────────────── -->
+        <Border Grid.Row="0"
+                Style="{StaticResource CardBorder}"
+                Margin="16,12,16,4">
+            <VerticalStackLayout Spacing="10">
+
+                <!-- Header row: title + detected version -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0"
+                           Text="HL7 Message"
+                           FontAttributes="Bold"
+                           FontSize="15"
+                           TextColor="{DynamicResource Primary}"
+                           VerticalOptions="Center" />
+                    <Border Grid.Column="1"
+                            BackgroundColor="{AppThemeBinding Light=#EEF2FF, Dark=#1E293B}"
+                            StrokeThickness="0"
+                            Padding="8,3"
+                            IsVisible="{Binding DetectedVersion, Converter={StaticResource StringNotEmptyConverter}}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="12" />
+                        </Border.StrokeShape>
+                        <Label Text="{Binding DetectedVersion}"
+                               FontSize="11"
+                               TextColor="{DynamicResource Primary}" />
+                    </Border>
+                </Grid>
+
+                <!-- Raw message editor -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#374151}"
+                        Padding="8,4">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="6" />
+                    </Border.StrokeShape>
+                    <Editor x:Name="MessageEditor"
+                            HeightRequest="100"
+                            FontFamily="Courier New, Courier, monospace"
+                            FontSize="11"
+                            Placeholder="Paste your raw HL7 v2 message here (MSH|^~\&amp;|...)" />
+                </Border>
+
+                <!-- Parse button -->
+                <Button Text="Parse &amp; Inspect"
+                        HorizontalOptions="Fill"
+                        IsEnabled="{Binding IsNotParsing}"
+                        Clicked="OnParseClicked" />
+
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- ── Row 1: Status bar ─────────────────────────────────────────────── -->
+        <Border Grid.Row="1"
+                Margin="16,0,16,4"
+                Padding="12,8"
+                StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=#F0FDF4, Dark=#14532D}"
+                IsVisible="{Binding ParseStatus, Converter={StaticResource StringNotEmptyConverter}}">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8" />
+            </Border.StrokeShape>
+            <Label Text="{Binding ParseStatus}"
+                   FontSize="12"
+                   TextColor="{AppThemeBinding Light=#166534, Dark=#86EFAC}"
+                   HorizontalTextAlignment="Center" />
+        </Border>
+
+        <!-- ── Row 2: Tree CollectionView ───────────────────────────────────── -->
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding TreeNodes}"
+                        Margin="8,0,8,0"
+                        IsVisible="{Binding TreeNodes, Converter={StaticResource CollectionNotEmptyConverter}}">
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8">
+                    <Label Text="No message parsed yet."
+                           HorizontalOptions="Center"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#9CA3AF, Dark=#6B7280}" />
+                    <Label Text="Paste a HL7 message above and tap Parse."
+                           HorizontalOptions="Center"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=#D1D5DB, Dark=#4B5563}" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="viewmodels:Hl7TreeNode">
+
+                    <!-- Each tree node row -->
+                    <Grid Padding="4,2">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleCommand}" />
+                        </Grid.GestureRecognizers>
+
+                        <Grid ColumnDefinitions="Auto,20,*" RowDefinitions="Auto">
+
+                            <!-- Indentation spacer (width = Level × 18) -->
+                            <BoxView Grid.Column="0"
+                                     WidthRequest="{Binding IndentPadding}"
+                                     HeightRequest="1"
+                                     Color="Transparent" />
+
+                            <!-- Expand / collapse arrow -->
+                            <Label Grid.Column="1"
+                                   Text="{Binding ExpandIcon}"
+                                   FontSize="10"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center"
+                                   TextColor="{DynamicResource Primary}" />
+
+                            <!-- Node content -->
+                            <Grid Grid.Column="2"
+                                  RowDefinitions="Auto,Auto"
+                                  ColumnDefinitions="*,Auto"
+                                  Padding="2,4">
+
+                                <!-- Top row: Notation + DataType badge -->
+                                <HorizontalStackLayout Grid.Row="0" Grid.Column="0"
+                                                       Spacing="6"
+                                                       VerticalOptions="Center">
+                                    <!-- Notation text -->
+                                    <Label Text="{Binding Notation}"
+                                           FontSize="{Binding FontSize}"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center">
+                                        <Label.TextColor>
+                                            <Binding Path="Level">
+                                                <Binding.Converter>
+                                                    <converters:NodeLevelToColorConverter />
+                                                </Binding.Converter>
+                                            </Binding>
+                                        </Label.TextColor>
+                                    </Label>
+
+                                    <!-- Data type badge [PL], [CWE] etc. -->
+                                    <Border Padding="4,1"
+                                            StrokeThickness="1"
+                                            Stroke="{DynamicResource Primary}"
+                                            IsVisible="{Binding HasDataType}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="4" />
+                                        </Border.StrokeShape>
+                                        <Label Text="{Binding DataType}"
+                                               FontSize="9"
+                                               TextColor="{DynamicResource Primary}" />
+                                    </Border>
+
+                                    <!-- Name (description) -->
+                                    <Label Text="{Binding Name}"
+                                           FontSize="{Binding FontSize}"
+                                           IsVisible="{Binding Name, Converter={StaticResource StringNotEmptyConverter}}"
+                                           TextColor="{AppThemeBinding Light=#374151, Dark=#D1D5DB}"
+                                           VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+
+                                <!-- Value on the right -->
+                                <Label Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding Value}"
+                                       FontSize="{Binding FontSize}"
+                                       IsVisible="{Binding HasValue}"
+                                       TextColor="{AppThemeBinding Light=#1E40AF, Dark=#93C5FD}"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="End"
+                                       VerticalOptions="Center"
+                                       MaxLines="1"
+                                       LineBreakMode="TailTruncation"
+                                       MaximumWidthRequest="180" />
+
+                            </Grid>
+                        </Grid>
+
+                        <!-- Bottom separator line -->
+                        <BoxView HeightRequest="1"
+                                 VerticalOptions="End"
+                                 Margin="4,0"
+                                 Color="{AppThemeBinding Light=#F1F5F9, Dark=#1E293B}" />
+                    </Grid>
+
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+        </CollectionView>
+
+        <!-- ── Row 3: Static footer ───────────────────────────────────────────── -->
+        <Grid Grid.Row="3"
+              Padding="16,10"
+              ColumnDefinitions="*,Auto"
+              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
+
+            <Label Grid.Column="0"
+                   Text="HL7 Inspector"
+                   HorizontalOptions="Center"
+                   FontAttributes="Bold"
+                   TextColor="{DynamicResource Primary}" />
+
+            <Button Grid.Column="1"
+                    Text="Home"
+                    HorizontalOptions="End"
+                    Clicked="OnHomeClicked" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

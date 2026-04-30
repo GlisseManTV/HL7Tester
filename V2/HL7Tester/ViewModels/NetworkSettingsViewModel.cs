@@ -49,6 +49,42 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     public ObservableCollection<string> AvailableLogLevels { get; } =
         new(["Debug", "Information", "Warning"]);
 
+    /// <summary>
+    /// Liste des encodages prédéfinis pour le message HL7.
+    /// </summary>
+    public ObservableCollection<string> AvailableEncodings { get; } = new(
+        new[] { "UTF-8", "CP1252", "ISO-8859-1", "Latin1" });
+
+    private string _selectedEncoding = "UTF-8";
+    /// <summary>
+    /// Encodage sélectionné dans le menu déroulant.
+    /// </summary>
+    public string SelectedEncoding
+    {
+        get => _selectedEncoding;
+        set => SetField(ref _selectedEncoding, value);
+    }
+
+    private bool _useCustomEncoding = false;
+    /// <summary>
+    /// Indique si un encodage personnalisé doit être utilisé.
+    /// </summary>
+    public bool UseCustomEncoding
+    {
+        get => _useCustomEncoding;
+        set => SetField(ref _useCustomEncoding, value);
+    }
+
+    private string _customEncoding = string.Empty;
+    /// <summary>
+    /// Nom de l'encodage personnalisé.
+    /// </summary>
+    public string CustomEncoding
+    {
+        get => _customEncoding;
+        set => SetField(ref _customEncoding, value);
+    }
+
     private bool _autoUpdateCheck = true;
     /// <summary>
     /// Indique si l'application doit vérifier automatiquement les mises à jour au démarrage.
@@ -162,6 +198,13 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
             ? "Debug"
             : _settings.LogLevel;
 
+        // Charger l'encodage depuis les settings
+        SelectedEncoding = string.IsNullOrWhiteSpace(_settings.MessageEncoding)
+            ? "UTF-8"
+            : _settings.MessageEncoding;
+        UseCustomEncoding = false;
+        CustomEncoding = string.Empty;
+
         HistoryEntries.Clear();
         foreach (var entry in _settings.History)
         {
@@ -227,6 +270,16 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
 
         _settings.LogLevel = SelectedLogLevel;
         _settings.AutoUpdateCheck = AutoUpdateCheck;
+
+        // Sauvegarder l'encodage du message
+        if (UseCustomEncoding && !string.IsNullOrWhiteSpace(CustomEncoding))
+        {
+            _settings.MessageEncoding = CustomEncoding;
+        }
+        else
+        {
+            _settings.MessageEncoding = SelectedEncoding;
+        }
 
         await _service.SaveAsync(_settings);
         

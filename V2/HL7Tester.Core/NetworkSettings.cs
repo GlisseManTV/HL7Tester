@@ -26,6 +26,11 @@ public sealed class NetworkSettings
     public string? LogLevel { get; set; }
 
     /// <summary>
+    /// Encodage du message HL7 (ex: "UTF-8", "CP1252", "ISO-8859-1", "Latin1", ou un encodage personnalisé).
+    /// </summary>
+    public string? MessageEncoding { get; set; }
+
+    /// <summary>
     /// Historique des dernières connexions IP:Port (dernier en premier).
     /// </summary>
     public List<ConnectionHistoryEntry> History { get; set; } = new();

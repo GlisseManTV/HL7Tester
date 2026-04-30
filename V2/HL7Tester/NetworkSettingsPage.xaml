@@ -165,20 +165,26 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Static footer with Home button -->
+        <!-- Static footer with buttons -->
         <Grid Grid.Row="1" Padding="20,12" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Label Grid.Column="0"
+            <Button Grid.Column="0"
+                    Text="Inspector"
+                    HorizontalOptions="Start"
+                    Clicked="OnInspectorClicked" />
+
+            <Label Grid.Column="1"
                    Text="{Binding AssemblyVersion}"
                    HorizontalOptions="Center"
                    FontSize="Small"
                    TextColor="{DynamicResource Primary}" />
 
-            <Button Grid.Column="1"
+            <Button Grid.Column="2"
                     Text="Home"
                     HorizontalOptions="End"
                     Clicked="OnHomeClicked" />

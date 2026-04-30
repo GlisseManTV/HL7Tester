@@ -1,3 +1,60 @@
+## v2.0.13 Changes (Latest Release)
+
+### HL7 Message Inspector — New Module for Hierarchical Message Inspection
+
+Complete rewrite of the HL7 Inspector page with a hierarchical expandable tree view (Segment → Field → Component → SubComponent) and comprehensive knowledge base for semantic descriptions.
+
+**Key Features:**
+- **Flat expandable tree UI**: Only visible nodes stored in `ObservableCollection<Hl7TreeNode>`, children dynamically inserted on expand
+- **Dynamic encoding detection**: Reads MSH encoding characters (`MSH-1` through `MSH-5`) at parse time
+- **Comprehensive knowledge base**: 50+ segment descriptions, all field names/types/required flags, 30+ data type component mappings
+- **Color-coded levels**: Indigo for segments, near-black for fields, gray for components, lighter gray for sub-components
+- **DataType badges**: Shows data type (e.g., `[PL]`, `[CWE]`) next to field notation
+- **HL7 escape sequence decoding**: `\F\` (field separator), `\S\` (sub-component), `\R\` (repetition), `\E\` (escape), `\T\` (text)
+- **MLLP framing stripping**: Automatically removes `\u000b` and `\u001c` control characters
+- **MSH special handling**: Synthetic MSH-1 = `|` (the field separator itself), field index offset by +1
+
+### Message Encoding Support for HL7 Transmission
+
+Refactor of the HL7 network sending pipeline to support custom message encodings, allowing users to specify encoding when sending messages.
+
+**Key Changes:**
+- `NetworkSettings.MessageEncoding` property added (string, default "UTF-8")
+- UI in `NetworkSettingsPage` with dropdown for predefined encodings (UTF-8, Windows-1252, ASCII) and custom input field
+- `Hl7NetworkSender` uses selected encoding for byte conversion (via `Encoding.GetEncoding()` or `Encoding.GetEncodingProvider()`)
+- `MainViewModel` passes selected encoding to the network sender
+- `NetworkSettingsViewModel` handles selection and saving of message encoding settings
+- Smart logging of encoding used for each send operation
+
+### Modified Files:
+
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Inspector/Models/ParsedHL7Message.cs` | NEW — Top-level parsed result model |
+| `HL7Tester.Core/Inspector/Models/HL7SegmentModel.cs` | NEW — Segment with fields list |
+| `HL7Tester.Core/Inspector/Models/HL7FieldModel.cs` | NEW — Field with data type, required flag, repetitions |
+| `HL7Tester.Core/Inspector/Models/HL7RepetitionModel.cs` | NEW — Repetition (separated by `~`) |
+| `HL7Tester.Core/Inspector/Models/HL7ComponentModel.cs` | NEW — Component (separated by `^`) |
+| `HL7Tester.Core/Inspector/Models/HL7SubComponentModel.cs` | NEW — Sub-component (separated by `&`) |
+| `HL7Tester.Core/Inspector/Services/HL7ParserService.cs` | NEW — Main parser service with MLLP stripping, escape decoding, dynamic separators |
+| `HL7Tester.Core/Inspector/Services/HL7KnowledgeBase.cs` | NEW — Static dictionary of 50+ segments, fields, components |
+| `HL7Tester.Core/Inspector/Services/HL7VersionDetector.cs` | NEW — Detects HL7 version from MSH-12 |
+| `HL7Tester/ViewModels/Hl7TreeNode.cs` | NEW — Tree node model with expand/collapse logic, indentation, font size per level |
+| `HL7Tester/ViewModels/Hl7InspectorViewModel.cs` | REWRITTEN — Uses HL7ParserService injection, flat ObservableCollection<Hl7TreeNode>, ToggleNode/Expand/Collapse |
+| `HL7Tester/Hl7InspectorPage.xaml` | REWRITTEN — Grid 4-row layout (Auto,Auto,*,Auto), flat expandable tree CollectionView, DataType badges |
+| `HL7Tester/Resources/Converters/NodeLevelToColorConverter.cs` | NEW — Converts NodeLevel enum to display color |
+| `HL7Tester/MauiProgram.cs` | Added DI registration for HL7ParserService, Hl7InspectorViewModel, Hl7InspectorPage |
+| `HL7Tester.Core/NetworkSettings.cs` | Added `MessageEncoding` property with JSON persistence |
+| `HL7Tester/NetworkSettingsPage.xaml` | Added message encoding dropdown + custom input field |
+| `HL7Tester/ViewModels/NetworkSettingsViewModel.cs` | Added message encoding selection logic, save/load from settings |
+| `HL7Tester.Core/Hl7NetworkSender.cs` | Uses selected encoding for byte conversion, logs encoding used |
+| `HL7Tester/MainViewModel.cs` | Passes selected encoding to Hl7NetworkSender |
+| `HL7Tester.csproj` | Version incremented to 2.0.13 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.13.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.13.0 |
+
+---
+
 ## v2.0.12 Changes (Latest Development)
 
 ### Settings Page UI Improvements

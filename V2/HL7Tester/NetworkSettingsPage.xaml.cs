@@ -24,4 +24,9 @@ public partial class NetworkSettingsPage : ContentPage
     {
         await Shell.Current.GoToAsync("//MainPage");
     }
+
+    private async void OnInspectorClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//Hl7InspectorPage");
+    }
 }

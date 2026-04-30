@@ -13,6 +13,11 @@
             Route="MainPage" />
 
         <ShellContent
+            Title="HL7 Inspector"
+            ContentTemplate="{DataTemplate local:Hl7InspectorPage}"
+            Route="Hl7InspectorPage" />
+
+        <ShellContent
             Title="Network"
             ContentTemplate="{DataTemplate local:NetworkSettingsPage}"
             Route="NetworkSettingsPage" />

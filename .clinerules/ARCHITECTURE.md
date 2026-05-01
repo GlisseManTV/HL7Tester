@@ -180,18 +180,34 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.13</ApplicationDisplayVersion>
-<ApplicationVersion>2.0.13.0</ApplicationVersion>
+<ApplicationDisplayVersion>2.0.14</ApplicationDisplayVersion>
+<ApplicationVersion>2.0.14.0</ApplicationVersion>
 ```
 
 ### Windows Package Manifest
 ```xml
 <!-- app.manifest -->
-<assemblyIdentity version="2.0.13.0" name="HL7Tester.WinUI.app"/>
+<assemblyIdentity version="2.0.14.0" name="HL7Tester.WinUI.app"/>
 
 <!-- Package.appxmanifest -->
-<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.13.0" />
+<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.14.0" />
 ```
+
+---
+
+## Recent Changes (v2.0.14)
+
+### Settings Page — Redesigned Layout
+- **Three-row layout**: Network Settings + Connection History side-by-side on top, Application Settings full-width in the middle, HL7 Documentation + HL7 Tools side-by-bottom
+- **HorizontalStackLayout → Grid** for button rows: buttons now fill the full width of their card with equal widths
+  - HL7 Documentation card: 3 columns (`*,*,*`) for ADT, ORM, SIU buttons
+  - HL7 Tools card: 2 columns (`*,*`) for Embedded Inspector and Web Inspector buttons
+- All buttons within a single card have identical sizes
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `NetworkSettingsPage.xaml` | Redesigned layout with 3-row structure; replaced HorizontalStackLayout with Grid for uniform button sizing in Documentation and Tools cards |
 
 ---
 
@@ -238,4 +254,4 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
-*Last Updated: April 30, 2026 (v2.0.13)*
+*Last Updated: January 5, 2026 (v2.0.14)*

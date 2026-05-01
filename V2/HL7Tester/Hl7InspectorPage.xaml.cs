@@ -27,4 +27,9 @@ public partial class Hl7InspectorPage : ContentPage
     {
         await Shell.Current.GoToAsync("//MainPage");
     }
+
+    private async void OnSettingsClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//NetworkSettingsPage");
+    }
 }

@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using System.Xml;
 using HL7Tester.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
@@ -53,7 +55,16 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     /// Liste des encodages prédéfinis pour le message HL7.
     /// </summary>
     public ObservableCollection<string> AvailableEncodings { get; } = new(
-        new[] { "UTF-8", "CP1252", "ISO-8859-1", "Latin1" });
+        new[] { 
+            "UTF-8",           // Standard moderne, recommandé
+            "ASCII",           // 7-bit pur — très courant en HL7 legacy
+            "CP1252",          // Windows Latin-1 (Europe de l'Ouest)
+            "ISO-8859-1",      // Latin-1 ISO (Europe de l'Ouest)
+            "ISO-8859-15",     // Latin-9 avec Euro (€) — utile en Europe
+            "IBM437",          // DOS original — legacy hospitalier
+            "Windows-1252",    // Alias explicite pour CP1252
+            "UTF-16LE"         // Unicode 2-byte little-endian
+        });
 
     private string _selectedEncoding = "UTF-8";
     /// <summary>
@@ -114,10 +125,14 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     public ICommand OpenDocumentationCommand { get; }
     public ICommand OpenOrmDocumentationCommand { get; }
     public ICommand OpenSiuDocumentationCommand { get; }
+    public ICommand OpenInspectorCommand { get; }
+    public ICommand OpenInspectorWebCommand { get; }
 
     private const string HL7_ADT_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH3.html#Heading3";
     private const string HL7_ORM_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH4.html#Heading13";
     private const string HL7_SIU_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH10.html#Heading53";
+    private const string HL7_INSPECTOR_WEB_URL = "https://www.hl7inspector.com";
+
 
     public NetworkSettingsViewModel(INetworkSettingsService service, ILogger<NetworkSettingsViewModel> logger)
     {
@@ -137,6 +152,8 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         OpenDocumentationCommand = new Command(OpenAdtDocumentation);
         OpenOrmDocumentationCommand = new Command(OpenOrmDocumentation);
         OpenSiuDocumentationCommand = new Command(OpenSiuDocumentation);
+        OpenInspectorCommand = new Command(OpenInspector);
+        OpenInspectorWebCommand = new Command(OpenWebInspector);
     }
 
     private void OpenAdtDocumentation()
@@ -181,6 +198,34 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to open HL7 SIU documentation URL: {Url}", HL7_SIU_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenWebInspector()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 Inspector: {Url}", HL7_INSPECTOR_WEB_URL);
+            
+            var uri = new Uri(HL7_INSPECTOR_WEB_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 Inspector URL: {Url}", HL7_INSPECTOR_WEB_URL);
+        }
+    }
+
+    private async void OpenInspector()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 Inspector page.");
+            await Shell.Current.GoToAsync("//Hl7InspectorPage");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to navigate to HL7 Inspector page.");
         }
     }
 

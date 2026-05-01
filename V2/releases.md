@@ -1,4 +1,25 @@
-## v2.0.13 Changes (Latest Release)
+## v2.0.14 Changes (Latest Release)
+
+### Settings Page — Redesigned Layout
+
+Complete restructure of the Settings page with a new three-row card layout and improved button sizing in documentation/tools cards.
+
+**Key Changes:**
+- **Three-row layout**: Network Settings + Connection History side-by-side on top, Application Settings full-width in the middle, HL7 Documentation + HL7 Tools side-by-bottom
+- **HorizontalStackLayout → Grid** for button rows: buttons now fill the full width of their card with equal widths
+  - HL7 Documentation card: 3 columns (`*,*,*`) for ADT, ORM, SIU buttons
+  - HL7 Tools card: 2 columns (`*,*`) for Embedded Inspector and Web Inspector buttons
+- All buttons within a single card have identical sizes
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `NetworkSettingsPage.xaml` | Redesigned layout with 3-row structure; replaced HorizontalStackLayout with Grid for uniform button sizing in Documentation and Tools cards |
+| `HL7Tester.csproj` | Version incremented to 2.0.14 |
+
+---
+
+## v2.0.13 Changes (Previous Release)
 
 ### HL7 Message Inspector — New Module for Hierarchical Message Inspection
 

@@ -4,6 +4,8 @@ using System.IO;
 using System.Threading.Tasks;
 using HL7Tester.Core;
 using HL7Tester.ViewModels;
+using Microsoft.Maui;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Storage;
 
@@ -15,6 +17,20 @@ public partial class MainPage : ContentPage
 	{
 		InitializeComponent();
 		BindingContext = viewModel;
+	}
+
+	protected override void OnAppearing()
+	{
+		base.OnAppearing();
+
+		// Check if there's a pending message from the inspector
+		var pendingMessage = Hl7InspectorViewModel.PendingParsedMessage;
+		if (!string.IsNullOrEmpty(pendingMessage))
+		{
+			var viewModel = BindingContext as MainViewModel;
+			viewModel!.GeneratedMessage = pendingMessage;
+			Hl7InspectorViewModel.PendingParsedMessage = null!;
+		}
 	}
 
 	private async void OnSettingsClicked(object? sender, EventArgs e)
@@ -70,7 +86,6 @@ public partial class MainPage : ContentPage
 			var viewModel = BindingContext as MainViewModel;
 			if (viewModel?.GeneratedMessage != null)
 			{
-				// Copie dans le presse-papier système pour macOS et Windows
 				await Clipboard.SetTextAsync(viewModel.GeneratedMessage);
 			}
 		}
@@ -80,12 +95,32 @@ public partial class MainPage : ContentPage
 		}
 	}
 
+	private async void OnInspectMessageClicked(object? sender, EventArgs e)
+	{
+		try
+		{
+			var viewModel = BindingContext as MainViewModel;
+			if (viewModel?.GeneratedMessage != null && !string.IsNullOrWhiteSpace(viewModel.GeneratedMessage))
+			{
+				Hl7InspectorViewModel.PendingParsedMessage = viewModel.GeneratedMessage;
+				await Shell.Current.GoToAsync("//Hl7InspectorPage");
+			}
+			else
+			{
+				await DisplayAlertAsync("Warning", "No message to inspect. Generate a message first.", "OK");
+			}
+		}
+		catch (Exception ex)
+		{
+			await DisplayAlertAsync("Error", $"Unable to open inspector: {ex.Message}", "OK");
+		}
+	}
+
 	private void OnSendLogHeaderTapped(object? sender, TappedEventArgs e)
 	{
 		var viewModel = BindingContext as MainViewModel;
 		if (viewModel != null)
 		{
-			// Toggle the Send log visibility using dedicated method
 			viewModel.ToggleSendLog();
 		}
 	}

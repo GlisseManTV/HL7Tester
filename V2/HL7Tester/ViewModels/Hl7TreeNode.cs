@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using Microsoft.Maui.ApplicationModel;
 
 namespace HL7Tester.ViewModels;
 
@@ -66,7 +67,7 @@ public sealed class Hl7TreeNode : INotifyPropertyChanged
     /// Command to toggle the expanded state of this node.
     /// Set by the ViewModel to allow controlling the flat collection.
     /// </summary>
-    public ICommand ToggleCommand { get; set; }
+    public ICommand ToggleCommand { get; set; } = null!;
 
     // ── Visual helpers ────────────────────────────────────────────────────────
 
@@ -106,14 +107,23 @@ public sealed class Hl7TreeNode : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Callback invoked by the ViewModel when expand/collapse is triggered.</summary>
+    internal Action? OnToggle { get; set; }
+
+    /// <summary>Command to toggle expand AND copy value (used on the row tap).</summary>
+    public ICommand ToggleAndCopyCommand { get; set; }
+
     // ── Constructor ───────────────────────────────────────────────────────────
 
     public Hl7TreeNode()
     {
-        ToggleCommand = new Command(() =>
+        ToggleAndCopyCommand = new Command(async () =>
         {
-            if (HasChildren)
-                IsExpanded = !IsExpanded;
+            OnToggle?.Invoke();
+            if (!string.IsNullOrEmpty(Value))
+            {
+                await Clipboard.Default.SetTextAsync(Value);
+            }
         });
     }
 

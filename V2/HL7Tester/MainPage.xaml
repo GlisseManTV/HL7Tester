@@ -2,11 +2,12 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.MainPage"
-             xmlns:converters="clr-namespace:HL7Tester.Converters"
-             Title="HL7Tester">
-    <ContentPage.Resources>
-        <converters:BoolToArrowConverter x:Key="BoolToArrowConverter" />
-    </ContentPage.Resources>
+              xmlns:converters="clr-namespace:HL7Tester.Converters"
+              Title="HL7Tester">
+        <ContentPage.Resources>
+            <converters:BoolToArrowConverter x:Key="BoolToArrowConverter" />
+            <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+        </ContentPage.Resources>
     <Grid RowDefinitions="Auto,*,Auto,Auto">
         <!-- Header -->
         <Grid Grid.Row="0"
@@ -577,11 +578,26 @@
                             Placeholder="HL7 message will appear here after generation" />
                 </Border>
 
-                <Button Grid.Column="1"
-                        Text="Copy"
-                        HorizontalOptions="End"
-                        ZIndex="2"
-                        Clicked="OnCopyMessageClicked" />
+                <!-- Copy and Inspect buttons stacked vertically inside the editor field (right-aligned) -->
+                <Grid Grid.Column="1"
+                      ColumnSpacing="6"
+                      RowSpacing="6"
+                      HorizontalOptions="End"
+                      VerticalOptions="Fill">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Button Grid.Row="0"
+                            Text="Copy"
+                            Clicked="OnCopyMessageClicked" />
+                    <Button Grid.Row="1"
+                            Text="Inspect"
+                            WidthRequest="90"
+                            IsVisible="{Binding GeneratedMessage, Converter={StaticResource StringNotEmptyConverter}}"
+                            Clicked="OnInspectMessageClicked" />
+                </Grid>
             </Grid>
 
             <!-- Bottom action bar (Generate / Send / Settings buttons) -->

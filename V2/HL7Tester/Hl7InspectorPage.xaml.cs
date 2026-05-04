@@ -11,6 +11,28 @@ public partial class Hl7InspectorPage : ContentPage
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = viewModel;
+
+        // Check if there's a pending message from MainPage
+        var pendingMessage = Hl7InspectorViewModel.PendingParsedMessage;
+        if (!string.IsNullOrEmpty(pendingMessage))
+        {
+            _viewModel.RawMessage = pendingMessage;
+            Hl7InspectorViewModel.PendingParsedMessage = null!;
+        }
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        // Check for pending message from MainPage via static property (most reliable)
+        var pendingMessage = Hl7InspectorViewModel.PendingParsedMessage;
+        if (!string.IsNullOrEmpty(pendingMessage))
+        {
+            _viewModel.RawMessage = pendingMessage;
+            _viewModel.ParseMessage();
+            Hl7InspectorViewModel.PendingParsedMessage = null!;
+        }
     }
 
     private void OnParseClicked(object? sender, EventArgs e)
@@ -23,8 +45,29 @@ public partial class Hl7InspectorPage : ContentPage
         _viewModel.ParseMessage();
     }
 
+    private async void OnSendParsedClicked(object? sender, EventArgs e)
+    {
+        var rawText = MessageEditor?.Text;
+        if (string.IsNullOrWhiteSpace(rawText))
+        {
+            await DisplayAlertAsync("Warning", "No message to send.", "OK");
+            return;
+        }
+
+        // Store the raw HL7 message so MainPage can pick it up
+        Hl7InspectorViewModel.PendingParsedMessage = rawText;
+        await Shell.Current.GoToAsync("//MainPage");
+    }
+
     private async void OnHomeClicked(object? sender, EventArgs e)
     {
+        // Clear pending message when navigating via Home button
+        Hl7InspectorViewModel.PendingParsedMessage = null;
         await Shell.Current.GoToAsync("//MainPage");
+    }
+
+    private async void OnSettingsClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//NetworkSettingsPage");
     }
 }

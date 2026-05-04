@@ -67,7 +67,7 @@ public sealed class Hl7TreeNode : INotifyPropertyChanged
     /// Command to toggle the expanded state of this node.
     /// Set by the ViewModel to allow controlling the flat collection.
     /// </summary>
-    public ICommand ToggleCommand { get; set; }
+    public ICommand ToggleCommand { get; set; } = null!;
 
     // ── Visual helpers ────────────────────────────────────────────────────────
 

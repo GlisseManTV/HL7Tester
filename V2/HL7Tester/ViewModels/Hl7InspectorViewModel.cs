@@ -160,6 +160,10 @@ public sealed class Hl7InspectorViewModel : INotifyPropertyChanged, IDisposable
 
         // Wire the toggle: expand inserts children after this node; collapse removes them
         segNode.ToggleCommand = new Command(() => ToggleNode(segNode));
+        segNode.ToggleAndCopyCommand = new Command(async () =>
+        {
+            ToggleNode(segNode);
+        });
         return segNode;
     }
 
@@ -223,7 +227,13 @@ public sealed class Hl7InspectorViewModel : INotifyPropertyChanged, IDisposable
                     };
 
                     if (subCompChildren.Count > 0)
+                    {
                         compNode.ToggleCommand = new Command(() => ToggleNode(compNode));
+                        compNode.ToggleAndCopyCommand = new Command(async () =>
+                        {
+                            ToggleNode(compNode);
+                        });
+                    }
 
                     compChildren.Add(compNode);
                 }
@@ -247,7 +257,13 @@ public sealed class Hl7InspectorViewModel : INotifyPropertyChanged, IDisposable
         };
 
         if (compChildren.Count > 0)
+        {
             fieldNode.ToggleCommand = new Command(() => ToggleNode(fieldNode));
+            fieldNode.ToggleAndCopyCommand = new Command(async () =>
+            {
+                ToggleNode(fieldNode);
+            });
+        }
 
         return fieldNode;
     }

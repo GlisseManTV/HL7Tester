@@ -88,7 +88,7 @@ Persists application settings to JSON:
 ### 5. HL7 Inspector — Message Parsing & Tree View
 **Location**: `HL7Tester.Core/Inspector/` + `HL7Tester/Hl7InspectorPage.xaml`
 
-New module for inspecting raw HL7 v2 messages with a hierarchical expandable tree:
+Module for inspecting raw HL7 v2 messages with a hierarchical expandable tree:
 
 **Core Models** (`HL7Tester.Core/Inspector/Models/`):
 - `ParsedHL7Message` — top-level parsed result (version, segments, parse error)
@@ -117,6 +117,11 @@ New module for inspecting raw HL7 v2 messages with a hierarchical expandable tre
 - `ToggleNode()` inserts/removes children dynamically
 - Indentation = Level × 18px, font size decreases per level
 - `NodeLevelToColorConverter` — color by level (Segment=indigo, Field=near-black, Component=gray, SubComponent=lighter gray)
+- **Click-to-Copy** (v2.0.15):
+  - `ToggleAndCopyCommand` — toggles expand/collapse AND copies node value to clipboard
+  - `OnToggle` callback — allows ViewModel to wire the command to its `ToggleNode()` method
+  - Arrow Label uses `ToggleCommand` only (expand/collapse)
+  - Main Grid uses `ToggleAndCopyCommand` (expand/collapse + copy)
 
 **UI** (`HL7Tester/Hl7InspectorPage.xaml`):
 - Grid layout: `RowDefinitions="Auto,Auto,*,Auto"` (input, status, tree, footer)
@@ -134,6 +139,7 @@ Manages network settings UI:
 - Log level selection
 - Auto-update toggle
 - Message encoding selection (predefined + custom input)
+- HL7 documentation links (ADT, ORM, SIU) — opens URLs via `Launcher.Default.OpenAsync()`
 
 ---
 
@@ -180,18 +186,45 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.14</ApplicationDisplayVersion>
-<ApplicationVersion>2.0.14.0</ApplicationVersion>
+<ApplicationDisplayVersion>2.0.15</ApplicationDisplayVersion>
+<ApplicationVersion>2.0.15.0</ApplicationVersion>
 ```
 
 ### Windows Package Manifest
 ```xml
 <!-- app.manifest -->
-<assemblyIdentity version="2.0.14.0" name="HL7Tester.WinUI.app"/>
+<assemblyIdentity version="2.0.15.0" name="HL7Tester.WinUI.app"/>
 
 <!-- Package.appxmanifest -->
-<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.14.0" />
+<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.15.0" />
 ```
+
+---
+
+## Recent Changes (v2.0.15)
+
+### HL7 Inspector — Click-to-Copy on Tree Nodes
+
+Added click-to-copy functionality for values in the HL7 Inspector tree view, allowing users to quickly copy field values and notations to the clipboard.
+
+**Key Features:**
+- **Click on row (not arrow)**: Toggles expand/collapse AND copies the node's value to clipboard
+- **Click on arrow (▼/▶)**: Toggles expand/collapse only
+- Both actions use the same `ToggleNode()` method from ViewModel, ensuring proper tree manipulation
+- Clipboard operations use `Clipboard.Default.SetTextAsync()` from MAUI
+
+**Technical Details:**
+- Added `ToggleAndCopyCommand` property to `Hl7TreeNode` that calls the ViewModel's `ToggleNode()` method then copies to clipboard
+- Commands wired in `BuildSegmentNode()`, `BuildFieldNode()`, and component node creation
+- XAML gesture recognizer on main Grid uses `ToggleAndCopyCommand`; arrow Label uses `ToggleCommand`
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/ViewModels/Hl7TreeNode.cs` | Added `ToggleAndCopyCommand` property; added `OnToggle` callback for ViewModel integration |
+| `HL7Tester/ViewModels/Hl7InspectorViewModel.cs` | Assigned `ToggleAndCopyCommand` in `BuildSegmentNode()`, `BuildFieldNode()`, and component node creation — all using the shared `ToggleNode()` method |
+| `HL7Tester/Hl7InspectorPage.xaml` | Updated tree row gesture recognizer to use `ToggleAndCopyCommand` on main Grid; arrow Label retains `ToggleCommand` for expand-only behavior |
+| `HL7Tester.csproj` | Version incremented to 2.0.15 |
 
 ---
 
@@ -254,4 +287,4 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
-*Last Updated: January 5, 2026 (v2.0.14)*
+*Last Updated: April 5, 2026 (v2.0.15)*

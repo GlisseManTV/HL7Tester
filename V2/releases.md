@@ -1,4 +1,31 @@
-## v2.0.14 Changes (Latest Release)
+## v2.0.15 Changes (Latest Release)
+
+### HL7 Inspector — Click-to-Copy on Tree Nodes
+
+Added click-to-copy functionality for values in the HL7 Inspector tree view, allowing users to quickly copy field values and notations to the clipboard.
+
+**Key Features:**
+- **Click on row (not arrow)**: Toggles expand/collapse AND copies the node's value to clipboard
+- **Click on arrow (▼/▶)**: Toggles expand/collapse only
+- Both actions use the same `ToggleNode()` method from ViewModel, ensuring proper tree manipulation
+- Clipboard operations use `Clipboard.Default.SetTextAsync()` from MAUI
+
+**Technical Details:**
+- Added `ToggleAndCopyCommand` property to `Hl7TreeNode` that calls the ViewModel's `ToggleNode()` method then copies to clipboard
+- Commands wired in `BuildSegmentNode()`, `BuildFieldNode()`, and component node creation
+- XAML gesture recognizer on main Grid uses `ToggleAndCopyCommand`; arrow Label uses `ToggleCommand`
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/ViewModels/Hl7TreeNode.cs` | Added `ToggleAndCopyCommand` property and constructor initialization; added `OnToggle` callback for ViewModel integration |
+| `HL7Tester/ViewModels/Hl7InspectorViewModel.cs` | Assigned `ToggleAndCopyCommand` in `BuildSegmentNode()`, `BuildFieldNode()`, and component node creation — all using the shared `ToggleNode()` method |
+| `HL7Tester/Hl7InspectorPage.xaml` | Updated tree row gesture recognizer to use `ToggleAndCopyCommand` on main Grid; arrow Label retains `ToggleCommand` for expand-only behavior |
+| `HL7Tester.csproj` | Version incremented to 2.0.15 |
+
+---
+
+## v2.0.14 Changes (Previous Release)
 
 ### Settings Page — Redesigned Layout
 

@@ -108,7 +108,8 @@
                     <!-- Each tree node row -->
                     <Grid Padding="4,2">
                         <Grid.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ToggleCommand}" />
+                            <!-- Tap anywhere on the row: toggle expand AND copy value -->
+                            <TapGestureRecognizer Command="{Binding ToggleAndCopyCommand}" />
                         </Grid.GestureRecognizers>
 
                         <Grid ColumnDefinitions="Auto,20,*" RowDefinitions="Auto">
@@ -119,15 +120,19 @@
                                      HeightRequest="1"
                                      Color="Transparent" />
 
-                            <!-- Expand / collapse arrow -->
+                            <!-- Expand / collapse arrow — tap only toggles -->
                             <Label Grid.Column="1"
                                    Text="{Binding ExpandIcon}"
                                    FontSize="10"
                                    VerticalOptions="Center"
                                    HorizontalOptions="Center"
-                                   TextColor="{DynamicResource Primary}" />
+                                   TextColor="{DynamicResource Primary}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleCommand}" />
+                                </Label.GestureRecognizers>
+                            </Label>
 
-                            <!-- Node content -->
+                            <!-- Node content (inherits row tap via parent gesture) -->
                             <Grid Grid.Column="2"
                                   RowDefinitions="Auto,Auto"
                                   ColumnDefinitions="*,Auto"

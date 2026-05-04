@@ -21,6 +21,10 @@ public sealed class Hl7InspectorViewModel : INotifyPropertyChanged, IDisposable
     private readonly ILogger<Hl7InspectorViewModel>? _logger;
     private bool _isDisposed;
 
+    // ── Static property to pass parsed message to MainPage ────────────────────
+
+    public static string? PendingParsedMessage { get; set; }
+
     // ── Bindable state ────────────────────────────────────────────────────────
 
     private string _rawMessage  = string.Empty;

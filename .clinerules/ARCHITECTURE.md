@@ -203,6 +203,38 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ## Recent Changes (v2.0.15)
 
+### Main Page — Inspect Button Visibility & Layout
+
+1. **Conditional "Inspect" Button Display**
+   - The "Inspect" button in the footer is now hidden when `GeneratedMessage` is empty or null
+   - Uses `StringNotEmptyConverter` to bind visibility to the message content
+   - Only appears after a message has been generated (via "Generate HL7" button)
+
+2. **Copy/Inspect Buttons Stacked Vertically**
+   - Replaced horizontal side-by-side layout with a vertical stack inside the footer editor area
+   - Both buttons share exactly 50% of the GeneratedMessage field height each (`RowDefinition Height="*"`)
+   - `VerticalOptions="Fill"` ensures full height utilization
+   - Added `RowSpacing="6"` for visual separation between buttons
+   - Preserves application width (no horizontal expansion)
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/MainPage.xaml` | Added `StringNotEmptyConverter` to resources; replaced horizontal button layout with vertical stack in footer Grid using `RowDefinitions="*,*"` and `RowSpacing="6"`; added `IsVisible="{Binding GeneratedMessage, Converter={StaticResource StringNotEmptyConverter}}"` on Inspect button |
+
+### Network Settings Page — Footer Alignment
+
+1. **Footer Padding Aligned with HL7 Inspector**
+   - Changed footer padding from `20,12` to `16,10` to match Hl7InspectorPage
+   - Ensures consistent visual spacing for the Home button relative to bottom and right edges
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/NetworkSettingsPage.xaml` | Updated footer Grid padding from `20,12` to `16,10` to align with Hl7InspectorPage footer |
+
+---
+
 ### HL7 Inspector — Click-to-Copy on Tree Nodes
 
 Added click-to-copy functionality for values in the HL7 Inspector tree view, allowing users to quickly copy field values and notations to the clipboard.
@@ -224,7 +256,29 @@ Added click-to-copy functionality for values in the HL7 Inspector tree view, all
 | `HL7Tester/ViewModels/Hl7TreeNode.cs` | Added `ToggleAndCopyCommand` property; added `OnToggle` callback for ViewModel integration |
 | `HL7Tester/ViewModels/Hl7InspectorViewModel.cs` | Assigned `ToggleAndCopyCommand` in `BuildSegmentNode()`, `BuildFieldNode()`, and component node creation — all using the shared `ToggleNode()` method |
 | `HL7Tester/Hl7InspectorPage.xaml` | Updated tree row gesture recognizer to use `ToggleAndCopyCommand` on main Grid; arrow Label retains `ToggleCommand` for expand-only behavior |
-| `HL7Tester.csproj` | Version incremented to 2.0.15 |
+
+### Send Parsed Message to Generated Message
+
+Added a "Send Parsed →" button next to "Parse & Inspect" on the HL7 Inspector page, allowing users to send the parsed raw message directly into the `GeneratedMessage` field of the MainPage.
+
+**Key Features:**
+- **Button layout**: Grid with `*,Auto` columns — "Parse and Inspect" fills available space (master button), "Send Parsed →" is fixed 120×36px on the right
+- **Static message bridge**: Uses `Hl7InspectorViewModel.PendingParsedMessage` static property to pass the raw HL7 text between ViewModels
+- **MainPage picks up in `OnAppearing`**: Checks `PendingParsedMessage` and assigns it to `ViewModel.GeneratedMessage`, then clears the pending value
+
+**Technical Details:**
+- `Hl7InspectorPage.xaml.cs` — `OnSendParsedClicked` stores raw message in `PendingParsedMessage` and navigates via `Shell.Current.GoToAsync("//MainPage")`
+- `Hl7InspectorViewModel.cs` — Added `public static string? PendingParsedMessage { get; set; }`
+- `MainPage.xaml.cs` — `OnAppearing()` checks `PendingParsedMessage`, assigns to `GeneratedMessage`, clears the bridge
+- `OnHomeClicked` in inspector also clears the pending message to prevent stale data
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/Hl7InspectorPage.xaml` | Changed button row from `VerticalStackLayout` to `Grid` (`*,Auto`); added "Send Parsed →" button with fixed size and secondary style |
+| `HL7Tester/Hl7InspectorPage.xaml.cs` | Added `OnSendParsedClicked` handler; updated `OnHomeClicked` to clear pending message |
+| `HL7Tester/ViewModels/Hl7InspectorViewModel.cs` | Added `PendingParsedMessage` static property for cross-ViewModel communication |
+| `HL7Tester/MainPage.xaml.cs` | Added `OnAppearing()` override to pick up pending messages from the inspector |
 
 ---
 

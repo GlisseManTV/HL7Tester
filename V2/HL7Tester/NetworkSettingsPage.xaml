@@ -201,12 +201,7 @@
         </ScrollView>
 
         <!-- Static footer with Home button only -->
-        <Grid Grid.Row="1" Padding="20,12" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
+        <Grid Grid.Row="1" Padding="16,10" ColumnDefinitions="*,Auto" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
             <Label Grid.Column="0"
                    Text="{Binding AssemblyVersion}"
                    HorizontalOptions="Start"

@@ -55,14 +55,24 @@
                             HeightRequest="100"
                             FontFamily="Courier New, Courier, monospace"
                             FontSize="11"
-                            Placeholder="Paste your raw HL7 v2 message here (MSH|^~\&amp;|...)" />
+                            Placeholder="Paste your raw HL7 v2 message here"
+                            Text="{Binding RawMessage}" />
                 </Border>
 
-                <!-- Parse button -->
-                <Button Text="Parse &amp; Inspect"
-                        HorizontalOptions="Fill"
-                        IsEnabled="{Binding IsNotParsing}"
-                        Clicked="OnParseClicked" />
+                <!-- Parse and Send buttons row -->
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <Button Grid.Column="0"
+                            Text="Parse and Inspect"
+                            IsEnabled="{Binding IsNotParsing}"
+                            Clicked="OnParseClicked" />
+                    <Button Grid.Column="1"
+                            Text="Send Parsed →"
+                            WidthRequest="120"
+                            HeightRequest="36"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray600}}"
+                            IsEnabled="{Binding IsNotParsing}"
+                            Clicked="OnSendParsedClicked" />
+                </Grid>
 
             </VerticalStackLayout>
         </Border>

@@ -4,6 +4,9 @@ using Microsoft.Maui.Controls;
 using Windows.Storage;
 using WinRT;
 #endif
+#if MACCATALYST
+using Foundation;
+#endif
 
 namespace HL7Tester.Services;
 
@@ -127,6 +130,8 @@ public static class Hl7FileImportService
     {
 #if WINDOWS
         return TryImportWindowsFilesAsync(dropEventArgs);
+#elif MACCATALYST
+        return TryImportMacCatalystFilesAsync(dropEventArgs);
 #else
         return Task.FromResult<Hl7FileImportResult?>(null);
 #endif
@@ -168,6 +173,98 @@ public static class Hl7FileImportService
         }
 
         return Hl7FileImportResult.Fail("The dropped item is not a supported file.", multipleFilesDropped);
+    }
+#endif
+
+#if MACCATALYST
+    private static async Task<Hl7FileImportResult?> TryImportMacCatalystFilesAsync(DropEventArgs dropEventArgs)
+    {
+        var items = dropEventArgs.PlatformArgs?.DropSession?.Items;
+        if (items == null || items.Length == 0)
+        {
+            return null;
+        }
+
+        bool multipleFilesDropped = items.Length > 1;
+        var provider = items[0].ItemProvider;
+        if (provider == null)
+        {
+            return Hl7FileImportResult.Fail("The dropped item is not a supported file.", multipleFilesDropped);
+        }
+
+        foreach (var typeIdentifier in provider.RegisteredTypeIdentifiers ?? Array.Empty<string>())
+        {
+            var fileResult = await TryImportMacCatalystProviderFileAsync(provider, typeIdentifier, multipleFilesDropped).ConfigureAwait(false);
+            if (fileResult != null)
+            {
+                return fileResult;
+            }
+        }
+
+        foreach (var typeIdentifier in provider.RegisteredTypeIdentifiers ?? Array.Empty<string>())
+        {
+            var dataResult = await TryImportMacCatalystProviderDataAsync(provider, typeIdentifier, multipleFilesDropped).ConfigureAwait(false);
+            if (dataResult != null)
+            {
+                return dataResult;
+            }
+        }
+
+        return Hl7FileImportResult.Fail("No supported text file or HL7 text content was dropped.", multipleFilesDropped);
+    }
+
+    private static async Task<Hl7FileImportResult?> TryImportMacCatalystProviderFileAsync(
+        NSItemProvider provider,
+        string typeIdentifier,
+        bool multipleFilesDropped)
+    {
+        try
+        {
+            var fileUrl = await provider.LoadFileRepresentationAsync(typeIdentifier).ConfigureAwait(false);
+            var path = fileUrl?.Path;
+
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                return null;
+            }
+
+            var fileName = Path.GetFileName(path);
+            var extension = Path.GetExtension(fileName);
+
+            if (!SupportedExtensions.Contains(extension))
+            {
+                return null;
+            }
+
+            return await ImportFilePathAsync(path, multipleFilesDropped).ConfigureAwait(false);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static async Task<Hl7FileImportResult?> TryImportMacCatalystProviderDataAsync(
+        NSItemProvider provider,
+        string typeIdentifier,
+        bool multipleFilesDropped)
+    {
+        try
+        {
+            var data = await provider.LoadDataRepresentationAsync(typeIdentifier).ConfigureAwait(false);
+            if (data == null || data.Length == 0)
+            {
+                return null;
+            }
+
+            var bytes = data.ToArray();
+            await using var stream = new MemoryStream(bytes, writable: false);
+            return await ReadStreamAsync(stream, "Dropped text", multipleFilesDropped).ConfigureAwait(false);
+        }
+        catch
+        {
+            return null;
+        }
     }
 #endif
 

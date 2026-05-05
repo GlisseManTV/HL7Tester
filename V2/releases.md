@@ -1,4 +1,38 @@
-## v2.0.15 Changes (Latest Release)
+## v2.0.16 Changes (Latest Release)
+
+### Cross-Platform HL7 File Drag & Drop
+
+Added explicit drag-and-drop support for HL7 text files on both Windows and macOS MacCatalyst, replacing platform-dependent native behavior.
+
+**Key Features:**
+- **MainPage GeneratedMessage drop zone**: Dropping a supported file into the generated message area replaces `GeneratedMessage` with the file content
+- **HL7 Inspector drop zone**: Dropping a supported file into the raw message editor fills `RawMessage` and automatically parses the message
+- **Supported file extensions**: `.hl7`, `.h7`, `.txt`, `.msg`, `.dat`, `.edi`, `.log`
+- **Single-file import behavior**: If multiple files are dropped, only the first file is imported and the user is informed
+- **Safety checks**: Empty files and files larger than 2 MB are rejected with a user-facing message
+- **Text normalization**: Imported text is normalized for consistent line endings across platforms
+
+**Technical Details:**
+- Added `Hl7FileImportService` in the MAUI app layer to keep platform drag/drop concerns outside `HL7Tester.Core`
+- Windows uses `PlatformArgs.DragEventArgs.DataView.GetStorageItemsAsync()` to read dropped `StorageFile` items
+- MacCatalyst uses `PlatformArgs.DropSession.Items`, `NSItemProvider.LoadFileRepresentationAsync()`, and `LoadDataRepresentationAsync()` fallback
+- `DropGestureRecognizer` is attached to the generated message and inspector raw message container borders for consistent target behavior
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/Services/Hl7FileImportService.cs` | NEW — Shared drag/drop file import service with Windows and MacCatalyst native file extraction |
+| `HL7Tester/MainPage.xaml` | Added explicit drop gesture to the GeneratedMessage editor container; updated placeholder |
+| `HL7Tester/MainPage.xaml.cs` | Added `OnGeneratedMessageFileDropped` handler to import dropped files into `GeneratedMessage` |
+| `HL7Tester/Hl7InspectorPage.xaml` | Added explicit drop gesture to the raw HL7 message editor container; updated placeholder |
+| `HL7Tester/Hl7InspectorPage.xaml.cs` | Added `OnRawMessageFileDropped` handler to import and auto-parse dropped files |
+| `HL7Tester.csproj` | Version incremented to 2.0.16 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.16.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.16.0 |
+
+---
+
+## v2.0.15 Changes (Previous Release)
 
 ### Main Page — Inspect Button Visibility & Layout
 

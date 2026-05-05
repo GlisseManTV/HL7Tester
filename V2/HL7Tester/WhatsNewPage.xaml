@@ -10,31 +10,37 @@
           Padding="24,32,24,16"
           RowSpacing="16">
 
-        <!-- Title -->
-        <Label Grid.Row="0"
-               Grid.Column="0"
-               Text="What's New"
-               FontSize="28"
-               FontFamily="OpenSansSemibold"
-               TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+        <!-- Header -->
+        <VerticalStackLayout Grid.Row="0"
+                             Grid.Column="0"
+                             Spacing="6">
+            <Label Text="What's New"
+                   FontSize="30"
+                   FontFamily="OpenSansSemibold"
+                   TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
 
-        <!-- Version badge -->
-        <Label x:Name="VersionLabel"
-               Grid.Row="0"
-               Grid.Column="0"
-               Margin="0,4,0,0"
-               FontSize="16"
-               FontFamily="OpenSansRegular"
-               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+            <Border HorizontalOptions="Start"
+                    Padding="10,4"
+                    StrokeThickness="0"
+                    Background="{AppThemeBinding Light={StaticResource Gray200Brush}, Dark={StaticResource Gray600Brush}}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+                <Label x:Name="VersionLabel"
+                       FontSize="13"
+                       FontFamily="OpenSansSemibold"
+                       TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+            </Border>
+        </VerticalStackLayout>
 
         <!-- Release notes content -->
         <ScrollView Grid.Row="1"
                     Grid.Column="0"
                     BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
-            <Border Style="{StaticResource CardBorder}" Padding="16">
+            <Border Style="{StaticResource CardBorder}" Padding="20">
                 <Label x:Name="ContentLabel"
-                       FontSize="14"
-                       LineHeight="1.5"
+                       FontSize="16"
+                       LineHeight="1.45"
                        TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
             </Border>
         </ScrollView>
@@ -45,8 +51,7 @@
                 Text="OK, Got It!"
                 HorizontalOptions="End"
                 VerticalOptions="Center"
-                Clicked="OnOkClicked"
-                Style="{StaticResource Button}" />
+                Clicked="OnOkClicked"/>
 
     </Grid>
 </ContentPage>

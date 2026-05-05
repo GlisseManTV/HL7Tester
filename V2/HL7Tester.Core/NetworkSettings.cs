@@ -34,6 +34,18 @@ public sealed class NetworkSettings
     /// Historique des dernières connexions IP:Port (dernier en premier).
     /// </summary>
     public List<ConnectionHistoryEntry> History { get; set; } = new();
+
+    /// <summary>
+    /// Version de l'application installée (ex: "2.0.16").
+    /// Utilisé pour détecter les mises à jour et afficher le popup "What's New".
+    /// </summary>
+    public string? InstalledVersion { get; set; }
+
+    /// <summary>
+    /// Dernière version pour laquelle le popup "What's New" a été affiché.
+    /// Si null ou différent de InstalledVersion, le popup est affiché au démarrage.
+    /// </summary>
+    public string? LastShownWhatNewVersion { get; set; }
 }
 
 public sealed class ConnectionHistoryEntry

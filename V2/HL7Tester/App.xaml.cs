@@ -1,4 +1,5 @@
 using HL7Tester.Core;
+using HL7Tester.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices;
@@ -10,16 +11,19 @@ public partial class App : Application
 	private readonly ILogger<App> _logger;
 	private readonly INetworkSettingsService _networkSettingsService;
 	private readonly IUpdateChecker _updateChecker;
+	private readonly IWhatsNewService _whatsNewService;
 
-	public App(ILogger<App> logger, INetworkSettingsService networkSettingsService, IUpdateChecker updateChecker)
+	public App(ILogger<App> logger, INetworkSettingsService networkSettingsService, IUpdateChecker updateChecker, IWhatsNewService whatsNewService)
 	{
 		InitializeComponent();
 		_logger = logger;
 		_networkSettingsService = networkSettingsService;
 		_updateChecker = updateChecker;
+		_whatsNewService = whatsNewService;
 
 		LogStartupInformation();
 		_ = CheckForUpdatesAsync();
+		_ = ShowWhatsNewPopupIfNeededAsync();
 	}
 
 	private void LogStartupInformation()
@@ -130,6 +134,50 @@ public partial class App : Application
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Unexpected error while checking for updates.");
+		}
+	}
+
+	private async Task ShowWhatsNewPopupIfNeededAsync()
+	{
+		try
+		{
+			var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
+			var versionString = AppInfo.Current.VersionString;
+
+			_logger.LogDebug("What's New check: InstalledVersion={Installed}, LastShown={LastShown}, Current={Current}",
+				settings.InstalledVersion,
+				settings.LastShownWhatNewVersion,
+				versionString);
+
+			// Show popup if the flag has never been set (first install) or if the version changed.
+			if (string.IsNullOrEmpty(settings.LastShownWhatNewVersion) ||
+				!string.Equals(settings.LastShownWhatNewVersion, versionString, StringComparison.Ordinal))
+			{
+				_logger.LogInformation("Showing What's New popup for version {Version}.", versionString);
+
+				MainThread.BeginInvokeOnMainThread(async () =>
+				{
+					try
+					{
+						var page = new WhatsNewPage(_whatsNewService, _networkSettingsService, versionString);
+						await Shell.Current.Navigation.PushModalAsync(page).ConfigureAwait(false);
+
+						_logger.LogInformation("What's New popup dismissed for version {Version}.", versionString);
+					}
+					catch (Exception ex)
+					{
+						_logger.LogError(ex, "Error displaying What's New popup.");
+					}
+				});
+			}
+			else
+			{
+				_logger.LogDebug("What's New popup not shown (version {Version} already displayed).", versionString);
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Unexpected error during What's New check.");
 		}
 	}
 

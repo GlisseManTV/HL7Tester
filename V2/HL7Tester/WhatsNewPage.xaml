@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HL7Tester.WhatsNewPage"
+             Title=""
+             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource OffBlack}}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          ColumnDefinitions="*"
+          Padding="24,32,24,16"
+          RowSpacing="16">
+
+        <!-- Title -->
+        <Label Grid.Row="0"
+               Grid.Column="0"
+               Text="What's New"
+               FontSize="28"
+               FontFamily="OpenSansSemibold"
+               TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+
+        <!-- Version badge -->
+        <Label x:Name="VersionLabel"
+               Grid.Row="0"
+               Grid.Column="0"
+               Margin="0,4,0,0"
+               FontSize="16"
+               FontFamily="OpenSansRegular"
+               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+
+        <!-- Release notes content -->
+        <ScrollView Grid.Row="1"
+                    Grid.Column="0"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
+            <Border Style="{StaticResource CardBorder}" Padding="16">
+                <Label x:Name="ContentLabel"
+                       FontSize="14"
+                       LineHeight="1.5"
+                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
+            </Border>
+        </ScrollView>
+
+        <!-- OK button (bottom-right) -->
+        <Button Grid.Row="2"
+                Grid.Column="0"
+                Text="OK, Got It!"
+                HorizontalOptions="End"
+                VerticalOptions="Center"
+                Clicked="OnOkClicked"
+                Style="{StaticResource Button}" />
+
+    </Grid>
+</ContentPage>

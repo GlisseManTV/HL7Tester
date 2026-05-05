@@ -1,11 +1,11 @@
 using HL7Tester.Core;
 using HL7Tester.Services;
-using System.Text.RegularExpressions;
 
 namespace HL7Tester;
 
 /// <summary>
-/// Modal page showing "What's New" release notes for the current version.
+/// Announcement-style "What's New" page shown to the user after an update.
+/// Each ### section in whatsnew.md is rendered as a visual feature card.
 /// </summary>
 public partial class WhatsNewPage : ContentPage
 {
@@ -20,7 +20,6 @@ public partial class WhatsNewPage : ContentPage
         _whatsNewService = whatsNewService;
         _settingsService = settingsService;
         _currentVersion = currentVersion;
-        _settings = new NetworkSettings();
 
         VersionLabel.Text = $"v{currentVersion}";
     }
@@ -29,23 +28,32 @@ public partial class WhatsNewPage : ContentPage
     {
         base.OnAppearing();
 
-        // Load existing settings to avoid overwriting them.
+        // Load existing settings to avoid overwriting them on OK.
         _settings = await _settingsService.LoadAsync();
 
         var content = await _whatsNewService.LoadContentAsync();
+
+        FeatureCardsContainer.Children.Clear();
+
         if (!string.IsNullOrWhiteSpace(content))
         {
-            ContentLabel.FormattedText = BuildFormattedReleaseNotes(content);
+            var cards = BuildAnnouncementCards(content);
+            foreach (var card in cards)
+                FeatureCardsContainer.Children.Add(card);
         }
         else
         {
-            ContentLabel.Text = "No release notes available.";
+            FeatureCardsContainer.Children.Add(new Label
+            {
+                Text = "No release notes available.",
+                FontSize = 15,
+                TextColor = Colors.Gray
+            });
         }
     }
 
     private async void OnOkClicked(object? sender, EventArgs e)
     {
-        // Save the current version as the last shown What's New version.
         _settings.InstalledVersion = _currentVersion;
         _settings.LastShownWhatNewVersion = _currentVersion;
 
@@ -55,120 +63,183 @@ public partial class WhatsNewPage : ContentPage
         }
         catch (Exception ex)
         {
-            // Non-critical — don't block the user.
             System.Diagnostics.Debug.WriteLine($"[WhatsNew] Failed to save settings: {ex.Message}");
         }
 
-        // Use the same Shell navigation pattern as the Home button and other pages.
         await Shell.Current.GoToAsync("//MainPage");
     }
-    
-    private static FormattedString BuildFormattedReleaseNotes(string markdown)
+
+    /// <summary>
+    /// Parses whatsnew.md and returns one Border card per ### feature section.
+    /// Format expected:
+    ///   ## vX.Y.Z          — version header (ignored in card rendering)
+    ///   ### 📂 Title        — feature card title (emoji + text)
+    ///   > Tagline sentence  — short user-facing benefit shown as subtitle
+    ///   - Bullet point      — optional benefit bullet (max 4 recommended)
+    /// </summary>
+    private static List<View> BuildAnnouncementCards(string markdown)
     {
-        var formatted = new FormattedString();
+        var cards = new List<View>();
         var lines = markdown.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
+
+        string? currentEmoji = null;
+        string? currentTitle = null;
+        string? currentTagline = null;
+        var currentBullets = new List<string>();
+
+        void FlushCard()
+        {
+            if (currentTitle == null) return;
+            cards.Add(CreateFeatureCard(currentEmoji ?? "✨", currentTitle, currentTagline, currentBullets));
+            currentEmoji = null;
+            currentTitle = null;
+            currentTagline = null;
+            currentBullets = new List<string>();
+        }
 
         foreach (var rawLine in lines)
         {
             var line = rawLine.Trim();
 
-            if (string.IsNullOrWhiteSpace(line))
-            {
-                formatted.Spans.Add(new Span { Text = Environment.NewLine });
+            // Skip version header and separators
+            if (line.StartsWith("## ", StringComparison.Ordinal) || line == "---" || string.IsNullOrWhiteSpace(line))
                 continue;
-            }
 
-            if (line == "---")
-            {
-                formatted.Spans.Add(new Span { Text = Environment.NewLine });
-                continue;
-            }
-
+            // New feature section — flush previous card
             if (line.StartsWith("### ", StringComparison.Ordinal))
             {
-                formatted.Spans.Add(new Span
+                FlushCard();
+                var titleRaw = line[4..].Trim();
+                // Extract leading emoji (first "word" that is non-ASCII / emoji)
+                var spaceIndex = titleRaw.IndexOf(' ');
+                if (spaceIndex > 0)
                 {
-                    Text = $"{line[4..]}{Environment.NewLine}",
-                    FontSize = 18,
-                    FontAttributes = FontAttributes.Bold,
-                    FontFamily = "OpenSansSemibold"
-                });
+                    currentEmoji = titleRaw[..spaceIndex].Trim();
+                    currentTitle = titleRaw[(spaceIndex + 1)..].Trim();
+                }
+                else
+                {
+                    currentEmoji = "✨";
+                    currentTitle = titleRaw;
+                }
                 continue;
             }
 
-            if (line.StartsWith("## ", StringComparison.Ordinal))
+            // Tagline (blockquote)
+            if (line.StartsWith("> ", StringComparison.Ordinal))
             {
-                formatted.Spans.Add(new Span
-                {
-                    Text = $"{line[3..]}{Environment.NewLine}{Environment.NewLine}",
-                    FontSize = 22,
-                    FontAttributes = FontAttributes.Bold,
-                    FontFamily = "OpenSansSemibold"
-                });
+                currentTagline = line[2..].Trim();
                 continue;
             }
 
+            // Bullet point
             if (line.StartsWith("- ", StringComparison.Ordinal))
             {
-                AddInlineMarkdownSpans(formatted, line[2..], 15, "• ");
-                formatted.Spans.Add(new Span { Text = Environment.NewLine });
+                currentBullets.Add(line[2..].Trim());
                 continue;
             }
-
-            AddInlineMarkdownSpans(formatted, line, 16);
-            formatted.Spans.Add(new Span { Text = Environment.NewLine });
         }
 
-        return formatted;
+        FlushCard(); // flush last card
+        return cards;
     }
 
-    private static void AddInlineMarkdownSpans(FormattedString formatted, string text, double fontSize, string prefix = "")
+    /// <summary>
+    /// Creates a styled feature card Border with emoji, title, tagline and optional bullets.
+    /// </summary>
+    private static Border CreateFeatureCard(string emoji, string title, string? tagline, List<string> bullets)
     {
-        if (!string.IsNullOrEmpty(prefix))
+        // Emoji column
+        var emojiLabel = new Label
         {
-            formatted.Spans.Add(new Span
+            Text = emoji,
+            FontSize = 34,
+            VerticalOptions = LayoutOptions.Start,
+            Margin = new Thickness(0, 2, 16, 0)
+        };
+
+        // Title label
+        var titleLabel = new Label
+        {
+            Text = title,
+            FontSize = 20,
+            FontFamily = "OpenSansSemibold",
+            FontAttributes = FontAttributes.Bold,
+            LineBreakMode = LineBreakMode.WordWrap,
+            TextColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                ? Color.FromArgb("#FFFFFF")
+                : Color.FromArgb("#190649") // MidnightBlue
+        };
+
+        var textStack = new VerticalStackLayout
+        {
+            Spacing = 7,
+            Children = { titleLabel }
+        };
+
+        // Tagline (benefit sentence)
+        if (!string.IsNullOrWhiteSpace(tagline))
+        {
+            textStack.Children.Add(new Label
             {
-                Text = prefix,
-                FontSize = fontSize,
-                FontAttributes = FontAttributes.Bold
+                Text = tagline,
+                FontSize = 16,
+                LineBreakMode = LineBreakMode.WordWrap,
+                TextColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                    ? Color.FromArgb("#ACACAC") // Gray300
+                    : Color.FromArgb("#6E6E6E")  // Gray500
             });
         }
 
-        var cleanedText = Regex.Replace(text, @"`([^`]+)`", "$1");
-        cleanedText = Regex.Replace(cleanedText, @"\[(.+?)\]\(.+?\)", "$1");
-
-        var matches = Regex.Matches(cleanedText, @"\*\*(.+?)\*\*");
-        var currentIndex = 0;
-
-        foreach (Match match in matches)
+        // Bullets
+        foreach (var bullet in bullets)
         {
-            if (match.Index > currentIndex)
+            textStack.Children.Add(new Label
             {
-                formatted.Spans.Add(new Span
-                {
-                    Text = cleanedText[currentIndex..match.Index],
-                    FontSize = fontSize
-                });
+                Text = $"• {bullet}",
+                FontSize = 15,
+                LineBreakMode = LineBreakMode.WordWrap,
+                TextColor = Application.Current?.RequestedTheme == AppTheme.Dark
+                    ? Color.FromArgb("#C8C8C8") // Gray200
+                    : Color.FromArgb("#404040")  // Gray600
+            });
+        }
+
+        // Card layout: emoji left, text right
+        var cardGrid = new Grid
+        {
+            ColumnDefinitions =
+            {
+                new ColumnDefinition { Width = GridLength.Auto },
+                new ColumnDefinition { Width = GridLength.Star }
             }
+        };
 
-            formatted.Spans.Add(new Span
-            {
-                Text = match.Groups[1].Value,
-                FontSize = fontSize,
-                FontAttributes = FontAttributes.Bold,
-                FontFamily = "OpenSansSemibold"
-            });
+        cardGrid.Add(emojiLabel, 0, 0);
+        cardGrid.Add(textStack, 1, 0);
 
-            currentIndex = match.Index + match.Length;
-        }
-
-        if (currentIndex < cleanedText.Length)
+        var card = new Border
         {
-            formatted.Spans.Add(new Span
+            Padding = new Thickness(16),
+            Margin = new Thickness(0, 0),
+            StrokeThickness = 1,
+            StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = new CornerRadius(12) },
+            Background = Application.Current?.RequestedTheme == AppTheme.Dark
+                ? new SolidColorBrush(Color.FromArgb("#212121")) // Gray900
+                : new SolidColorBrush(Colors.White),
+            Stroke = Application.Current?.RequestedTheme == AppTheme.Dark
+                ? new SolidColorBrush(Color.FromArgb("#404040")) // Gray600
+                : new SolidColorBrush(Color.FromArgb("#C8C8C8")), // Gray200
+            Shadow = new Shadow
             {
-                Text = cleanedText[currentIndex..],
-                FontSize = fontSize
-            });
-        }
+                Radius = 8,
+                Opacity = 0.08f,
+                Offset = new Point(0, 2),
+                Brush = new SolidColorBrush(Colors.Black)
+            },
+            Content = cardGrid
+        };
+
+        return card;
     }
 }

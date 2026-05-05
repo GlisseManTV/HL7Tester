@@ -11,9 +11,13 @@
           RowSpacing="16">
 
         <!-- Header -->
-        <VerticalStackLayout Grid.Row="0"
-                             Grid.Column="0"
-                             Spacing="6">
+        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6">
+
+            <!-- Big celebration emoji -->
+            <Label Text="🎉"
+                   FontSize="40"
+                   HorizontalOptions="Start" />
+
             <Label Text="What's New"
                    FontSize="30"
                    FontFamily="OpenSansSemibold"
@@ -33,22 +37,16 @@
             </Border>
         </VerticalStackLayout>
 
-        <!-- Release notes content -->
-        <ScrollView Grid.Row="1"
-                    Grid.Column="0"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}">
-            <Border Style="{StaticResource CardBorder}" Padding="20">
-                <Label x:Name="ContentLabel"
-                       FontSize="16"
-                       LineHeight="1.45"
-                       TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}" />
-            </Border>
+        <!-- Feature cards scroll area -->
+        <ScrollView Grid.Row="1" Grid.Column="0">
+            <VerticalStackLayout x:Name="FeatureCardsContainer"
+                                 Spacing="12" />
         </ScrollView>
 
         <!-- OK button (bottom-right) -->
         <Button Grid.Row="2"
                 Grid.Column="0"
-                Text="OK, Got It!"
+                Text="Got it!"
                 HorizontalOptions="End"
                 VerticalOptions="Center"
                 Clicked="OnOkClicked"/>

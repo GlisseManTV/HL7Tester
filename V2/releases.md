@@ -1,5 +1,34 @@
 ## v2.0.16 Changes (Latest Release)
 
+### What's New Page — Announcement-Style Redesign
+
+Replaced the flat markdown text block with a visually engaging, end-user-facing announcement layout. The page now presents each feature as a styled card, using warm benefit-oriented language instead of technical release notes.
+
+**Key Features:**
+- Each `###` section in `whatsnew.md` renders as a standalone `Border` card with rounded corners and a subtle shadow
+- Card layout: large emoji on the left, bold title + gray tagline + bullet list on the right
+- Fully respects light/dark theme (`AppTheme.Dark` check at card creation time)
+- Header now includes a 🎉 emoji above the "What's New" title for a warm welcome feel
+- "Got it!" button replaces the previous "OK, Got It!" label (no emoji in button text)
+
+**Technical Details:**
+- Removed `ContentLabel` (single `Label` with `FormattedText`) from XAML
+- Added `FeatureCardsContainer` (`VerticalStackLayout`, `x:Name`) inside the `ScrollView`
+- New `BuildAnnouncementCards(string markdown)` static method: parses `## / ### / > / -` lines into structured data, calls `CreateFeatureCard()` per section
+- New `CreateFeatureCard(emoji, title, tagline, bullets)` static method: builds `Border > Grid > [emojiLabel | VerticalStackLayout]` entirely in code
+- Font sizes: emoji 34px · title 20px · tagline 16px · bullets 15px
+- `whatsnew.md` reformatted to follow the end-user announcement format (emoji titles, `>` taglines, benefit bullets — no technical details)
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/WhatsNewPage.xaml` | Replaced `ContentLabel` with `FeatureCardsContainer`; added 🎉 emoji to header; changed button text to "Got it!" |
+| `HL7Tester/WhatsNewPage.xaml.cs` | Replaced `BuildFormattedReleaseNotes` with `BuildAnnouncementCards` + `CreateFeatureCard`; removed `System.Text.RegularExpressions` import |
+| `HL7Tester/Resources/Raw/whatsnew.md` | Reformatted content in announcement style: emoji titles, `>` taglines, benefit-focused bullets, no technical details |
+| `.clinerules/ARCHITECTURE.md` | Added "What's New Page — Content Guidelines" section documenting the `whatsnew.md` format and rendering rules |
+
+---
+
 ### Cross-Platform HL7 File Drag & Drop
 
 Added explicit drag-and-drop support for HL7 text files on both Windows and macOS MacCatalyst, replacing platform-dependent native behavior.

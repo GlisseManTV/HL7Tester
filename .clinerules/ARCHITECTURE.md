@@ -215,7 +215,105 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ---
 
+## What's New Page — Content Guidelines
+
+### Purpose
+The `WhatsNewPage` is an **end-user announcement page**, not a developer changelog. It is shown automatically when the user updates to a new version. Content must be warm, benefit-oriented, and immediately understandable by non-technical users.
+
+### whatsnew.md Format
+
+The file lives at `HL7Tester/Resources/Raw/whatsnew.md` and is embedded as a `MauiAsset`. Each `###` section becomes a **visual feature card** in the app.
+
+**Required structure:**
+
+```markdown
+## vX.Y.Z
+
+### 📂 Short User-Facing Title
+> One sentence describing the benefit to the user. Not technical.
+- Bullet point 1 (what the user can do)
+- Bullet point 2
+- Bullet point 3 (max 4 bullets recommended)
+
+### 🔍 Another Feature Title
+> Tagline for this feature.
+- Bullet 1
+```
+
+**Rules:**
+
+| Rule | Requirement |
+|------|-------------|
+| `## vX.Y.Z` | Exactly one version header per file (ignored visually) |
+| `### Emoji Title` | Each section starts with an emoji, followed by a short title |
+| `> Tagline` | Exactly one blockquote line per section — the key benefit statement |
+| `- Bullets` | Optional. Max 4 bullets. Written in plain language, user benefit focus |
+| Language | English only. Simple words. No jargon, no class names, no file paths |
+| Technical details | **Never included** — strip all implementation details before publishing |
+
+**Good example:**
+```markdown
+### 📂 Drop HL7 Files Directly into the App
+> No more copy-paste. Just drag a file and you're done.
+- Works on both Windows and macOS
+- Supported formats: .hl7, .txt, .msg, .dat and more
+- Dropped files are auto-parsed in the Inspector
+```
+
+**Bad example (do not do this):**
+```markdown
+### Cross-Platform HL7 File Drag & Drop
+Added explicit drag-and-drop support for HL7 text files on both Windows and macOS MacCatalyst.
+- Windows uses PlatformArgs.DragEventArgs.DataView.GetStorageItemsAsync()
+- MacCatalyst uses NSItemProvider.LoadFileRepresentationAsync()
+```
+
+### How the WhatsNewPage Renders the Content
+
+- Each `###` section → one `Border` card (rounded corners, subtle shadow)
+- Emoji → large label on the left of the card
+- Title → bold, `MidnightBlue` (light) / white (dark), font size 17
+- Tagline → gray subtitle, font size 14
+- Bullets → smaller gray text with `•` prefix, font size 13
+- The `## vX.Y.Z` header is **not rendered** as a card (skipped by parser)
+- `---` separators are also skipped
+
+### When to Update whatsnew.md
+
+Update `whatsnew.md` whenever a new version is released **before** bumping the version number in `.csproj`. The parser reads only the first `## vX.Y.Z` section, so older version blocks should be removed or kept out of the file.
+
+---
+
 ## Recent Changes (v2.0.16)
+
+### What's New Page — Announcement-Style Redesign
+
+Replaced the flat markdown text block with a visually engaging, end-user-facing announcement layout. The page now presents each feature as a styled card, using warm benefit-oriented language instead of technical release notes.
+
+**Key Features:**
+- Each `###` section in `whatsnew.md` renders as a standalone `Border` card with rounded corners and a subtle shadow
+- Card layout: large emoji on the left, bold title + gray tagline + bullet list on the right
+- Fully respects light/dark theme (`AppTheme.Dark` check at card creation time)
+- Header now includes a 🎉 emoji above the "What's New" title for a warm welcome feel
+- "Got it!" button replaces the previous "OK, Got It!" label (no emoji in button text)
+
+**Technical Details:**
+- Removed `ContentLabel` (single `Label` with `FormattedText`) from XAML
+- Added `FeatureCardsContainer` (`VerticalStackLayout`, `x:Name`) inside the `ScrollView`
+- New `BuildAnnouncementCards(string markdown)` static method: parses `## / ### / > / -` lines into structured data, calls `CreateFeatureCard()` per section
+- New `CreateFeatureCard(emoji, title, tagline, bullets)` static method: builds `Border > Grid > [emojiLabel | VerticalStackLayout]` entirely in code
+- Font sizes: emoji 34px · title 20px · tagline 16px · bullets 15px
+- `whatsnew.md` reformatted to follow the end-user announcement format (emoji titles, `>` taglines, benefit bullets — no technical details)
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/WhatsNewPage.xaml` | Replaced `ContentLabel` with `FeatureCardsContainer`; added 🎉 emoji to header; changed button text to "Got it!" |
+| `HL7Tester/WhatsNewPage.xaml.cs` | Replaced `BuildFormattedReleaseNotes` with `BuildAnnouncementCards` + `CreateFeatureCard`; removed `System.Text.RegularExpressions` import |
+| `HL7Tester/Resources/Raw/whatsnew.md` | Reformatted content in announcement style: emoji titles, `>` taglines, benefit-focused bullets, no technical details |
+| `.clinerules/ARCHITECTURE.md` | Added "What's New Page — Content Guidelines" section documenting the `whatsnew.md` format and rendering rules |
+
+---
 
 ### Cross-Platform HL7 File Drag & Drop
 

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using HL7Tester.Core;
+using HL7Tester.Services;
 using HL7Tester.ViewModels;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
@@ -122,6 +123,37 @@ public partial class MainPage : ContentPage
 		if (viewModel != null)
 		{
 			viewModel.ToggleSendLog();
+		}
+	}
+
+	private async void OnGeneratedMessageFileDropped(object? sender, DropEventArgs e)
+	{
+		try
+		{
+			var result = await Hl7FileImportService.ImportDroppedContentAsync(e);
+			if (!result.Success)
+			{
+				await DisplayAlertAsync("File import", result.ErrorMessage ?? "Unable to import the dropped file.", "OK");
+				return;
+			}
+
+			var viewModel = BindingContext as MainViewModel;
+			if (viewModel == null)
+			{
+				await DisplayAlertAsync("File import", "Unable to import the file because the page is not ready.", "OK");
+				return;
+			}
+
+			viewModel.GeneratedMessage = result.Content ?? string.Empty;
+
+			if (result.MultipleFilesDropped)
+			{
+				await DisplayAlertAsync("File import", $"Imported '{result.FileName}'. Additional dropped files were ignored.", "OK");
+			}
+		}
+		catch (Exception ex)
+		{
+			await DisplayAlertAsync("Error", $"Unable to import dropped file: {ex.Message}", "OK");
 		}
 	}
 }

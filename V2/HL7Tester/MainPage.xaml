@@ -573,9 +573,12 @@
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="8">
+                    <Border.GestureRecognizers>
+                        <DropGestureRecognizer AllowDrop="True" Drop="OnGeneratedMessageFileDropped" />
+                    </Border.GestureRecognizers>
                     <Editor Text="{Binding GeneratedMessage}" 
                             AutoSize="TextChanges"
-                            Placeholder="HL7 message will appear here after generation" />
+                            Placeholder="HL7 message will appear here after generation or file drop" />
                 </Border>
 
                 <!-- Copy and Inspect buttons stacked vertically inside the editor field (right-aligned) -->

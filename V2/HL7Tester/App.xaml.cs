@@ -23,7 +23,6 @@ public partial class App : Application
 
 		LogStartupInformation();
 		_ = CheckForUpdatesAsync();
-		_ = ShowWhatsNewPopupIfNeededAsync();
 	}
 
 	private void LogStartupInformation()
@@ -141,7 +140,9 @@ public partial class App : Application
 	{
 		try
 		{
-			var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
+			// Do NOT use ConfigureAwait(false) here — we need to stay on the main thread
+			// so that MainThread.BeginInvokeOnMainThread works correctly on Windows.
+			var settings = await _networkSettingsService.LoadAsync();
 			var versionString = AppInfo.Current.VersionString;
 
 			_logger.LogDebug("What's New check: InstalledVersion={Installed}, LastShown={LastShown}, Current={Current}",
@@ -183,6 +184,10 @@ public partial class App : Application
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		return new Window(new AppShell());
+		var window = new Window(new AppShell());
+		// Delay What's New popup until the window and Shell are fully initialized.
+		// Calling it from the constructor causes "Unable to find main thread" on Windows.
+		window.Created += (s, e) => _ = ShowWhatsNewPopupIfNeededAsync();
+		return window;
 	}
 }

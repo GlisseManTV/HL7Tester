@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HL7Tester.WhatsNewPage"
+             Title=""
+             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource OffBlack}}">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          ColumnDefinitions="*"
+          Padding="24,32,24,16"
+          RowSpacing="16">
+
+        <!-- Header -->
+        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6">
+
+            <!-- Big celebration emoji -->
+            <Label Text="🎉"
+                   FontSize="40"
+                   HorizontalOptions="Start" />
+
+            <Label Text="What's New"
+                   FontSize="30"
+                   FontFamily="OpenSansSemibold"
+                   TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+
+            <Border HorizontalOptions="Start"
+                    Padding="10,4"
+                    StrokeThickness="0"
+                    Background="{AppThemeBinding Light={StaticResource Gray200Brush}, Dark={StaticResource Gray600Brush}}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12" />
+                </Border.StrokeShape>
+                <Label x:Name="VersionLabel"
+                       FontSize="13"
+                       FontFamily="OpenSansSemibold"
+                       TextColor="{AppThemeBinding Light={StaticResource MidnightBlue}, Dark={StaticResource White}}" />
+            </Border>
+        </VerticalStackLayout>
+
+        <!-- Feature cards scroll area -->
+        <ScrollView Grid.Row="1" Grid.Column="0">
+            <VerticalStackLayout x:Name="FeatureCardsContainer"
+                                 Spacing="12" />
+        </ScrollView>
+
+        <!-- OK button (bottom-right) -->
+        <Button Grid.Row="2"
+                Grid.Column="0"
+                Text="Got it!"
+                HorizontalOptions="End"
+                VerticalOptions="Center"
+                Clicked="OnOkClicked"/>
+
+    </Grid>
+</ContentPage>

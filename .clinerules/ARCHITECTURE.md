@@ -17,6 +17,7 @@ V2/
 │   │   └── Styles/           # Global styles (Colors.xaml, Styles.xaml)
 │   ├── ViewModels/           # MVVM ViewModels
 │   ├── Logging/              # Custom file logging implementation
+│   ├── Services/             # App-level UI/platform services (file import, drag/drop)
 │   └── *.xaml/.xaml.cs       # UI pages and code-behind
 ├── HL7Tester.Core/           # Shared business logic library
 │   ├── Hl7NetworkSender.cs   # HL7 message sending with MLLP framing + encoding
@@ -141,6 +142,19 @@ Manages network settings UI:
 - Message encoding selection (predefined + custom input)
 - HL7 documentation links (ADT, ORM, SIU) — opens URLs via `Launcher.Default.OpenAsync()`
 
+### 7. Hl7FileImportService (Drag & Drop File Import)
+**Location**: `HL7Tester/Services/Hl7FileImportService.cs`
+
+App-level service for importing dropped HL7 text files into UI fields:
+- Supports `.hl7`, `.h7`, `.txt`, `.msg`, `.dat`, `.edi`, `.log`
+- Enforces a 2 MB maximum file size and rejects empty files
+- Reads text as UTF-8 with BOM detection and normalizes line endings to `Environment.NewLine`
+- Imports only the first file when multiple files are dropped
+- Windows implementation uses `PlatformArgs.DragEventArgs.DataView.GetStorageItemsAsync()` for `StorageFile` access
+- MacCatalyst implementation uses `PlatformArgs.DropSession.Items`, `NSItemProvider.LoadFileRepresentationAsync()`, and `LoadDataRepresentationAsync()` fallback
+- Used by `MainPage.xaml.cs` to populate `MainViewModel.GeneratedMessage`
+- Used by `Hl7InspectorPage.xaml.cs` to populate `Hl7InspectorViewModel.RawMessage` and automatically parse after import
+
 ---
 
 ## Development Guidelines
@@ -186,18 +200,149 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.15</ApplicationDisplayVersion>
-<ApplicationVersion>2.0.15.0</ApplicationVersion>
+<ApplicationDisplayVersion>2.0.16</ApplicationDisplayVersion>
+<ApplicationVersion>2.0.16.0</ApplicationVersion>
 ```
 
 ### Windows Package Manifest
 ```xml
 <!-- app.manifest -->
-<assemblyIdentity version="2.0.15.0" name="HL7Tester.WinUI.app"/>
+<assemblyIdentity version="2.0.16.0" name="HL7Tester.WinUI.app"/>
 
 <!-- Package.appxmanifest -->
-<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.15.0" />
+<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.16.0" />
 ```
+
+---
+
+## What's New Page — Content Guidelines
+
+### Purpose
+The `WhatsNewPage` is an **end-user announcement page**, not a developer changelog. It is shown automatically when the user updates to a new version. Content must be warm, benefit-oriented, and immediately understandable by non-technical users.
+
+### whatsnew.md Format
+
+The file lives at `HL7Tester/Resources/Raw/whatsnew.md` and is embedded as a `MauiAsset`. Each `###` section becomes a **visual feature card** in the app.
+
+**Required structure:**
+
+```markdown
+## vX.Y.Z
+
+### 📂 Short User-Facing Title
+> One sentence describing the benefit to the user. Not technical.
+- Bullet point 1 (what the user can do)
+- Bullet point 2
+- Bullet point 3 (max 4 bullets recommended)
+
+### 🔍 Another Feature Title
+> Tagline for this feature.
+- Bullet 1
+```
+
+**Rules:**
+
+| Rule | Requirement |
+|------|-------------|
+| `## vX.Y.Z` | Exactly one version header per file (ignored visually) |
+| `### Emoji Title` | Each section starts with an emoji, followed by a short title |
+| `> Tagline` | Exactly one blockquote line per section — the key benefit statement |
+| `- Bullets` | Optional. Max 4 bullets. Written in plain language, user benefit focus |
+| Language | English only. Simple words. No jargon, no class names, no file paths |
+| Technical details | **Never included** — strip all implementation details before publishing |
+
+**Good example:**
+```markdown
+### 📂 Drop HL7 Files Directly into the App
+> No more copy-paste. Just drag a file and you're done.
+- Works on both Windows and macOS
+- Supported formats: .hl7, .txt, .msg, .dat and more
+- Dropped files are auto-parsed in the Inspector
+```
+
+**Bad example (do not do this):**
+```markdown
+### Cross-Platform HL7 File Drag & Drop
+Added explicit drag-and-drop support for HL7 text files on both Windows and macOS MacCatalyst.
+- Windows uses PlatformArgs.DragEventArgs.DataView.GetStorageItemsAsync()
+- MacCatalyst uses NSItemProvider.LoadFileRepresentationAsync()
+```
+
+### How the WhatsNewPage Renders the Content
+
+- Each `###` section → one `Border` card (rounded corners, subtle shadow)
+- Emoji → large label on the left of the card
+- Title → bold, `MidnightBlue` (light) / white (dark), font size 17
+- Tagline → gray subtitle, font size 14
+- Bullets → smaller gray text with `•` prefix, font size 13
+- The `## vX.Y.Z` header is **not rendered** as a card (skipped by parser)
+- `---` separators are also skipped
+
+### When to Update whatsnew.md
+
+Update `whatsnew.md` whenever a new version is released **before** bumping the version number in `.csproj`. The parser reads only the first `## vX.Y.Z` section, so older version blocks should be removed or kept out of the file.
+
+---
+
+## Recent Changes (v2.0.16)
+
+### What's New Page — Announcement-Style Redesign
+
+Replaced the flat markdown text block with a visually engaging, end-user-facing announcement layout. The page now presents each feature as a styled card, using warm benefit-oriented language instead of technical release notes.
+
+**Key Features:**
+- Each `###` section in `whatsnew.md` renders as a standalone `Border` card with rounded corners and a subtle shadow
+- Card layout: large emoji on the left, bold title + gray tagline + bullet list on the right
+- Fully respects light/dark theme (`AppTheme.Dark` check at card creation time)
+- Header now includes a 🎉 emoji above the "What's New" title for a warm welcome feel
+- "Got it!" button replaces the previous "OK, Got It!" label (no emoji in button text)
+
+**Technical Details:**
+- Removed `ContentLabel` (single `Label` with `FormattedText`) from XAML
+- Added `FeatureCardsContainer` (`VerticalStackLayout`, `x:Name`) inside the `ScrollView`
+- New `BuildAnnouncementCards(string markdown)` static method: parses `## / ### / > / -` lines into structured data, calls `CreateFeatureCard()` per section
+- New `CreateFeatureCard(emoji, title, tagline, bullets)` static method: builds `Border > Grid > [emojiLabel | VerticalStackLayout]` entirely in code
+- Font sizes: emoji 34px · title 20px · tagline 16px · bullets 15px
+- `whatsnew.md` reformatted to follow the end-user announcement format (emoji titles, `>` taglines, benefit bullets — no technical details)
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/WhatsNewPage.xaml` | Replaced `ContentLabel` with `FeatureCardsContainer`; added 🎉 emoji to header; changed button text to "Got it!" |
+| `HL7Tester/WhatsNewPage.xaml.cs` | Replaced `BuildFormattedReleaseNotes` with `BuildAnnouncementCards` + `CreateFeatureCard`; removed `System.Text.RegularExpressions` import |
+| `HL7Tester/Resources/Raw/whatsnew.md` | Reformatted content in announcement style: emoji titles, `>` taglines, benefit-focused bullets, no technical details |
+| `.clinerules/ARCHITECTURE.md` | Added "What's New Page — Content Guidelines" section documenting the `whatsnew.md` format and rendering rules |
+
+---
+
+### Cross-Platform HL7 File Drag & Drop
+
+Added explicit drag-and-drop support for HL7 text files on both Windows and macOS MacCatalyst.
+
+**Key Features:**
+- Drop supported files into the `GeneratedMessage` area on MainPage to replace the current generated message
+- Drop supported files into the HL7 Inspector raw message editor to import and automatically parse the message
+- Supported extensions: `.hl7`, `.h7`, `.txt`, `.msg`, `.dat`, `.edi`, `.log`
+- Only the first dropped file is imported when multiple files are dropped
+- Empty files and files larger than 2 MB are rejected with a clear message
+
+**Technical Details:**
+- `Hl7FileImportService` centralizes file extension validation, size checks, UTF-8/BOM text reading, and line-ending normalization
+- Windows file drops use native `StorageFile` extraction through `PlatformArgs.DragEventArgs.DataView.GetStorageItemsAsync()`
+- MacCatalyst file drops use native `DropSession.Items` + `NSItemProvider` file/data representation APIs
+- `DropGestureRecognizer` is attached explicitly to both target editor containers to avoid relying on platform-specific default editor behavior
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/Services/Hl7FileImportService.cs` | NEW — Cross-platform HL7 text file import service for dropped files |
+| `HL7Tester/MainPage.xaml` | Added drop gesture to GeneratedMessage container; updated placeholder |
+| `HL7Tester/MainPage.xaml.cs` | Added handler to import dropped file content into `GeneratedMessage` |
+| `HL7Tester/Hl7InspectorPage.xaml` | Added drop gesture to raw message container; updated placeholder |
+| `HL7Tester/Hl7InspectorPage.xaml.cs` | Added handler to import dropped file content and auto-parse it |
+| `HL7Tester.csproj` | Version incremented to 2.0.16 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.16.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.16.0 |
 
 ---
 
@@ -341,4 +486,4 @@ Added a "Send Parsed →" button next to "Parse & Inspect" on the HL7 Inspector 
 
 ---
 
-*Last Updated: April 5, 2026 (v2.0.15)*
+*Last Updated: May 5, 2026 (v2.0.16)*

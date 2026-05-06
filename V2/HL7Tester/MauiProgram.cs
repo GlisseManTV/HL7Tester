@@ -74,6 +74,9 @@ public static class MauiProgram
 		builder.Services.AddTransient<Hl7InspectorViewModel>();
 		builder.Services.AddTransient<Hl7InspectorPage>();
 
+		// What's New service
+		builder.Services.AddSingleton<Services.IWhatsNewService, Services.WhatsNewService>();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif

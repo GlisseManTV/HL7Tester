@@ -1,4 +1,32 @@
-## v2.0.16 Changes (Latest Release)
+## v2.0.17 Changes (Latest Release)
+
+### Regenerate ControlID Without Changing Anything Else
+
+Added a "Refresh ID" button in the footer that regenerates only the ControlID (MSH-10) field while preserving the entire rest of the message exactly as it was. This allows reusing existing messages when the receiver rejects them due to duplicate ControlIDs.
+
+**Key Features:**
+- Click "Refresh ID" to generate a new unique ControlID (MSH-10)
+- The rest of the message stays exactly as it was — no segments are added, removed, or modified
+- Uses the same SHA256 algorithm as the original generator for full consistency with `GenerateControlIdFromMessage()`
+
+**Technical Details:**
+- Added `RegenerateControlIdCommand` and `RegenerateControlId()` method to `MainViewModel`
+- Method normalizes line endings (`\n` → `\r`), extracts MSH line fields, removes old ControlID, computes SHA256 hash with `Encoding.Latin1`, takes first 19 hex chars
+- Replaces only the MSH line in the normalized message and converts back to `Environment.NewLine` for display
+- Command wired to a new "Refresh ID" button in the footer Grid (5th column)
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/ViewModels/MainViewModel.cs` | Added `RegenerateControlIdCommand`, `RegenerateControlId()` method with SHA256 ControlID regeneration logic; added imports for `System.Security.Cryptography` and `System.Text` |
+| `HL7Tester/MainPage.xaml` | Updated footer Grid to 5 columns (Copy, GeneratedMessage, Refresh ID/Inspect stacked vertically); added "Refresh ID" button |
+| `HL7Tester.csproj` | Version incremented to 2.0.17 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.17.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.17.0 |
+
+---
+
+## v2.0.16 Changes (Previous Release)
 
 ### What's New Page — Announcement-Style Redesign
 

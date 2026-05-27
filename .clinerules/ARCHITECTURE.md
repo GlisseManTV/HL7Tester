@@ -200,17 +200,17 @@ This ensures consistency, maintainability, and accessibility for international d
 
 ### HL7Tester.csproj (Version Configuration)
 ```xml
-<ApplicationDisplayVersion>2.0.16</ApplicationDisplayVersion>
-<ApplicationVersion>2.0.16.0</ApplicationVersion>
+<ApplicationDisplayVersion>2.0.17</ApplicationDisplayVersion>
+<ApplicationVersion>2.0.17.0</ApplicationVersion>
 ```
 
 ### Windows Package Manifest
 ```xml
 <!-- app.manifest -->
-<assemblyIdentity version="2.0.16.0" name="HL7Tester.WinUI.app"/>
+<assemblyIdentity version="2.0.17.0" name="HL7Tester.WinUI.app"/>
 
 <!-- Package.appxmanifest -->
-<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.16.0" />
+<Identity Name="ItConsult4Care.Hl7Tester" Publisher="..." Version="2.0.17.0" />
 ```
 
 ---
@@ -281,6 +281,33 @@ Added explicit drag-and-drop support for HL7 text files on both Windows and macO
 ### When to Update whatsnew.md
 
 Update `whatsnew.md` whenever a new version is released **before** bumping the version number in `.csproj`. The parser reads only the first `## vX.Y.Z` section, so older version blocks should be removed or kept out of the file.
+
+---
+
+## Recent Changes (v2.0.17)
+
+### Regenerate ControlID Without Changing Anything Else
+
+Added a "Refresh ID" button in the footer that regenerates only the ControlID (MSH-10) field while preserving the entire rest of the message exactly as it was. This allows reusing existing messages when the receiver rejects them due to duplicate ControlIDs.
+
+**Key Features:**
+- Click "Refresh ID" to generate a new unique ControlID (MSH-10)
+- The rest of the message stays exactly as it was — no segments are added, removed, or modified
+- Uses the same SHA256 algorithm as the original generator for full consistency with `GenerateControlIdFromMessage()`
+
+**Technical Details:**
+- Added `RegenerateControlIdCommand` and `RegenerateControlId()` method to `MainViewModel`
+- Method normalizes line endings (`\n` → `\r`), extracts MSH line fields, removes old ControlID, computes SHA256 hash with `Encoding.Latin1`, takes first 19 hex chars
+- Replaces only the MSH line in the normalized message and converts back to `Environment.NewLine` for display
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/ViewModels/MainViewModel.cs` | Added `RegenerateControlIdCommand`, `RegenerateControlId()` method with SHA256 ControlID regeneration logic; added imports for `System.Security.Cryptography` and `System.Text` |
+| `HL7Tester/MainPage.xaml` | Updated footer Grid to 5 columns (Copy, GeneratedMessage, Refresh ID/Inspect stacked vertically); added "Refresh ID" button |
+| `HL7Tester.csproj` | Version incremented to 2.0.17 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.17.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.17.0 |
 
 ---
 
@@ -486,4 +513,4 @@ Added a "Send Parsed →" button next to "Parse & Inspect" on the HL7 Inspector 
 
 ---
 
-*Last Updated: May 5, 2026 (v2.0.16)*
+*Last Updated: May 27, 2026 (v2.0.17)*

@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Input;
 using HL7Tester.Core;
 using Microsoft.Extensions.Logging;
@@ -540,6 +543,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public ICommand GenerateCommand { get; }
     public ICommand SendCommand { get; }
+    public ICommand RegenerateControlIdCommand { get; }
 
     public MainViewModel(
         AdtMessageGenerator generator,
@@ -557,6 +561,55 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         GenerateCommand = new Command(OnGenerate);
         SendCommand = new Command(async () => await OnSendAsync());
+        RegenerateControlIdCommand = new Command(RegenerateControlId);
+    }
+
+    private void RegenerateControlId()
+    {
+        if (string.IsNullOrWhiteSpace(_generatedMessage)) return;
+
+        // Normalize \n to \r for consistent hashing (same as generator)
+        var normalizedMessage = _generatedMessage.Replace("\n", "\r");
+
+        // Extract the MSH line and split on pipe to isolate MSH-10 (ControlID)
+        var mshLine = normalizedMessage.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault(s => s.StartsWith("MSH"));
+
+        if (string.IsNullOrWhiteSpace(mshLine)) return;
+
+        var fields = mshLine.Split('|');
+        if (fields.Length < 10) return;
+
+        // Save old ControlID before modifying the message
+        string oldControlId = fields[9];
+
+        // The prefix for hashing is everything up to MSH-9 (without ControlID field)
+        // MSH|field1|field2|...|field8|field9|<ControlID>
+        // We need: MSH|field1|field2|...|field8|field9 (no trailing pipe)
+        var prefix = string.Join("|", fields.Take(9));
+
+        // Rebuild the message with the prefix replacing the old MSH line
+        var rebuiltMessage = normalizedMessage.Replace(mshLine, prefix);
+
+        // Compute SHA256 using Latin-1 encoding (same as GenerateControlIdFromMessage)
+        var hashBytes = Encoding.Latin1.GetBytes(rebuiltMessage);
+        using var sha256 = SHA256.Create();
+        var hash = sha256.ComputeHash(hashBytes);
+
+        // Build hex string and take first 19 chars (same as GenerateControlIdFromMessage)
+        var hexBuilder = new StringBuilder(hash.Length * 2);
+        foreach (byte b in hash)
+            hexBuilder.Append(b.ToString("x2"));
+        var newControlId = hexBuilder.ToString().Substring(0, 19);
+
+        // Build the full new MSH line with remaining fields intact
+        var remainingFields = string.Join("|", fields.Skip(10));
+        var newMshLine = prefix + "|" + newControlId + "|" + remainingFields;
+
+        // Replace only the first occurrence of the old MSH line with the new one in normalized message
+        _generatedMessage = normalizedMessage.Replace(mshLine, newMshLine).Replace("\r", Environment.NewLine);
+
+        OnPropertyChanged(nameof(GeneratedMessage));
     }
 
     private void RefreshMessageTypes()

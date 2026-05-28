@@ -1,4 +1,10 @@
-## v2.0.16
+## v2.0.17
+
+### 🔄 Regenerate ControlID Without Changing Anything Else
+> Reuse an existing message by refreshing only its ControlID — no more rejected duplicates.
+- Click "Refresh ID" to generate a new unique ControlID (MSH-10)
+- The rest of the message stays exactly as it was
+- Uses the same SHA256 algorithm as the original generator for full consistency
 
 ### 📂 Drop HL7 Files Directly into the App
 > No more copy-paste. Just drag a file and you're done.

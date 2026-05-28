@@ -13,6 +13,9 @@ public partial class Hl7InspectorPage : ContentPage
         _viewModel = viewModel;
         BindingContext = viewModel;
 
+        // Wire the Editor control so the ViewModel can push converted text into it
+        viewModel.SetEditorRef(MessageEditor);
+
         // Check if there's a pending message from MainPage
         var pendingMessage = Hl7InspectorViewModel.PendingParsedMessage;
         if (!string.IsNullOrEmpty(pendingMessage))

@@ -566,13 +566,21 @@
         <!-- Persistent footer with generated message and actions (generated message expands automatically with content lines) -->
         <Grid Grid.Row="3" Padding="20,8" RowDefinitions="Auto,Auto">
             <!-- Generated HL7 message editor (expands automatically with content lines) -->
-            <Grid Grid.Row="0" ColumnSpacing="8" ZIndex="1">
+            <Grid Grid.Row="0" ColumnSpacing="6" ZIndex="1">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="6" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="6" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Style="{StaticResource CardBorder}" Padding="8">
+                <!-- Copy button (always visible, left of message) -->
+                <Button Grid.Column="0"
+                        Text="Copy"
+                        Clicked="OnCopyMessageClicked" />
+
+                <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="8">
                     <Border.GestureRecognizers>
                         <DropGestureRecognizer AllowDrop="True" Drop="OnGeneratedMessageFileDropped" />
                     </Border.GestureRecognizers>
@@ -581,8 +589,8 @@
                             Placeholder="HL7 message will appear here after generation or file drop" />
                 </Border>
 
-                <!-- Copy and Inspect buttons stacked vertically inside the editor field (right-aligned) -->
-                <Grid Grid.Column="1"
+                <!-- Right side: Refresh ID and Inspect stacked vertically -->
+                <Grid Grid.Column="4"
                       ColumnSpacing="6"
                       RowSpacing="6"
                       HorizontalOptions="End"
@@ -592,9 +600,13 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
+                    <!-- Refresh ID button (always visible, top) -->
                     <Button Grid.Row="0"
-                            Text="Copy"
-                            Clicked="OnCopyMessageClicked" />
+                            Text="Refresh ID"
+                            WidthRequest="90"
+                            Command="{Binding RegenerateControlIdCommand}" />
+
+                    <!-- Inspect button (only visible when message is not empty, bottom) -->
                     <Button Grid.Row="1"
                             Text="Inspect"
                             WidthRequest="90"

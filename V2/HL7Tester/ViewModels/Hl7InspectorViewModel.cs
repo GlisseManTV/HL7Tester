@@ -18,15 +18,17 @@ namespace HL7Tester.ViewModels;
 public sealed class Hl7InspectorViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly HL7ParserService _parserService;
+    private readonly XmlHl7ParserService _xmlParser;
     private readonly ILogger<Hl7InspectorViewModel>? _logger;
     private bool _isDisposed;
 
-    // ── Static property to pass parsed message to MainPage ────────────────────
+    // Reference to the Editor control so we can push converted text directly into the UI
+    private Editor? _editorRef;
 
+    // ── Static property to pass parsed message to MainPage ────────────────────
     public static string? PendingParsedMessage { get; set; }
 
     // ── Bindable state ────────────────────────────────────────────────────────
-
     private string _rawMessage  = string.Empty;
     private string _parseStatus = string.Empty;
     private string _detectedVersion = string.Empty;
@@ -76,11 +78,22 @@ public sealed class Hl7InspectorViewModel : INotifyPropertyChanged, IDisposable
 
     public Hl7InspectorViewModel(
         HL7ParserService parserService,
+        XmlHl7ParserService xmlParser,
         ILogger<Hl7InspectorViewModel>? logger = null)
     {
         _parserService = parserService;
+        _xmlParser     = xmlParser;
         _logger        = logger ?? NullLogger<Hl7InspectorViewModel>.Instance;
         ParseCommand   = new Command(ParseMessage, () => IsNotParsing);
+    }
+
+    /// <summary>
+    /// Called from code-behind to pass a reference to the Editor control.
+    /// This allows the ViewModel to push converted HL7 text directly into the UI.
+    /// </summary>
+    public void SetEditorRef(Editor editor)
+    {
+        _editorRef = editor;
     }
 
     // ── Parsing ───────────────────────────────────────────────────────────────
@@ -103,7 +116,24 @@ public sealed class Hl7InspectorViewModel : INotifyPropertyChanged, IDisposable
 
         try
         {
-            var result = _parserService.Parse(RawMessage);
+            // Auto-detect XML format and convert to standard HL7 if needed
+            string messageToParse = RawMessage;
+            if (XmlHl7ParserService.IsXmlHl7(RawMessage))
+            {
+                var converted = _xmlParser.Parse(RawMessage);
+                if (converted != null)
+                {
+                    // Rewrite the editor with the standard HL7 version so the user sees the reformatted message
+                    RawMessage = converted;
+                    messageToParse = converted;
+
+                    // Also update the Editor control directly — XAML bindings are OneWay,
+                    // so setting RawMessage on the ViewModel doesn't push to the UI.
+                    _editorRef?.SetValue(Editor.TextProperty, converted);
+                }
+            }
+
+            var result = _parserService.Parse(messageToParse);
 
             if (!result.IsSuccess)
             {

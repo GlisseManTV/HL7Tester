@@ -69,8 +69,9 @@ public static class MauiProgram
 		builder.Services.AddTransient<NetworkSettingsViewModel>();
 		builder.Services.AddTransient<NetworkSettingsPage>();
 
-		// HL7 Inspector — ParserService is singleton (stateless after parsing)
+		// HL7 Inspector — ParserServices are singletons (stateless after parsing)
 		builder.Services.AddSingleton<HL7ParserService>();
+		builder.Services.AddSingleton<XmlHl7ParserService>();
 		builder.Services.AddTransient<Hl7InspectorViewModel>();
 		builder.Services.AddTransient<Hl7InspectorPage>();
 

@@ -19,4 +19,8 @@
     <ProjectReference Include="..\HL7Tester.Core\HL7Tester.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Fixtures\*.hl7" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

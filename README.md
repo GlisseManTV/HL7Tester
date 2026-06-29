@@ -52,13 +52,28 @@ This Windows / MacOS application allow you to generate and send HL7 V2.3 message
 
 ## Supported message families
 
-HL7Tester now supports multiple HL7 v2.3 message families directly from the main UI:
+HL7Tester now supports multiple HL7 message families directly from the main UI:
 
 - **ADT**
 - **ORM**
 - **SIU**
 
 You can select the message family and message type in the header, then generate/send with the same workflow.
+
+### ORM general orders
+
+The ORM generator supports `ORM^O01` general order messages for:
+
+- **HL7 v2.3**
+- **HL7 v2.5.1**
+
+The first-release ORM profile focuses on AP-side integration testing with an official-structure subset:
+
+- Required segments: `MSH`, `PID`, `ORC`, `OBR`
+- Optional segments: `PV1`, `DG1`, order-level `NTE`
+- Supported order actions: `NW` and `CA`
+
+The generator intentionally does not emit deferred ORM groups by default, including `PD1`, `PV2`, patient observations, order-level `OBX`, `FT1`, `CTI`, or `BLG`.
 
 
 ## Preview

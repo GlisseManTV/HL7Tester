@@ -1,4 +1,42 @@
-## v2.0.17 Changes (Latest Release)
+## v2.0.18 Changes (Latest Release)
+
+### SIU Segment Placeholders — Field Numbers Corrected
+Fixed incorrect field placeholders for AIG, AIL, and AIP segments in the SIU section of the Main Page.
+
+**Key Changes:**
+| Segment | Before | After |
+|---------|--------|-------|
+| AIG-3 (Resource ID) | AIG-4.1 / AIG-4.2 | AIG-3.1 / AIG-3.2 |
+| AIL-3 (Location) | AIL-4.1 / AIL-4.2 / AIL-4.3 | AIL-3.1 / AIL-3.2 / AIL-3.3 |
+| AIP-3 (Personnel) | AIP-4.1 / AIP-4.2 / AIP-4.3 | AIP-3.1 / AIP-3.2 / AIP-3.3 |
+
+Field references are now consistent with the HL7 v2.3 specification as defined in `HL7KnowledgeBase.cs`.
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/MainPage.xaml` | Corrected AIG (AIG-4.x → AIG-3.x), AIL (AIL-4.x → AIL-3.x), and AIP (AIP-4.x → AIP-3.x) field placeholders |
+
+---
+
+### Refresh ID Now Updates EVN Timestamps Too
+The "Refresh ID" button in the footer now regenerates both the ControlID (MSH-10) **and** the EVN timestamps in a single click.
+
+**Key Features:**
+- **MSH-10** (ControlID) — regenerated via SHA256 hash of the message prefix
+- **EVN-2.1** (RecordedDateTime) — updated to current timestamp (`yyyyMMddHHmmss`)
+- **EVN-6.1** (EventOccured) — updated to the `EventDateTime` field value if provided, or current timestamp otherwise
+- All other segments and fields are preserved exactly as they were
+- No new fields are added — existing EVN fields are refreshed in place
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/ViewModels/MainViewModel.cs` | Extended `RegenerateControlId()` to also find and refresh EVN-2 and EVN-6 timestamps |
+
+---
+
+## v2.0.17 Changes (Previous Release)
 
 ### Regenerate ControlID Without Changing Anything Else
 

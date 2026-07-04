@@ -450,13 +450,13 @@
                                FontAttributes="Bold" />
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Label Text="Resource ID (AIG-4.1)" VerticalOptions="Center" />
-                            <Entry Grid.Column="1" Text="{Binding SiuGeneralResourceId}" Placeholder="AIG-4.1" />
+                            <Label Text="Resource ID (AIG-3.1)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuGeneralResourceId}" Placeholder="AIG-3.1" />
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Label Text="Resource name (AIG-4.2)" VerticalOptions="Center" />
-                            <Entry Grid.Column="1" Text="{Binding SiuGeneralResourceName}" Placeholder="AIG-4.2" />
+                            <Label Text="Resource name (AIG-3.2)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuGeneralResourceName}" Placeholder="AIG-3.2" />
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
@@ -471,18 +471,18 @@
                                FontAttributes="Bold" />
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Label Text="Location code (AIL-4.1)" VerticalOptions="Center" />
-                            <Entry Grid.Column="1" Text="{Binding SiuLocationCode}" Placeholder="AIL-4.1" />
+                            <Label Text="Location code (AIL-3.1)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuLocationCode}" Placeholder="AIL-3.1" />
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Label Text="Location description (AIL-4.2)" VerticalOptions="Center" />
-                            <Entry Grid.Column="1" Text="{Binding SiuLocationDescription}" Placeholder="AIL-4.2" />
+                            <Label Text="Location description (AIL-3.2)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuLocationDescription}" Placeholder="AIL-3.2" />
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Label Text="Location site (AIL-4.3)" VerticalOptions="Center" />
-                            <Entry Grid.Column="1" Text="{Binding SiuLocationSite}" Placeholder="AIL-4.3" />
+                            <Label Text="Location site (AIL-3.3)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuLocationSite}" Placeholder="AIL-3.3" />
                         </Grid>
 
                         <BoxView HeightRequest="1"
@@ -492,18 +492,18 @@
                                FontAttributes="Bold" />
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Label Text="Personnel ID (AIP-4.1)" VerticalOptions="Center" />
-                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelId}" Placeholder="AIP-4.1" />
+                            <Label Text="Personnel ID (AIP-3.1)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelId}" Placeholder="AIP-3.1" />
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Label Text="Personnel family (AIP-4.2)" VerticalOptions="Center" />
-                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelFamilyName}" Placeholder="AIP-4.2" />
+                            <Label Text="Personnel family (AIP-3.2)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelFamilyName}" Placeholder="AIP-3.2" />
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <Label Text="Personnel given (AIP-4.3)" VerticalOptions="Center" />
-                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelGivenName}" Placeholder="AIP-4.3" />
+                            <Label Text="Personnel given (AIP-3.3)" VerticalOptions="Center" />
+                            <Entry Grid.Column="1" Text="{Binding SiuPersonnelGivenName}" Placeholder="AIP-3.3" />
                         </Grid>
 
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">

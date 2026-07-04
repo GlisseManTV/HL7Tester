@@ -607,7 +607,33 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var newMshLine = prefix + "|" + newControlId + "|" + remainingFields;
 
         // Replace only the first occurrence of the old MSH line with the new one in normalized message
-        _generatedMessage = normalizedMessage.Replace(mshLine, newMshLine).Replace("\r", Environment.NewLine);
+        _generatedMessage = normalizedMessage.Replace(mshLine, newMshLine);
+
+        // Refresh EVN-2 (RecordedDateTime) and EVN-6 (EventOccured)
+        var evnLine = _generatedMessage.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault(s => s.StartsWith("EVN"));
+
+        if (!string.IsNullOrWhiteSpace(evnLine))
+        {
+            var evnFields = evnLine.Split('|');
+            var newTimestamp = DateTime.Now.ToString("yyyyMMddHHmm");
+
+            // EVN-2 (RecordedDateTime)
+            if (evnFields.Length > 1)
+                evnFields[2] = newTimestamp;
+
+            // EVN-6 (EventOccured)
+            var eventOccurred = string.IsNullOrWhiteSpace(_eventDateTime) ? newTimestamp : _eventDateTime;
+            while (evnFields.Length < 6)
+                evnFields = evnFields.Append(string.Empty).ToArray();
+            evnFields[6] = eventOccurred;
+
+            var newEvnLine = string.Join("|", evnFields);
+            _generatedMessage = _generatedMessage.Replace(evnLine, newEvnLine);
+        }
+
+        // Convert all \r to Environment.NewLine (normalize line endings)
+        _generatedMessage = _generatedMessage.Replace("\r", Environment.NewLine);
 
         OnPropertyChanged(nameof(GeneratedMessage));
     }

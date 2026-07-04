@@ -1,20 +1,12 @@
-## v2.0.17
+## v2.0.18
 
-### 🔄 Regenerate ControlID Without Changing Anything Else
-> Reuse an existing message by refreshing only its ControlID — no more rejected duplicates.
-- Click "Refresh ID" to generate a new unique ControlID (MSH-10)
-- The rest of the message stays exactly as it was
-- Uses the same SHA256 algorithm as the original generator for full consistency
+### 🔄 Smarter Refresh ID
+> Refresh the ControlID **and** the EVN timestamps in one click — no more manual edits.
+- The "Refresh ID" button now updates both MSH-10 (ControlID) and EVN timestamps
+- EVN-2 (RecordedDateTime) and EVN-6 (EventOccured) get fresh timestamps instantly
+- All other fields stay exactly as they were
 
-### 📂 Drop HL7 Files Directly into the App
-> No more copy-paste. Just drag a file and you're done.
-- Works on both Windows and macOS
-- Supported formats: .hl7, .txt, .msg, .dat and more
-- Dropped files are auto-parsed in the Inspector
-- Large or empty files are safely rejected
+### Fix
+> Errored placeholder for SIU messages
+- Few SIU placeholder were errored. No impact on your workflows
 
-### 🔍 Smarter Inspector Integration
-> The Inspector now accepts dropped files and parses them instantly.
-- Drop a file → message parsed automatically
-- Send any inspected message back to the main screen in one click
-- Works seamlessly with all supported file types

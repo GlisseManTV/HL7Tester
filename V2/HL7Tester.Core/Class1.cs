@@ -16,6 +16,8 @@ namespace HL7Tester.Core;
 public sealed class AdtMessageRequest
 {
     public string MessageTypeCode { get; set; } = "ADT A01";
+    public string? MessageDateTime { get; set; }
+    public string? MessageControlId { get; set; }
 
     // Common patient/location fields
     public string PatientId { get; set; } = string.Empty;
@@ -43,17 +45,25 @@ public sealed class AdtMessageRequest
     public IList<ObxEntry> ObxEntries { get; } = new List<ObxEntry>();
 
     // ORM-specific
+    public string OrmHl7Version { get; set; } = "2.3";
     public string OrderControl { get; set; } = "NW";
     public string OrmPlacerOrderNumber { get; set; } = string.Empty;
     public string OrmFillerOrderNumber { get; set; } = string.Empty;
-    public string OrmOrderStatus { get; set; } = "Final";
+    public string OrmOrderStatus { get; set; } = "SC";
     public string OrmUniversalServiceId { get; set; } = string.Empty;
+    public string OrmUniversalServiceCode { get; set; } = "GENORDER";
+    public string OrmUniversalServiceText { get; set; } = "General Order";
+    public string OrmUniversalServiceCodingSystem { get; set; } = "L";
     public string? OrmRequestedDateTime { get; set; }
     public string OrmOrderingProviderId { get; set; } = string.Empty;
     public string OrmOrderingProviderFamilyName { get; set; } = string.Empty;
     public string OrmOrderingProviderGivenName { get; set; } = string.Empty;
+    public bool OrmIncludePv1 { get; set; }
+    public string OrmPatientClass { get; set; } = "O";
     public string OrmDiagnosisCode { get; set; } = string.Empty;
     public string OrmDiagnosisText { get; set; } = string.Empty;
+    public string OrmDiagnosisCodingSystem { get; set; } = string.Empty;
+    public string OrmOrderNote { get; set; } = string.Empty;
 
     // SIU-specific
     public string SiuPlacerAppointmentId { get; set; } = string.Empty;
@@ -89,6 +99,12 @@ public sealed class ObxEntry
     public string? Type { get; set; }
     public string? Reason { get; set; }
 }
+
+public sealed record OrmO01Profile(
+    string Version,
+    IReadOnlyList<string> RequiredSegments,
+    IReadOnlyList<string> OptionalSegments,
+    IReadOnlyList<string> DeferredSegments);
 
 /// <summary>
 /// Main HL7 v2.3 message generator (ADT + ORM + SIU).
@@ -219,15 +235,19 @@ public sealed class AdtMessageGenerator
             throw new NotSupportedException($"Unsupported ORM trigger event: '{triggerEvent}'.");
         }
 
-        var now = DateTime.Now;
-        string timestamp = now.ToString("yyyyMMddHHmmss");
+        OrmO01Profile profile = GetOrmO01Profile(request.OrmHl7Version);
+        string timestamp = string.IsNullOrWhiteSpace(request.MessageDateTime)
+            ? DateTime.Now.ToString("yyyyMMddHHmmss")
+            : request.MessageDateTime;
         string requestedDateTime = string.IsNullOrWhiteSpace(request.OrmRequestedDateTime)
             ? timestamp
             : request.OrmRequestedDateTime;
 
-        var tempSegments = BuildOrmSegments(request, messageCode, triggerEvent, timestamp, string.Empty, requestedDateTime);
-        string controlId = GenerateControlIdFromMessage(string.Join("\r", tempSegments));
-        var segments = BuildOrmSegments(request, messageCode, triggerEvent, timestamp, controlId, requestedDateTime);
+        var tempSegments = BuildOrmSegments(request, messageCode, triggerEvent, profile, timestamp, string.Empty, requestedDateTime);
+        string controlId = string.IsNullOrWhiteSpace(request.MessageControlId)
+            ? GenerateControlIdFromMessage(string.Join("\r", tempSegments))
+            : request.MessageControlId;
+        var segments = BuildOrmSegments(request, messageCode, triggerEvent, profile, timestamp, controlId, requestedDateTime);
 
         var finalMessage = string.Join("\r", segments);
         _logger.LogInformation("ORM message generated successfully (ControlID={ControlId})", controlId);
@@ -264,34 +284,56 @@ public sealed class AdtMessageGenerator
         AdtMessageRequest request,
         string messageCode,
         string triggerEvent,
+        OrmO01Profile profile,
         string timestamp,
         string controlId,
         string requestedDateTime)
     {
+        string orderControl = NormalizeOrderControl(request.OrderControl);
+        string placerOrderNumber = string.IsNullOrWhiteSpace(request.OrmPlacerOrderNumber)
+            ? $"PO-{timestamp}"
+            : request.OrmPlacerOrderNumber;
+        string fillerOrderNumber = request.OrmFillerOrderNumber ?? string.Empty;
+        string orderStatus = NormalizeOrderStatus(request.OrmOrderStatus);
+        string serviceIdentifier = BuildUniversalServiceIdentifier(request);
+        string orderingProvider = BuildProviderField(
+            request.OrmOrderingProviderId,
+            request.OrmOrderingProviderFamilyName,
+            request.OrmOrderingProviderGivenName);
+
         var segments = new List<string>
         {
-            BuildMshSegment(request, messageCode, triggerEvent, timestamp, controlId),
+            BuildMshSegment(request, messageCode, triggerEvent, timestamp, controlId, profile.Version),
             BuildPidSegment(request),
-            BuildPv1Segment(request, patientClass: "I", includeVisitNumber: true),
+        };
+
+        if (request.OrmIncludePv1)
+        {
+            segments.Add(BuildOrmPv1Segment(request));
+        }
+
+        segments.AddRange(new[]
+        {
             BuildSegment(
                 "ORC",
-                request.OrderControl,
-                request.OrmPlacerOrderNumber,
-                request.OrmFillerOrderNumber,
+                orderControl,
+                placerOrderNumber,
+                fillerOrderNumber,
                 string.Empty,
-                request.OrmOrderStatus,
+                orderStatus,
                 string.Empty,
                 $"^^^{requestedDateTime}^^^^",
                 string.Empty,
                 timestamp,
                 string.Empty,
-                BuildProviderField(request.OrmOrderingProviderId, request.OrmOrderingProviderFamilyName, request.OrmOrderingProviderGivenName)),
+                string.Empty,
+                orderingProvider),
             BuildSegment(
                 "OBR",
                 "1",
-                request.OrmPlacerOrderNumber,
-                request.OrmFillerOrderNumber,
-                request.OrmUniversalServiceId,
+                placerOrderNumber,
+                fillerOrderNumber,
+                serviceIdentifier,
                 string.Empty,
                 string.Empty,
                 string.Empty,
@@ -302,7 +344,7 @@ public sealed class AdtMessageGenerator
                 string.Empty,
                 string.Empty,
                 string.Empty,
-                BuildProviderField(request.OrmOrderingProviderId, request.OrmOrderingProviderFamilyName, request.OrmOrderingProviderGivenName),
+                orderingProvider,
                 string.Empty,
                 string.Empty,
                 string.Empty,
@@ -311,8 +353,8 @@ public sealed class AdtMessageGenerator
                 string.Empty,
                 string.Empty,
                 string.Empty,
-                request.OrmOrderStatus)
-        };
+                orderStatus)
+        });
 
         if (!string.IsNullOrWhiteSpace(request.OrmDiagnosisCode) || !string.IsNullOrWhiteSpace(request.OrmDiagnosisText))
         {
@@ -321,10 +363,14 @@ public sealed class AdtMessageGenerator
                     "DG1",
                     "1",
                     string.Empty,
-                    $"{request.OrmDiagnosisCode}^{request.OrmDiagnosisText}"));
+                    BuildCodedElement(request.OrmDiagnosisCode, request.OrmDiagnosisText, request.OrmDiagnosisCodingSystem)));
         }
 
-        segments.AddRange(BuildObxSegments(request.ObxEntries));
+        if (!string.IsNullOrWhiteSpace(request.OrmOrderNote))
+        {
+            segments.Add(BuildSegment("NTE", "1", string.Empty, request.OrmOrderNote));
+        }
+
         return segments;
     }
 
@@ -428,7 +474,8 @@ public sealed class AdtMessageGenerator
         string messageCode,
         string triggerEvent,
         string timestamp,
-        string controlId)
+        string controlId,
+        string hl7Version = "2.3")
     {
         return BuildSegment(
             "MSH",
@@ -442,7 +489,7 @@ public sealed class AdtMessageGenerator
             $"{messageCode}^{triggerEvent}",
             controlId,
             "P",
-            "2.3",
+            hl7Version,
             string.Empty,
             string.Empty,
             string.Empty,
@@ -498,6 +545,94 @@ public sealed class AdtMessageGenerator
 
     private static string BuildProviderField(string id, string familyName, string givenName)
         => $"{id}^{familyName}^{givenName}";
+
+    private static string BuildOrmPv1Segment(AdtMessageRequest request)
+    {
+        string patientClass = string.IsNullOrWhiteSpace(request.OrmPatientClass) ? "O" : request.OrmPatientClass;
+        string location = $"{request.Unit}^{request.Room}^{request.Bed}^{request.Facility}^^^^^{request.Floor}";
+
+        return BuildSegment(
+            "PV1",
+            "1",
+            patientClass,
+            location,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            request.AdmissionNumber);
+    }
+
+    private static string BuildUniversalServiceIdentifier(AdtMessageRequest request)
+    {
+        if (!string.IsNullOrWhiteSpace(request.OrmUniversalServiceId))
+        {
+            return request.OrmUniversalServiceId;
+        }
+
+        return BuildCodedElement(
+            request.OrmUniversalServiceCode,
+            request.OrmUniversalServiceText,
+            request.OrmUniversalServiceCodingSystem);
+    }
+
+    private static string BuildCodedElement(string? code, string? text, string? codingSystem)
+    {
+        string identifier = code ?? string.Empty;
+        string displayText = text ?? string.Empty;
+        string system = codingSystem ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(system))
+        {
+            return $"{identifier}^{displayText}";
+        }
+
+        return $"{identifier}^{displayText}^{system}";
+    }
+
+    private static OrmO01Profile GetOrmO01Profile(string? version)
+    {
+        var requiredSegments = new[] { "MSH", "PID", "ORC", "OBR" };
+        var optionalSegments = new[] { "PV1", "DG1", "NTE" };
+        var deferredSegments = new[] { "PD1", "PV2", "OBX", "FT1", "CTI", "BLG" };
+
+        if (string.Equals(version, "2.5.1", StringComparison.OrdinalIgnoreCase))
+        {
+            return new OrmO01Profile("2.5.1", requiredSegments, optionalSegments, deferredSegments);
+        }
+
+        if (string.Equals(version, "2.3", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(version))
+        {
+            return new OrmO01Profile("2.3", requiredSegments, optionalSegments, deferredSegments);
+        }
+
+        throw new NotSupportedException($"Unsupported ORM HL7 version: '{version}'.");
+    }
+
+    private static string NormalizeOrderControl(string? orderControl)
+    {
+        string rawValue = string.IsNullOrWhiteSpace(orderControl) ? "NW" : orderControl.Trim();
+        string value = rawValue.Split('-', 2, StringSplitOptions.RemoveEmptyEntries)[0].Trim().ToUpperInvariant();
+        return value switch
+        {
+            "NW" or "CA" => value,
+            _ => throw new NotSupportedException($"Unsupported ORM order control: '{orderControl}'.")
+        };
+    }
+
+    private static string NormalizeOrderStatus(string? orderStatus)
+        => string.IsNullOrWhiteSpace(orderStatus) ? "SC" : orderStatus.Trim();
 
     private static IEnumerable<string> BuildObxSegments(IEnumerable<ObxEntry> entries)
     {

@@ -75,8 +75,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public IReadOnlyList<string> OrderControlList { get; } = new[]
     {
         "NW - New order",
-        "CA - Cancel order",
-        "XO - Cross-order"
+        "CA - Cancel order"
+    };
+
+    public IReadOnlyList<string> OrmHl7VersionList { get; } = new[]
+    {
+        "2.3",
+        "2.5.1"
+    };
+
+    public IReadOnlyList<string> OrmPatientClassList { get; } = new[]
+    {
+        "O - Outpatient",
+        "I - Inpatient",
+        "E - Emergency"
     };
 
     private string _selectedMessageFamily = "ADT";
@@ -324,11 +336,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
         private set => SetField(ref _isSiuSectionVisible, value);
     }
 
-    private string _ormOrderControl = "NW";
+    private string _ormOrderControl = "NW - New order";
     public string OrmOrderControl
     {
         get => _ormOrderControl;
         set => SetField(ref _ormOrderControl, value);
+    }
+
+    private string _ormHl7Version = "2.3";
+    public string OrmHl7Version
+    {
+        get => _ormHl7Version;
+        set => SetField(ref _ormHl7Version, string.IsNullOrWhiteSpace(value) ? "2.3" : value);
     }
 
     private string _ormPlacerOrderNumber = string.Empty;
@@ -359,6 +378,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
         set => SetField(ref _ormUniversalServiceId, value);
     }
 
+    private string _ormUniversalServiceCode = "GENORDER";
+    public string OrmUniversalServiceCode
+    {
+        get => _ormUniversalServiceCode;
+        set => SetField(ref _ormUniversalServiceCode, value);
+    }
+
+    private string _ormUniversalServiceText = "General Order";
+    public string OrmUniversalServiceText
+    {
+        get => _ormUniversalServiceText;
+        set => SetField(ref _ormUniversalServiceText, value);
+    }
+
+    private string _ormUniversalServiceCodingSystem = "L";
+    public string OrmUniversalServiceCodingSystem
+    {
+        get => _ormUniversalServiceCodingSystem;
+        set => SetField(ref _ormUniversalServiceCodingSystem, value);
+    }
+
     private string? _ormRequestedDateTime;
     public string? OrmRequestedDateTime
     {
@@ -387,6 +427,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
         set => SetField(ref _ormOrderingProviderGivenName, value);
     }
 
+    private bool _ormIncludePv1;
+    public bool OrmIncludePv1
+    {
+        get => _ormIncludePv1;
+        set => SetField(ref _ormIncludePv1, value);
+    }
+
+    private string _ormPatientClass = "O - Outpatient";
+    public string OrmPatientClass
+    {
+        get => _ormPatientClass;
+        set => SetField(ref _ormPatientClass, value);
+    }
+
     private string _ormDiagnosisCode = string.Empty;
     public string OrmDiagnosisCode
     {
@@ -399,6 +453,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _ormDiagnosisText;
         set => SetField(ref _ormDiagnosisText, value);
+    }
+
+    private string _ormDiagnosisCodingSystem = string.Empty;
+    public string OrmDiagnosisCodingSystem
+    {
+        get => _ormDiagnosisCodingSystem;
+        set => SetField(ref _ormDiagnosisCodingSystem, value);
+    }
+
+    private string _ormOrderNote = string.Empty;
+    public string OrmOrderNote
+    {
+        get => _ormOrderNote;
+        set => SetField(ref _ormOrderNote, value);
     }
 
     private string _siuPlacerAppointmentId = string.Empty;
@@ -676,6 +744,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IsOrmSectionVisible = isOrm;
         IsSiuSectionVisible = isSiu;
 
+        if (isOrm)
+        {
+            EnsureOrmDefaults();
+        }
+
         string selectedType = SelectedMessageType ?? string.Empty;
 
         bool isMergeAdtType =
@@ -708,6 +781,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         try
         {
+            bool isOrm = string.Equals(SelectedMessageFamily, "ORM", StringComparison.OrdinalIgnoreCase);
+            if (isOrm)
+            {
+                EnsureOrmDefaults();
+            }
+
             var request = new AdtMessageRequest
             {
                 MessageTypeCode = SelectedMessageType,
@@ -726,17 +805,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 AdmissionNumber = AdmissionNumber ?? string.Empty,
                 EventDateTime = IsEventDateTimeVisible && !string.IsNullOrWhiteSpace(EventDateTime) ? EventDateTime : null,
 
+                OrmHl7Version = OrmHl7Version,
                 OrderControl = ExtractOrderControlCode(OrmOrderControl),
                 OrmPlacerOrderNumber = OrmPlacerOrderNumber ?? string.Empty,
                 OrmFillerOrderNumber = OrmFillerOrderNumber ?? string.Empty,
-                OrmOrderStatus = OrmOrderStatus ?? "Final",
+                OrmOrderStatus = OrmOrderStatus ?? "SC",
                 OrmUniversalServiceId = OrmUniversalServiceId ?? string.Empty,
+                OrmUniversalServiceCode = OrmUniversalServiceCode ?? "GENORDER",
+                OrmUniversalServiceText = OrmUniversalServiceText ?? "General Order",
+                OrmUniversalServiceCodingSystem = OrmUniversalServiceCodingSystem ?? "L",
                 OrmRequestedDateTime = string.IsNullOrWhiteSpace(OrmRequestedDateTime) ? null : OrmRequestedDateTime,
                 OrmOrderingProviderId = OrmOrderingProviderId ?? string.Empty,
                 OrmOrderingProviderFamilyName = OrmOrderingProviderFamilyName ?? string.Empty,
                 OrmOrderingProviderGivenName = OrmOrderingProviderGivenName ?? string.Empty,
+                OrmIncludePv1 = OrmIncludePv1,
+                OrmPatientClass = ExtractPatientClassCode(OrmPatientClass),
                 OrmDiagnosisCode = OrmDiagnosisCode ?? string.Empty,
                 OrmDiagnosisText = OrmDiagnosisText ?? string.Empty,
+                OrmDiagnosisCodingSystem = OrmDiagnosisCodingSystem ?? string.Empty,
+                OrmOrderNote = OrmOrderNote ?? string.Empty,
 
                 SiuPlacerAppointmentId = SiuPlacerAppointmentId ?? string.Empty,
                 SiuFillerAppointmentId = SiuFillerAppointmentId ?? string.Empty,
@@ -887,5 +974,93 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var code = parts.Length > 0 ? parts[0].Trim() : value.Trim();
 
         return string.IsNullOrWhiteSpace(code) ? "NW" : code;
+    }
+
+    private static string ExtractPatientClassCode(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "O";
+        }
+
+        var parts = value.Split('-', 2, StringSplitOptions.RemoveEmptyEntries);
+        var code = parts.Length > 0 ? parts[0].Trim() : value.Trim();
+
+        return string.IsNullOrWhiteSpace(code) ? "O" : code;
+    }
+
+    private void EnsureOrmDefaults()
+    {
+        string now = DateTime.Now.ToString("yyyyMMddHHmmss");
+
+        if (string.IsNullOrWhiteSpace(PatientId))
+        {
+            PatientId = "PAT001";
+        }
+
+        if (string.IsNullOrWhiteSpace(PatientFamilyName))
+        {
+            PatientFamilyName = "TEST";
+        }
+
+        if (string.IsNullOrWhiteSpace(PatientGivenName))
+        {
+            PatientGivenName = "PATIENT";
+        }
+
+        if (string.IsNullOrWhiteSpace(BirthDate))
+        {
+            BirthDate = "19800101";
+        }
+
+        if (string.IsNullOrWhiteSpace(Sex))
+        {
+            Sex = "U";
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmPlacerOrderNumber))
+        {
+            OrmPlacerOrderNumber = $"PO-{now}";
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmOrderStatus) || string.Equals(OrmOrderStatus, "Final", StringComparison.OrdinalIgnoreCase))
+        {
+            OrmOrderStatus = "SC";
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmUniversalServiceCode))
+        {
+            OrmUniversalServiceCode = "GENORDER";
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmUniversalServiceText))
+        {
+            OrmUniversalServiceText = "General Order";
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmUniversalServiceCodingSystem))
+        {
+            OrmUniversalServiceCodingSystem = "L";
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmRequestedDateTime))
+        {
+            OrmRequestedDateTime = now;
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmOrderingProviderId))
+        {
+            OrmOrderingProviderId = "PROV001";
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmOrderingProviderFamilyName))
+        {
+            OrmOrderingProviderFamilyName = "ORDERING";
+        }
+
+        if (string.IsNullOrWhiteSpace(OrmOrderingProviderGivenName))
+        {
+            OrmOrderingProviderGivenName = "PROVIDER";
+        }
     }
 }

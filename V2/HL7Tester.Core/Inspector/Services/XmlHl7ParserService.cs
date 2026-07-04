@@ -84,7 +84,18 @@ public class XmlHl7ParserService
         return hl7Patterns.Any(p => Regex.IsMatch(trimmed, p, RegexOptions.IgnoreCase));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // HL7 data type prefixes used for sub-components (e.g. PL.1, HD.2, CX.5)
+    private static readonly HashSet<string> DataTypePrefixes = new(
+        System.StringComparer.OrdinalIgnoreCase)
+    {
+        "AD", "ADJ", "ADP", "AO", "AP", "CA", "CO", "DA", "DD", "DE", "DL", "DO",
+        "DP", "DR", "DU", "EA", "EC", "EL", "EN", "EO", "EP", "EQ", "ER", "ES",
+        "ET", "EV", "EX", "FA", "FC", "FD", "FE", "FI", "FL", "FN", "FO", "FT",
+        "HD", "IC", "ID", "IS", "INT", "NM", "PL", "PN", "PNL", "PNP", "PR", "PT",
+        "RP", "SI", "SL", "SN", "SP", "ST", "SCT", "TD", "TI", "TN", "TP", "TS",
+        "TX", "UD", "UF", "UN", "UR", "URP", "VCD", "VID", "VN", "VO", "VR", "VT",
+        "VV", "VW", "VX", "VY", "VZ", "WE", "XAD", "XCN", "XPN"
+    };
 
     private string ConvertSegmentToStandard(XElement element, string segmentId)
     {
@@ -102,6 +113,11 @@ public class XmlHl7ParserService
             var fieldNotation = child.Name.LocalName;
             int fieldIndex = ExtractFieldIndex(fieldNotation);
             if (fieldIndex <= 0)
+                continue;
+
+            // Skip data type sub-components (e.g. PL.1, HD.2, CX.5)
+            var dotPos = fieldNotation.IndexOf('.');
+            if (dotPos > 0 && IsDataTypePrefix(fieldNotation.Substring(0, dotPos)))
                 continue;
 
             string value = ConvertElementToStandardValue(child, fieldIndex);
@@ -124,6 +140,11 @@ public class XmlHl7ParserService
             var fieldNotation = child.Name.LocalName;
             int fieldIndex = ExtractFieldIndex(fieldNotation);
             if (fieldIndex <= 0)
+                continue;
+
+            // Skip data type sub-components (e.g. PL.1, HD.2, CX.5)
+            var dotPos = fieldNotation.IndexOf('.');
+            if (dotPos > 0 && IsDataTypePrefix(fieldNotation.Substring(0, dotPos)))
                 continue;
 
             if (fieldIndex == 1)
@@ -154,7 +175,7 @@ public class XmlHl7ParserService
 
     private string ConvertElementToStandardValue(XElement element, int fieldIndex)
     {
-        // If the element has typed children (e.g. <CX.1>, <HD.2>), build a pipe-separated value
+        // If the element has typed children (e.g. <CX.1>, <HD.2>), build a component-separated value
         var children = element.Elements().ToList();
         if (!children.Any())
         {
@@ -170,15 +191,24 @@ public class XmlHl7ParserService
             return GetElementValue(element);
         }
 
-        // Build pipe-separated value from typed children
-        var parts = new List<string>();
+        // Find the maximum index among typed children to build a correctly-sized array
+        var maxIndex = typedChildren
+            .Select(c => int.Parse(c.Name.LocalName.Substring(c.Name.LocalName.IndexOf('.') + 1)))
+            .Max();
+
+        // Build array with correct size (index is 1-based, empty slots become empty strings)
+        var parts = new string[maxIndex];
         foreach (var child in typedChildren)
         {
-            string value = ExtractTypedValue(child);
-            parts.Add(value);
+            var childName = child.Name.LocalName;
+            var childDotIndex = childName.IndexOf('.');
+            if (childDotIndex > 0 && int.TryParse(childName.Substring(childDotIndex + 1), out var childIndex))
+            {
+                parts[childIndex - 1] = ExtractTypedValue(child);
+            }
         }
 
-        return string.Join("|", parts);
+        return string.Join("^", parts);
     }
 
     private string ExtractTypedValue(XElement element)
@@ -188,8 +218,9 @@ public class XmlHl7ParserService
         if (dotIndex <= 0)
             return GetElementValue(element);
 
-        // The prefix is the data type (e.g. CX, HD, TS)
-        string dataType = name.Substring(0, dotIndex);
+        // Extract the numeric index (e.g. PL.9 → 9, CX.1 → 1)
+        if (!int.TryParse(name.Substring(dotIndex + 1), out var index))
+            return GetElementValue(element);
 
         // Check for nested elements (recursive extraction)
         var children = element.Elements().ToList();
@@ -204,14 +235,19 @@ public class XmlHl7ParserService
             return GetElementValue(element);
         }
 
-        // Recursively build pipe-separated value
-        var parts = new List<string>();
+        // Build array with correct size (index is 1-based)
+        var parts = new string[index];
         foreach (var child in typedChildren)
         {
-            parts.Add(ExtractTypedValue(child));
+            var childName = child.Name.LocalName;
+            var childDotIndex = childName.IndexOf('.');
+            if (childDotIndex > 0 && int.TryParse(childName.Substring(childDotIndex + 1), out var childIndex))
+            {
+                parts[childIndex - 1] = ExtractTypedValue(child);
+            }
         }
 
-        return string.Join("|", parts);
+        return string.Join("^", parts);
     }
 
     private static int ExtractFieldIndex(string notation)
@@ -291,6 +327,11 @@ public class XmlHl7ParserService
     private static string GetElementValue(XElement element)
     {
         return DecodeXmlEntities(element.Value);
+    }
+
+    private static bool IsDataTypePrefix(string prefix)
+    {
+        return DataTypePrefixes.Contains(prefix);
     }
 
     private static bool IsKnownSegmentId(string id)

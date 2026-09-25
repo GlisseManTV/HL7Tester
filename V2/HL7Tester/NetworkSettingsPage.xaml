@@ -180,15 +180,20 @@
                     <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
                         <VerticalStackLayout Spacing="12">                        
                             <Label Text="HL7 Tools" Style="{StaticResource SubHeadline}" />
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                                <Button Grid.Column="0"
+                            <Grid RowDefinitions="*,*,*" RowSpacing="8">
+                                <Button Grid.Row="0"
                                         Text="Embedded HL7 Inspector"
                                         Command="{Binding OpenInspectorCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="12,8" />
-                                <Button Grid.Column="1"
+                                <Button Grid.Row="1"
                                         Text="Web based HL7 Inspector ↗"
                                         Command="{Binding OpenInspectorWebCommand}"
+                                        HorizontalOptions="Fill"
+                                        Padding="12,8" />
+                                <Button Grid.Row="2"
+                                        Text="Batch Send"
+                                        Command="{Binding OpenBatchSendCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="12,8" />
                             </Grid>

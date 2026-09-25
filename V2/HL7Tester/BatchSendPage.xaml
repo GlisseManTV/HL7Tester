@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:HL7Tester.ViewModels"
+             xmlns:converters="clr-namespace:HL7Tester.Converters"
+             x:Class="HL7Tester.BatchSendPage"
+             Title="Batch Send">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+            <converters:CollectionNotEmptyConverter x:Key="CollectionNotEmptyConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Scrollable content -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="16" Spacing="12">
+
+                <!-- ── Template selector ─────────────────────────────────────── -->
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Workflow Template" Style="{StaticResource SubHeadline}" />
+                        <Picker x:Name="TemplatePicker"
+                                Title="Select a template"
+                                ItemsSource="{Binding Templates}"
+                                SelectedItem="{Binding SelectedTemplate}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ── Workflow steps ────────────────────────────────────────── -->
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="10">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="Steps" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
+                            <Button Grid.Column="1" Text="+ Add"
+                                    Command="{Binding AddStepCommand}"
+                                    FontSize="13"
+                                    Padding="8,4" />
+                        </Grid>
+
+                        <CollectionView ItemsSource="{Binding Steps}"
+                                        SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodels:WorkflowStep">
+                                    <Border Padding="10" Margin="0,2"
+                                            StrokeThickness="1"
+                                            Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#374151}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="6" />
+                                        </Border.StrokeShape>
+                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding MessageType}"
+                                                   FontSize="13"
+                                                   VerticalOptions="Center"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Label Grid.Column="1"
+                                                   Text=""
+                                                   VerticalOptions="Center" />
+                                            <Button Grid.Column="2"
+                                                   Text="▲"
+                                                   FontSize="12"
+                                                   Padding="6,2"
+                                                   BackgroundColor="Transparent" />
+                                            <Button Grid.Column="3"
+                                                   Text="▼"
+                                                   FontSize="12"
+                                                   Padding="6,2"
+                                                   BackgroundColor="Transparent" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                        <Button Text="Remove Last Step"
+                                Command="{Binding RemoveStepCommand}"
+                                FontSize="13"
+                                Padding="8,4"
+                                HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ── Location fields ───────────────────────────────────────── -->
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Location (applied to all steps)" Style="{StaticResource SubHeadline}" />
+                        <Grid RowSpacing="8" ColumnSpacing="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Text="Room" VerticalOptions="Center" />
+                            <Entry Grid.Row="0" Grid.Column="1"
+                                   Text="{Binding Room}"
+                                   Placeholder="e.g., 405" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="Bed" VerticalOptions="Center" />
+                            <Entry Grid.Row="1" Grid.Column="1"
+                                   Text="{Binding Bed}"
+                                   Placeholder="e.g., 2" />
+
+                            <Label Grid.Row="2" Grid.Column="0" Text="Unit" VerticalOptions="Center" />
+                            <Entry Grid.Row="2" Grid.Column="1"
+                                   Text="{Binding Unit}"
+                                   Placeholder="e.g., ICU" />
+
+                            <Label Grid.Row="3" Grid.Column="0" Text="Floor" VerticalOptions="Center" />
+                            <Entry Grid.Row="3" Grid.Column="1"
+                                   Text="{Binding Floor}"
+                                   Placeholder="e.g., 4" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ── Parameters ────────────────────────────────────────────── -->
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="Parameters" Style="{StaticResource SubHeadline}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                            <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                <Label Text="Patients" FontSize="13" />
+                                <Entry Text="{Binding PatientCount}"
+                                       Keyboard="Numeric"
+                                       Placeholder="10" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Delay (ms)" FontSize="13" />
+                                <Entry Text="{Binding GlobalDelayMs}"
+                                       Keyboard="Numeric"
+                                       Placeholder="500" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- ── Start / Stop ──────────────────────────────────────────── -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Button Grid.Column="0"
+                            Text="▶ Start"
+                            Command="{Binding StartCommand}"
+                            BackgroundColor="#10B981"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="8"
+                            HeightRequest="44" />
+                    <Button Grid.Column="1"
+                            Text="■ Stop"
+                            Command="{Binding StopCommand}"
+                            BackgroundColor="#EF4444"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="8"
+                            HeightRequest="44" />
+                </Grid>
+
+                <!-- ── Status ────────────────────────────────────────────────── -->
+                <Border Style="{StaticResource CardBorder}"
+                        IsVisible="{Binding StatusText, Converter={StaticResource StringNotEmptyConverter}}">
+                    <Label Text="{Binding StatusText}"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
+                           LineBreakMode="WordWrap" />
+                </Border>
+
+                <!-- ── Results ───────────────────────────────────────────────── -->
+                <Border Style="{StaticResource CardBorder}"
+                        IsVisible="{Binding Results, Converter={StaticResource CollectionNotEmptyConverter}}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Results" Style="{StaticResource SubHeadline}" />
+
+                        <Label Text="{Binding SummaryText}"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#1F2937, Dark=#F9FAFB}" />
+
+                        <CollectionView ItemsSource="{Binding Results}"
+                                        SelectionMode="None"
+                                        HeightRequest="300">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="8" Margin="0,2"
+                                            StrokeThickness="1"
+                                            Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#374151}">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="4" />
+                                        </Border.StrokeShape>
+                                        <Label Text="{Binding .}"
+                                               FontSize="12"
+                                               FontFamily="Courier New, Courier, monospace"
+                                               LineBreakMode="TailTruncation" />
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ── Footer ────────────────────────────────────────────────────────── -->
+        <Grid Grid.Row="1" Padding="16,10">
+            <Button Text="← Home"
+                    Clicked="OnHomeClicked"
+                    HorizontalOptions="Start"
+                    FontSize="14"
+                    Padding="12,6" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

@@ -1,5 +1,6 @@
 using System;
 using HL7Tester.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HL7Tester;
 
@@ -29,4 +30,5 @@ public partial class NetworkSettingsPage : ContentPage
     {
         await Shell.Current.GoToAsync("//Hl7InspectorPage");
     }
+
 }

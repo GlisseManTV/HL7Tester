@@ -525,7 +525,7 @@ Added a "Send Parsed →" button next to "Parse & Inspect" on the HL7 Inspector 
 New page for sending batches of HL7 messages in parallel to stress test an HL7 service in production-like conditions.
 
 **Key Features:**
-- Predefined workflow templates (4 built-in) + free step editing
+- Predefined workflow templates (4 built-in) named by their step sequence (e.g., "A01 → A02 → A08 → A03") + free step editing
 - Multiple patients (configurable count) sent in parallel, each following the workflow sequentially
 - Global delay in ms between ALL messages (across all patients) via `SemaphoreSlim(1,1)` throttle
 - Randomized patient data: name, surname, patient ID, admission number, sex, birth date
@@ -534,19 +534,29 @@ New page for sending batches of HL7 messages in parallel to stress test an HL7 s
 - Stop via `CancellationToken`
 - Access from Settings → HL7 Tools card (Shell navigation, same pattern as HL7 Inspector)
 
+**Workflow Step Editor:**
+- Reorder steps with ▲▼ buttons (commands wired directly on `WorkflowStep`)
+- Delete individual steps with 🗑️ button per row
+- Picker to select message type before adding a new step
+- Conditional fields per step type:
+  - Non-A31 steps: Room/Bed/Unit/Floor overrides (placeholders: PV1.3.1–PV1.3.4)
+  - A31 steps: Name/Surname overrides (placeholders: PID.5.1, PID.5.2)
+- If a step field is empty, the global value is used (fallback in `BatchSendEngine`)
+
 **New Files:**
 | File | Purpose |
 |------|---------|
-| `HL7Tester.Core/Batch/Models/WorkflowStep.cs` | Single workflow step (MessageType + optional location overrides) |
+| `HL7Tester.Core/Batch/Models/WorkflowStep.cs` | Step with MessageType, location/identity overrides, IsIdentityStep/IsLocationStep, commands |
 | `HL7Tester.Core/Batch/Models/PatientContext.cs` | Patient identity (randomized fields only) |
 | `HL7Tester.Core/Batch/Models/BatchWorkflow.cs` | Full workflow definition (steps, patient count, delay, location) |
 | `HL7Tester.Core/Batch/Models/BatchSendResult.cs` | Per-patient and overall batch results |
 | `HL7Tester.Core/Batch/PatientDataRandomizer.cs` | Generates random patient data (seeded for testing) |
 | `HL7Tester.Core/Batch/BatchSendEngine.cs` | Core orchestration: parallel patients, global throttle, CancellationToken |
-| `HL7Tester.Core/Batch/BatchWorkflowTemplates.cs` | 4 static predefined templates |
-| `HL7Tester/ViewModels/BatchSendViewModel.cs` | MVVM ViewModel for the Batch Send page |
-| `HL7Tester/BatchSendPage.xaml` | UI: template picker, steps editor, location, params, start/stop, results |
+| `HL7Tester.Core/Batch/BatchWorkflowTemplates.cs` | 4 static predefined templates (named by step sequence) |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | MVVM ViewModel with `WireStepCommands()` for per-step commands |
+| `HL7Tester/BatchSendPage.xaml` | UI: template picker, steps editor with per-row controls, location, params, results |
 | `HL7Tester/BatchSendPage.xaml.cs` | Page code-behind |
+| `HL7Tester/Resources/Converters/BoolToVisibilityConverter.cs` | Boolean → Visibility converter for conditional field display |
 | `HL7Tester.Tests/BatchSendEngineTests.cs` | Unit tests for the engine (8 tests) |
 | `HL7Tester.Tests/PatientDataRandomizerTests.cs` | Unit tests for the randomizer (8 tests) |
 

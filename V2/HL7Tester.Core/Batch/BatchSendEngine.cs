@@ -116,8 +116,8 @@ public sealed class BatchSendEngine
                 {
                     MessageTypeCode = step.MessageType,
                     PatientId = patient.PatientId,
-                    PatientFamilyName = patient.FamilyName,
-                    PatientGivenName = patient.GivenName,
+                    PatientFamilyName = step.FamilyName ?? patient.FamilyName,
+                    PatientGivenName = step.GivenName ?? patient.GivenName,
                     BirthDate = patient.BirthDate,
                     Sex = patient.Sex,
                     AdmissionNumber = patient.AdmissionNumber,

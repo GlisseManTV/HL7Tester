@@ -10,6 +10,7 @@
         <ResourceDictionary>
             <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
             <converters:CollectionNotEmptyConverter x:Key="CollectionNotEmptyConverter" />
+            <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -33,9 +34,14 @@
                 <!-- ── Workflow steps ────────────────────────────────────────── -->
                 <Border Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="10">
-                        <Grid ColumnDefinitions="*,Auto">
+                        <Grid ColumnDefinitions="*,*,Auto">
                             <Label Grid.Column="0" Text="Steps" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
-                            <Button Grid.Column="1" Text="+ Add"
+                            <Picker Grid.Column="1"
+                                    Title="Message type"
+                                    ItemsSource="{Binding AvailableStepTypes}"
+                                    SelectedItem="{Binding SelectedNewStepType}"
+                                    FontSize="12" />
+                            <Button Grid.Column="2" Text="+ Add"
                                     Command="{Binding AddStepCommand}"
                                     FontSize="13"
                                     Padding="8,4" />
@@ -51,36 +57,72 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="6" />
                                         </Border.StrokeShape>
-                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                            <Label Grid.Column="0"
-                                                   Text="{Binding MessageType}"
-                                                   FontSize="13"
-                                                   VerticalOptions="Center"
-                                                   LineBreakMode="TailTruncation" />
-                                            <Label Grid.Column="1"
-                                                   Text=""
-                                                   VerticalOptions="Center" />
-                                            <Button Grid.Column="2"
-                                                   Text="▲"
-                                                   FontSize="12"
-                                                   Padding="6,2"
-                                                   BackgroundColor="Transparent" />
-                                            <Button Grid.Column="3"
-                                                   Text="▼"
-                                                   FontSize="12"
-                                                   Padding="6,2"
-                                                   BackgroundColor="Transparent" />
-                                        </Grid>
+                                        <VerticalStackLayout Spacing="6">
+                                            <!-- Row 1: message type + controls -->
+                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                                                <Label Grid.Column="0"
+                                                       Text="{Binding MessageType}"
+                                                       FontSize="13"
+                                                       VerticalOptions="Center"
+                                                       LineBreakMode="TailTruncation" />
+                                                <Button Grid.Column="1"
+                                                       Text="▲"
+                                                       FontSize="12"
+                                                       Padding="6,2"
+                                                       BackgroundColor="Transparent"
+                                                       Command="{Binding MoveUpCommand}" />
+                                                <Button Grid.Column="2"
+                                                       Text="▼"
+                                                       FontSize="12"
+                                                       Padding="6,2"
+                                                       BackgroundColor="Transparent"
+                                                       Command="{Binding MoveDownCommand}" />
+                                                <Button Grid.Column="3"
+                                                       Text="🗑️"
+                                                       FontSize="12"
+                                                       Padding="6,2"
+                                                       BackgroundColor="Transparent"
+                                                       Command="{Binding RemoveCommand}" />
+                                            </Grid>
+
+                                            <!-- Row 2a: Identity fields (A31) -->
+                                            <Grid ColumnDefinitions="*,*" ColumnSpacing="8"
+                                                  IsVisible="{Binding IsIdentityStep, Converter={StaticResource BoolToVis}}">
+                                                <Entry Grid.Column="0"
+                                                       Text="{Binding GivenName}"
+                                                       Placeholder="PID.5.1 Name"
+                                                       FontSize="12" />
+                                                <Entry Grid.Column="1"
+                                                       Text="{Binding FamilyName}"
+                                                       Placeholder="PID.5.2 Surname"
+                                                       FontSize="12" />
+                                            </Grid>
+
+                                            <!-- Row 2b: Location fields (non-A31) -->
+                                            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8"
+                                                  IsVisible="{Binding IsLocationStep, Converter={StaticResource BoolToVis}}">
+                                                <Entry Grid.Column="0"
+                                                       Text="{Binding Unit}"
+                                                       Placeholder="PV1.3.1 Unit"
+                                                       FontSize="12" />
+                                                <Entry Grid.Column="1"
+                                                       Text="{Binding Room}"
+                                                       Placeholder="PV1.3.2 Room"
+                                                       FontSize="12" />
+                                                <Entry Grid.Column="2"
+                                                       Text="{Binding Bed}"
+                                                       Placeholder="PV1.3.3 Bed"
+                                                       FontSize="12" />
+                                                <Entry Grid.Column="3"
+                                                       Text="{Binding Floor}"
+                                                       Placeholder="PV1.3.4 Floor"
+                                                       FontSize="12" />
+                                            </Grid>
+                                        </VerticalStackLayout>
                                     </Border>
                                 </DataTemplate>
                             </CollectionView.ItemTemplate>
                         </CollectionView>
-
-                        <Button Text="Remove Last Step"
-                                Command="{Binding RemoveStepCommand}"
-                                FontSize="13"
-                                Padding="8,4"
-                                HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -100,25 +142,25 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Text="Room" VerticalOptions="Center" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="Unit" VerticalOptions="Center" />
                             <Entry Grid.Row="0" Grid.Column="1"
-                                   Text="{Binding Room}"
-                                   Placeholder="e.g., 405" />
-
-                            <Label Grid.Row="1" Grid.Column="0" Text="Bed" VerticalOptions="Center" />
-                            <Entry Grid.Row="1" Grid.Column="1"
-                                   Text="{Binding Bed}"
-                                   Placeholder="e.g., 2" />
-
-                            <Label Grid.Row="2" Grid.Column="0" Text="Unit" VerticalOptions="Center" />
-                            <Entry Grid.Row="2" Grid.Column="1"
                                    Text="{Binding Unit}"
-                                   Placeholder="e.g., ICU" />
+                                   Placeholder="PV1.3.1 Unit" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="Room" VerticalOptions="Center" />
+                            <Entry Grid.Row="1" Grid.Column="1"
+                                   Text="{Binding Room}"
+                                   Placeholder="PV1.3.2 Room" />
+
+                            <Label Grid.Row="2" Grid.Column="0" Text="Bed" VerticalOptions="Center" />
+                            <Entry Grid.Row="2" Grid.Column="1"
+                                   Text="{Binding Bed}"
+                                   Placeholder="PV1.3.3 Bed" />
 
                             <Label Grid.Row="3" Grid.Column="0" Text="Floor" VerticalOptions="Center" />
                             <Entry Grid.Row="3" Grid.Column="1"
                                    Text="{Binding Floor}"
-                                   Placeholder="e.g., 4" />
+                                   Placeholder="PV1.3.4 Floor" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>

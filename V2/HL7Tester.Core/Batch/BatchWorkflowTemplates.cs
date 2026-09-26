@@ -11,6 +11,8 @@ public sealed class BatchWorkflowTemplate
     public string Description { get; set; } = string.Empty;
     public List<WorkflowStep> Steps { get; set; } = new();
 
+    public override string ToString() => Name;
+
     /// <summary>
     /// Creates a new BatchWorkflow from this template.
     /// </summary>
@@ -38,8 +40,8 @@ public static class BatchWorkflowTemplates
         {
             new()
             {
-                Name = "Admission complète",
-                Description = "A01 → A02 → A08 → A03",
+                Name = "A01 → A02 → A08 → A03",
+                Description = "Full admission cycle",
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },
@@ -50,8 +52,8 @@ public static class BatchWorkflowTemplates
             },
             new()
             {
-                Name = "Mouvement + annulation",
-                Description = "A01 → A02 → A12 → A02 → A03",
+                Name = "A01 → A02 → A12 → A02 → A03",
+                Description = "Movement with cancellation",
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },
@@ -63,8 +65,8 @@ public static class BatchWorkflowTemplates
             },
             new()
             {
-                Name = "Cycle complet",
-                Description = "A01 → A02 → A08 → A12 → A02 → A31 → A03",
+                Name = "A01 → A02 → A08 → A12 → A02 → A31 → A03",
+                Description = "Full cycle with update",
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },
@@ -78,8 +80,8 @@ public static class BatchWorkflowTemplates
             },
             new()
             {
-                Name = "Admission + update",
-                Description = "A01 → A31 → A03",
+                Name = "A01 → A31 → A03",
+                Description = "Admission with patient update",
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },

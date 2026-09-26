@@ -40,6 +40,21 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
 
     public ObservableCollection<WorkflowStep> Steps { get; } = new();
 
+    /// <summary>
+    /// Available HL7 message types for adding new steps.
+    /// </summary>
+    public IReadOnlyList<string> AvailableStepTypes { get; } = WorkflowStep.AvailableMessageTypes;
+
+    private string _selectedNewStepType;
+    /// <summary>
+    /// The message type selected in the "Add step" picker.
+    /// </summary>
+    public string SelectedNewStepType
+    {
+        get => _selectedNewStepType;
+        set => SetField(ref _selectedNewStepType, value);
+    }
+
     // ─── Location fields (global) ──────────────────────────────────
 
     private string _room = string.Empty;
@@ -118,9 +133,6 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
     public ICommand StartCommand { get; }
     public ICommand StopCommand { get; }
     public ICommand AddStepCommand { get; }
-    public ICommand RemoveStepCommand { get; }
-    public ICommand MoveUpCommand { get; }
-    public ICommand MoveDownCommand { get; }
 
     // ─── Constructor ───────────────────────────────────────────────
 
@@ -134,14 +146,12 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         _logger = logger;
 
         _selectedTemplate = Templates[0];
+        _selectedNewStepType = AvailableStepTypes[0];
         LoadTemplateIntoWorkflow();
 
         StartCommand = new Command(OnStart, () => !IsRunning);
         StopCommand = new Command(OnStop, () => IsRunning);
         AddStepCommand = new Command(OnAddStep);
-        RemoveStepCommand = new Command(OnRemoveStep);
-        MoveUpCommand = new Command(OnMoveUp);
-        MoveDownCommand = new Command(OnMoveDown);
     }
 
     // ─── Template loading ──────────────────────────────────────────
@@ -152,6 +162,7 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         var workflow = _selectedTemplate.CreateWorkflow();
         foreach (var step in workflow.Steps)
         {
+            WireStepCommands(step);
             Steps.Add(step);
         }
     }
@@ -161,40 +172,39 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
     private void OnAddStep()
     {
         if (Steps.Count >= 6) return;
-        Steps.Add(new WorkflowStep { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" });
+        var step = new WorkflowStep { MessageType = SelectedNewStepType };
+        WireStepCommands(step);
+        Steps.Add(step);
     }
 
-    private void OnRemoveStep()
+    /// <summary>
+    /// Wires the MoveUp/MoveDown/Remove commands directly on a WorkflowStep.
+    /// </summary>
+    private void WireStepCommands(WorkflowStep step)
     {
-        if (Steps.Count <= 2) return;
-        // Remove last step by default (UI can bind to a specific index)
-        Steps.RemoveAt(Steps.Count - 1);
-    }
+        step.MoveUpCommand = new Command(() =>
+        {
+            int index = Steps.IndexOf(step);
+            if (index <= 0) return;
+            Steps.RemoveAt(index);
+            Steps.Insert(index - 1, step);
+        });
 
-    public void RemoveStepAt(int index)
-    {
-        if (index < 0 || index >= Steps.Count || Steps.Count <= 2) return;
-        Steps.RemoveAt(index);
-    }
+        step.MoveDownCommand = new Command(() =>
+        {
+            int index = Steps.IndexOf(step);
+            if (index < 0 || index >= Steps.Count - 1) return;
+            Steps.RemoveAt(index);
+            Steps.Insert(index + 1, step);
+        });
 
-    public void MoveStepUp(int index)
-    {
-        if (index <= 0 || index >= Steps.Count) return;
-        var item = Steps[index];
-        Steps.RemoveAt(index);
-        Steps.Insert(index - 1, item);
+        step.RemoveCommand = new Command(() =>
+        {
+            int index = Steps.IndexOf(step);
+            if (index < 0 || Steps.Count <= 2) return;
+            Steps.RemoveAt(index);
+        });
     }
-
-    public void MoveStepDown(int index)
-    {
-        if (index < 0 || index >= Steps.Count - 1) return;
-        var item = Steps[index];
-        Steps.RemoveAt(index);
-        Steps.Insert(index + 1, item);
-    }
-
-    private void OnMoveUp() { }
-    private void OnMoveDown() { }
 
     // ─── Start / Stop ──────────────────────────────────────────────
 

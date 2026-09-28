@@ -21,6 +21,11 @@
             Title="Network"
             ContentTemplate="{DataTemplate local:NetworkSettingsPage}"
             Route="NetworkSettingsPage" />
+
+        <ShellContent
+            Title="Batch Send"
+            ContentTemplate="{DataTemplate local:BatchSendPage}"
+            Route="BatchSendPage" />
     </TabBar>
 
 </Shell>

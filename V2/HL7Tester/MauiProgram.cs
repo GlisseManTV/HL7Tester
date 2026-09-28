@@ -78,6 +78,12 @@ public static class MauiProgram
 		// What's New service
 		builder.Services.AddSingleton<Services.IWhatsNewService, Services.WhatsNewService>();
 
+		// Batch Send
+		builder.Services.AddSingleton<HL7Tester.Core.Batch.PatientDataRandomizer>();
+		builder.Services.AddSingleton<HL7Tester.Core.Batch.BatchSendEngine>();
+		builder.Services.AddTransient<HL7Tester.ViewModels.BatchSendViewModel>();
+		builder.Services.AddTransient<HL7Tester.BatchSendPage>();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif

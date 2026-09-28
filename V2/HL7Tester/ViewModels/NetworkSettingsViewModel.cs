@@ -127,6 +127,7 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     public ICommand OpenSiuDocumentationCommand { get; }
     public ICommand OpenInspectorCommand { get; }
     public ICommand OpenInspectorWebCommand { get; }
+    public ICommand OpenBatchSendCommand { get; }
 
     private const string HL7_ADT_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH3.html#Heading3";
     private const string HL7_ORM_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH4.html#Heading13";
@@ -154,6 +155,20 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         OpenSiuDocumentationCommand = new Command(OpenSiuDocumentation);
         OpenInspectorCommand = new Command(OpenInspector);
         OpenInspectorWebCommand = new Command(OpenWebInspector);
+        OpenBatchSendCommand = new Command(OpenBatchSend);
+    }
+
+    private async void OpenBatchSend()
+    {
+        try
+        {
+            _logger.LogInformation("Opening Batch Send page.");
+            await Shell.Current.GoToAsync("//BatchSendPage");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open Batch Send page.");
+        }
     }
 
     private void OpenAdtDocumentation()

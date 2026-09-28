@@ -367,3 +367,5 @@ FodyWeavers.xsd
 V2/HL7Tester/*.exe
 V2/WINDOWS_INSTALLER.md
 V2/HL7Tester/Resources/Styles/UI_DESIGN_GUIDELINES.md
+.clinerules/
+.roo/

@@ -1,4 +1,116 @@
-## v2.0.18 Changes (Latest Release)
+## v2.0.20 Changes (Latest Release)
+
+### Batch Send — Save & Delete Custom Workflow Templates
+
+Added the ability to save the current workflow configuration as a reusable custom template, and to delete custom templates. Built-in templates remain in code and cannot be deleted.
+
+**Key Features:**
+- "💾 Save" button saves the current steps as a new custom template (or overwrites an existing one with the same name)
+- Template name is auto-generated from the step sequence (e.g., "A01 → A02 → A08 → A03")
+- "🗑️ Delete" button removes the selected custom template (hidden for built-in templates)
+- Status text confirms save/delete operations
+- Custom templates persist in a separate JSON file (`~/.HL7Tester/batchtemplates.json`)
+- Built-in templates (4) remain hardcoded in `BatchWorkflowTemplates.cs`
+
+**Technical Details:**
+- New `IBatchTemplateService` / `FileBatchTemplateService` in `HL7Tester.Core/Batch/BatchTemplateService.cs`
+  - `LoadAsync()` — reads JSON file, returns `List<BatchWorkflowTemplate>`
+  - `SaveAsync(template)` — upserts by name (replaces existing or appends)
+  - `DeleteAsync(name)` — removes by name, rewrites JSON
+  - Handles corrupted JSON gracefully (returns empty list)
+- `BatchWorkflowTemplate` gained `IsBuiltIn` property (bool, default `false`)
+- `BatchWorkflowTemplate.GenerateNameFromSteps(List<WorkflowStep>)` — produces "A01 → A02 → A08 → A03"
+- `BatchSendViewModel`:
+  - `Templates` is now `ObservableCollection<BatchWorkflowTemplate>` (built-in + custom)
+  - `SelectTemplateCommand` (`Command<BatchWorkflowTemplate>`) — loads template into workflow on tap
+  - `SaveTemplateCommand` / `DeleteTemplateCommand` — save/delete via service
+  - `CanDeleteTemplate` — computed property (true only for non-built-in selected template)
+  - `LoadTemplatesAsync()` — clears and repopulates collection, selects first template
+- DI: `IBatchTemplateService` registered in `MauiProgram.cs` with path `Path.Combine(FileSystem.AppDataDirectory, "batchtemplates.json")`
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Batch/BatchTemplateService.cs` | NEW — `IBatchTemplateService` + `FileBatchTemplateService` |
+| `HL7Tester.Core/Batch/BatchWorkflowTemplates.cs` | Added `IsBuiltIn` property, `GenerateNameFromSteps()` static method |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | Added template save/delete/select commands, `CanDeleteTemplate`, `LoadTemplatesAsync()` |
+| `HL7Tester/BatchSendPage.xaml` | Added Save/Delete buttons, `CollectionView` for template list |
+| `HL7Tester/BatchSendPage.xaml.cs` | Added `OnAppearing()` to reload templates |
+| `HL7Tester/MauiProgram.cs` | Registered `IBatchTemplateService` |
+| `HL7Tester.Tests/BatchTemplateServiceTests.cs` | NEW — 10 unit tests for the template service |
+| `HL7Tester.csproj` | Version incremented to 2.0.20 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.20.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.20.0 |
+
+---
+
+### Batch Send — Template Picker Replaced with CollectionView List
+
+Replaced the unstable MAUI `Picker` dropdown with a `CollectionView` list, matching the Connection History pattern in Settings. This eliminates the known MAUI Picker binding instability when the `ItemsSource` collection is modified.
+
+**Key Features:**
+- All templates are always visible in a scrollable list (no dropdown)
+- Tap a template to load it into the workflow
+- `CollectionView` handles collection changes (Add/Remove/Clear) without binding issues
+- Same visual style as Connection History (`ClickableListItemBorder`)
+
+**Technical Details:**
+- Removed `SelectedTemplateIndex` property and `Picker` element
+- Added `SelectTemplateCommand` (`Command<BatchWorkflowTemplate>`) wired via `TapGestureRecognizer`
+- `DataTemplate x:DataType="batch:BatchWorkflowTemplate"` with `Name` label
+- `HeightRequest="180"` for the list area
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/BatchSendPage.xaml` | Replaced `Picker` with `CollectionView` + `DataTemplate`; added `xmlns:batch` |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | Removed `SelectedTemplateIndex`; added `SelectTemplateCommand` + `OnSelectTemplate()` |
+
+---
+
+## v2.0.19 Changes (Previous Release)
+
+### Batch Send — Stress Testing Module
+
+New page for sending batches of HL7 messages in parallel to stress test an HL7 service in production-like conditions.
+
+**Key Features:**
+- Predefined workflow templates (4 built-in) named by their step sequence
+- Multiple patients (configurable count) sent in parallel
+- Global delay in ms between ALL messages via `SemaphoreSlim(1,1)` throttle
+- Randomized patient data: name, surname, patient ID, admission number, sex, birth date
+- Room/Bed/Unit/Floor are user-defined (NOT randomized)
+- Simple final summary per patient
+- Stop via `CancellationToken`
+- Access from Settings → HL7 Tools card
+
+**New Files:**
+| File | Purpose |
+|------|---------|
+| `HL7Tester.Core/Batch/Models/WorkflowStep.cs` | Step model with commands |
+| `HL7Tester.Core/Batch/Models/PatientContext.cs` | Patient identity |
+| `HL7Tester.Core/Batch/Models/BatchWorkflow.cs` | Full workflow definition |
+| `HL7Tester.Core/Batch/Models/BatchSendResult.cs` | Per-patient and overall results |
+| `HL7Tester.Core/Batch/PatientDataRandomizer.cs` | Random patient data generation |
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | Core orchestration |
+| `HL7Tester.Core/Batch/BatchWorkflowTemplates.cs` | 4 static predefined templates |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | MVVM ViewModel |
+| `HL7Tester/BatchSendPage.xaml` | UI page |
+| `HL7Tester.Tests/BatchSendEngineTests.cs` | Unit tests (8 tests) |
+| `HL7Tester.Tests/PatientDataRandomizerTests.cs` | Unit tests (8 tests) |
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `MauiProgram.cs` | DI registrations |
+| `AppShell.xaml` | Added `ShellContent` with `Route="BatchSendPage"` |
+| `NetworkSettingsPage.xaml` | Added "Batch Send" button |
+| `NetworkSettingsViewModel.cs` | Added `OpenBatchSendCommand` |
+| `HL7Tester.csproj` | Version incremented to 2.0.19 |
+
+---
+
+## v2.0.18 Changes (Previous Release)
 
 ### SIU Segment Placeholders — Field Numbers Corrected
 Fixed incorrect field placeholders for AIG, AIL, and AIP segments in the SIU section of the Main Page.

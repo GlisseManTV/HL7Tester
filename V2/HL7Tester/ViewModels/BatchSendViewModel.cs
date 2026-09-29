@@ -13,6 +13,7 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
 {
     private readonly BatchSendEngine _engine;
     private readonly INetworkSettingsService _networkSettingsService;
+    private readonly IBatchTemplateService _templateService;
     private readonly ILogger<BatchSendViewModel> _logger;
 
     private CancellationTokenSource? _cts;
@@ -21,20 +22,14 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
 
     // ─── Templates ───────────────────────────────────────────────
 
-    public IReadOnlyList<BatchWorkflowTemplate> Templates { get; } = BatchWorkflowTemplates.All;
+    public ObservableCollection<BatchWorkflowTemplate> Templates { get; } = new();
 
-    private BatchWorkflowTemplate _selectedTemplate;
-    public BatchWorkflowTemplate SelectedTemplate
-    {
-        get => _selectedTemplate;
-        set
-        {
-            if (SetField(ref _selectedTemplate, value))
-            {
-                LoadTemplateIntoWorkflow();
-            }
-        }
-    }
+    private BatchWorkflowTemplate? _selectedTemplate;
+
+    /// <summary>
+    /// True if the currently selected template is a custom (non-built-in) template that can be deleted.
+    /// </summary>
+    public bool CanDeleteTemplate => _selectedTemplate is not null && !_selectedTemplate.IsBuiltIn;
 
     // ─── Workflow steps ────────────────────────────────────────────
 
@@ -133,32 +128,80 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
     public ICommand StartCommand { get; }
     public ICommand StopCommand { get; }
     public ICommand AddStepCommand { get; }
+    public ICommand SaveTemplateCommand { get; }
+    public ICommand DeleteTemplateCommand { get; }
+    public ICommand SelectTemplateCommand { get; }
 
     // ─── Constructor ───────────────────────────────────────────────
 
     public BatchSendViewModel(
         BatchSendEngine engine,
         INetworkSettingsService networkSettingsService,
+        IBatchTemplateService templateService,
         ILogger<BatchSendViewModel> logger)
     {
         _engine = engine;
         _networkSettingsService = networkSettingsService;
+        _templateService = templateService;
         _logger = logger;
 
-        _selectedTemplate = Templates[0];
         _selectedNewStepType = AvailableStepTypes[0];
-        LoadTemplateIntoWorkflow();
 
         StartCommand = new Command(OnStart, () => !IsRunning);
         StopCommand = new Command(OnStop, () => IsRunning);
         AddStepCommand = new Command(OnAddStep);
+        SaveTemplateCommand = new Command(OnSaveTemplate);
+        DeleteTemplateCommand = new Command(OnDeleteTemplate);
+        SelectTemplateCommand = new Command<BatchWorkflowTemplate>(OnSelectTemplate);
+    }
+
+    /// <summary>
+    /// Loads all templates (built-in + custom) into the Templates collection.
+    /// </summary>
+    public async Task LoadTemplatesAsync()
+    {
+        Templates.Clear();
+
+        // Add built-in templates
+        foreach (var template in BatchWorkflowTemplates.All)
+        {
+            Templates.Add(template);
+        }
+
+        // Add custom templates from file
+        try
+        {
+            var customTemplates = await _templateService.LoadAsync().ConfigureAwait(false);
+            foreach (var template in customTemplates)
+            {
+                Templates.Add(template);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load custom batch templates");
+        }
+
+        // Select first template
+        if (Templates.Count > 0)
+        {
+            OnSelectTemplate(Templates[0]);
+        }
     }
 
     // ─── Template loading ──────────────────────────────────────────
 
+    private void OnSelectTemplate(BatchWorkflowTemplate template)
+    {
+        _selectedTemplate = template;
+        OnPropertyChanged(nameof(CanDeleteTemplate));
+        LoadTemplateIntoWorkflow();
+    }
+
     private void LoadTemplateIntoWorkflow()
     {
         Steps.Clear();
+        if (_selectedTemplate is null) return;
         var workflow = _selectedTemplate.CreateWorkflow();
         foreach (var step in workflow.Steps)
         {
@@ -295,13 +338,94 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         StatusText = "Stopping...";
     }
 
+    // ─── Template management ───────────────────────────────────────
+
+    private async void OnSaveTemplate()
+    {
+        if (Steps.Count < 2)
+        {
+            StatusText = "Cannot save: workflow must have at least 2 steps.";
+            return;
+        }
+
+        var name = BatchWorkflowTemplate.GenerateNameFromSteps(Steps.ToList());
+
+        // Prevent overwriting a built-in template
+        var existing = Templates.FirstOrDefault(t => t.Name == name);
+        if (existing is not null && existing.IsBuiltIn)
+        {
+            StatusText = $"Cannot save: \"{name}\" is a built-in template.";
+            return;
+        }
+
+        var template = new BatchWorkflowTemplate
+        {
+            Name = name,
+            Description = "Custom template",
+            IsBuiltIn = false,
+            Steps = Steps.Select(s => s.Clone()).ToList()
+        };
+
+        try
+        {
+            await _templateService.SaveAsync(template).ConfigureAwait(false);
+
+            // Update the collection in-place (no Clear)
+            if (existing is not null)
+            {
+                // Overwrite existing custom template
+                int index = Templates.IndexOf(existing);
+                Templates[index] = template;
+            }
+            else
+            {
+                Templates.Add(template);
+            }
+
+            // Select the saved template (loads workflow into steps)
+            OnSelectTemplate(template);
+
+            StatusText = $"Template \"{name}\" saved.";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Error saving template: {ex.Message}";
+            _logger.LogError(ex, "Failed to save batch template");
+        }
+    }
+
+    private async void OnDeleteTemplate()
+    {
+        if (_selectedTemplate is null || _selectedTemplate.IsBuiltIn) return;
+
+        var name = _selectedTemplate.Name;
+
+        try
+        {
+            await _templateService.DeleteAsync(name).ConfigureAwait(false);
+            // Reload templates — LoadTemplatesAsync selects the first template
+            await LoadTemplatesAsync().ConfigureAwait(false);
+            StatusText = $"Template \"{name}\" deleted.";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Error deleting template: {ex.Message}";
+            _logger.LogError(ex, "Failed to delete batch template");
+        }
+    }
+
     // ─── INotifyPropertyChanged ────────────────────────────────────
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value)) return false;
         field = value;
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        OnPropertyChanged(propertyName);
         return true;
     }
 }

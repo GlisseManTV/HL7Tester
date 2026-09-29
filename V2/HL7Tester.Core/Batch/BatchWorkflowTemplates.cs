@@ -11,6 +11,11 @@ public sealed class BatchWorkflowTemplate
     public string Description { get; set; } = string.Empty;
     public List<WorkflowStep> Steps { get; set; } = new();
 
+    /// <summary>
+    /// True if this is a built-in template that cannot be deleted.
+    /// </summary>
+    public bool IsBuiltIn { get; set; } = false;
+
     public override string ToString() => Name;
 
     /// <summary>
@@ -24,6 +29,20 @@ public sealed class BatchWorkflowTemplate
             workflow.Steps.Add(step.Clone());
         }
         return workflow;
+    }
+
+    /// <summary>
+    /// Generates a display name from a list of steps, e.g. "A01 → A02 → A08 → A03".
+    /// </summary>
+    public static string GenerateNameFromSteps(List<WorkflowStep> steps)
+    {
+        var codes = steps.Select(s =>
+        {
+            // Extract the code part: "ADT A01 - Inpatient..." → "A01"
+            var parts = s.MessageType.Split(' ');
+            return parts.Length >= 2 ? parts[1] : s.MessageType;
+        });
+        return string.Join(" → ", codes);
     }
 }
 
@@ -42,6 +61,7 @@ public static class BatchWorkflowTemplates
             {
                 Name = "A01 → A02 → A08 → A03",
                 Description = "Full admission cycle",
+                IsBuiltIn = true,
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },
@@ -54,6 +74,7 @@ public static class BatchWorkflowTemplates
             {
                 Name = "A01 → A02 → A12 → A02 → A03",
                 Description = "Movement with cancellation",
+                IsBuiltIn = true,
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },
@@ -67,6 +88,7 @@ public static class BatchWorkflowTemplates
             {
                 Name = "A01 → A02 → A08 → A12 → A02 → A31 → A03",
                 Description = "Full cycle with update",
+                IsBuiltIn = true,
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },
@@ -82,6 +104,7 @@ public static class BatchWorkflowTemplates
             {
                 Name = "A01 → A31 → A03",
                 Description = "Admission with patient update",
+                IsBuiltIn = true,
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },

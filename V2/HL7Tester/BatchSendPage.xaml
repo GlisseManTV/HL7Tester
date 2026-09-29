@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:HL7Tester.ViewModels"
              xmlns:converters="clr-namespace:HL7Tester.Converters"
+             xmlns:batch="clr-namespace:HL7Tester.Core.Batch;assembly=HL7Tester.Core"
              x:Class="HL7Tester.BatchSendPage"
              Title="Batch Send">
 
@@ -24,10 +25,40 @@
                 <Border Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Workflow Template" Style="{StaticResource SubHeadline}" />
-                        <Picker x:Name="TemplatePicker"
-                                Title="Select a template"
-                                ItemsSource="{Binding Templates}"
-                                SelectedItem="{Binding SelectedTemplate}" />
+                        <CollectionView ItemsSource="{Binding Templates}"
+                                        SelectionMode="None"
+                                        HeightRequest="180">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="batch:BatchWorkflowTemplate">
+                                    <Border Padding="10" Margin="0,2"
+                                            Style="{StaticResource ClickableListItemBorder}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectTemplateCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{Binding Name}"
+                                               FontSize="13"
+                                               LineBreakMode="TailTruncation" />
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Button Grid.Column="0"
+                                    Text="💾 Save"
+                                    Command="{Binding SaveTemplateCommand}"
+                                    FontSize="13"
+                                    Padding="8,4" />
+                            <Button Grid.Column="1"
+                                    Text="🗑️ Delete"
+                                    Command="{Binding DeleteTemplateCommand}"
+                                    FontSize="13"
+                                    Padding="8,4"
+                                    BackgroundColor="#EF4444"
+                                    TextColor="White"
+                                    IsVisible="{Binding CanDeleteTemplate}" />
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 

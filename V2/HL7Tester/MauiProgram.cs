@@ -81,6 +81,11 @@ public static class MauiProgram
 		// Batch Send
 		builder.Services.AddSingleton<HL7Tester.Core.Batch.PatientDataRandomizer>();
 		builder.Services.AddSingleton<HL7Tester.Core.Batch.BatchSendEngine>();
+		builder.Services.AddSingleton<HL7Tester.Core.Batch.IBatchTemplateService>(sp =>
+		{
+			var path = Path.Combine(FileSystem.AppDataDirectory, "batchtemplates.json");
+			return new HL7Tester.Core.Batch.FileBatchTemplateService(path);
+		});
 		builder.Services.AddTransient<HL7Tester.ViewModels.BatchSendViewModel>();
 		builder.Services.AddTransient<HL7Tester.BatchSendPage>();
 

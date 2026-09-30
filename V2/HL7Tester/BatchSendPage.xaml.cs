@@ -19,6 +19,11 @@ public partial class BatchSendPage : ContentPage
         _ = _viewModel.LoadTemplatesAsync();
     }
 
+    private void OnSettingsClicked(object? sender, EventArgs e)
+    {
+        Shell.Current.GoToAsync("//NetworkSettingsPage");
+    }
+
     private void OnHomeClicked(object? sender, EventArgs e)
     {
         Shell.Current.GoToAsync("//MainPage");

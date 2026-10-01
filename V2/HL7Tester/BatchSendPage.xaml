@@ -11,7 +11,6 @@
         <ResourceDictionary>
             <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
             <converters:CollectionNotEmptyConverter x:Key="CollectionNotEmptyConverter" />
-            <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -118,7 +117,7 @@
 
                                             <!-- Row 2a: Identity fields (A31) -->
                                             <Grid ColumnDefinitions="*,*" ColumnSpacing="8"
-                                                  IsVisible="{Binding IsIdentityStep, Converter={StaticResource BoolToVis}}">
+                                                  IsVisible="{Binding IsIdentityStep}">
                                                 <Entry Grid.Column="0"
                                                        Text="{Binding GivenName}"
                                                        Placeholder="PID.5.1 Name"
@@ -131,7 +130,7 @@
 
                                             <!-- Row 2b: Location fields (non-A31) -->
                                             <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8"
-                                                  IsVisible="{Binding IsLocationStep, Converter={StaticResource BoolToVis}}">
+                                                  IsVisible="{Binding IsLocationStep}">
                                                 <Entry Grid.Column="0"
                                                        Text="{Binding Unit}"
                                                        Placeholder="PV1.3.1 Unit"
@@ -152,7 +151,7 @@
 
                                             <!-- Row 2c: Merge fields (A18/A40) -->
                                             <Grid ColumnDefinitions="*"
-                                                  IsVisible="{Binding IsMergeStep, Converter={StaticResource BoolToVis}}">
+                                                  IsVisible="{Binding IsMergeStep}">
                                                 <Entry Grid.Column="0"
                                                        Text="{Binding NewPatientId}"
                                                        Placeholder="MRG.1 New Patient ID"

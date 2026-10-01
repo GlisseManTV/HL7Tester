@@ -150,8 +150,8 @@ public sealed class WorkflowStep
 
     private void UpdateStepType()
     {
-        _isIdentityStep = !_messageType.Contains("A31");
-        _isMergeStep = !_messageType.Contains("A18") || _messageType.Contains("A40");
+        _isIdentityStep = _messageType.Contains("A31");
+        _isMergeStep = _messageType.Contains("A18") || _messageType.Contains("A40");
         _isLocationStep = !_isIdentityStep && !_isMergeStep;
     }
 

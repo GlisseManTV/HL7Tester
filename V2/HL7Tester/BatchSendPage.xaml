@@ -149,6 +149,15 @@
                                                        Placeholder="PV1.3.4 Floor"
                                                        FontSize="12" />
                                             </Grid>
+
+                                            <!-- Row 2c: Merge fields (A18/A40) -->
+                                            <Grid ColumnDefinitions="*"
+                                                  IsVisible="{Binding IsMergeStep, Converter={StaticResource BoolToVis}}">
+                                                <Entry Grid.Column="0"
+                                                       Text="{Binding NewPatientId}"
+                                                       Placeholder="MRG.1 New Patient ID"
+                                                       FontSize="12" />
+                                            </Grid>
                                         </VerticalStackLayout>
                                     </Border>
                                 </DataTemplate>

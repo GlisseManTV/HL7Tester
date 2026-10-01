@@ -125,6 +125,7 @@ public sealed class BatchSendEngine
                     Bed = step.Bed ?? workflow.Bed,
                     Unit = step.Unit ?? workflow.Unit,
                     Floor = step.Floor ?? workflow.Floor,
+                    NewPatientId = step.NewPatientId,
                     EventDateTime = DateTime.Now.ToString("yyyyMMddHHmm")
                 };
 

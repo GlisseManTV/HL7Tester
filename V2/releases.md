@@ -1,4 +1,60 @@
-## v2.0.20 Changes (Latest Release)
+## v2.0.21 Changes (Latest Release)
+
+### Batch Send — All ADT Message Types + Merge Step Support
+
+Extended the Batch Send step picker from 6 to all 30 ADT message types supported by the app (A01–A40), and added a dedicated "New Patient ID" field for merge steps (A18/A40).
+
+**Key Features:**
+- All 30 ADT message types are now available in the step picker (previously only 6)
+- New "New Patient ID" field appears automatically for A18 (Merge Patient Records) and A40 (Patient Record Merge) steps
+- Fixed a silent binding bug: `BoolToVisibilityConverter` was used on `IsVisible` (bool) properties, causing the binding to fail and all rows to remain visible. Replaced with direct bool bindings.
+
+**Technical Details:**
+- `WorkflowStep.AvailableMessageTypes` expanded from 6 to 30 entries (matching `MainViewModel.MessageTypesByFamily["ADT"]`)
+- New `WorkflowStep.NewPatientId` (string?) — passed to `AdtMessageRequest.NewPatientId` for merge steps
+- New `WorkflowStep.IsMergeStep` (bool) — `true` when type contains "A18" or "A40"
+- `UpdateStepType()` now uses correct logic: `IsIdentityStep` = contains "A31", `IsMergeStep` = contains "A18"/"A40", `IsLocationStep` = neither
+- `Clone()` includes `NewPatientId`
+- `BatchSendEngine.RunPatientAsync` passes `step.NewPatientId` to the request
+- `BatchSendPage.xaml`: removed `BoolToVisibilityConverter` from all `IsVisible` bindings (the converter returns `Visibility` enum but `IsVisible` is `bool` → silent binding failure). Direct `bool → bool` binding works natively in MAUI.
+- New Row 2c in step editor: `Entry` for "MRG.1 New Patient ID" visible only when `IsMergeStep` is true
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Batch/Models/WorkflowStep.cs` | Expanded `AvailableMessageTypes` to 30, added `NewPatientId`, `IsMergeStep`, fixed `UpdateStepType()`, updated `Clone()` |
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | Pass `step.NewPatientId` to `AdtMessageRequest` |
+| `HL7Tester/BatchSendPage.xaml` | Added merge step row, removed `BoolToVisibilityConverter` from `IsVisible` bindings, removed unused converter resource |
+| `HL7Tester.csproj` | Version incremented to 2.0.21 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.21.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.21.0 |
+
+### Network Sender — MSA-1 Status & Error Description
+
+The `SendResult` now includes the MSA-1 acknowledgment status (AA, AE, AR) and the MSA-3 error description from the receiver's ACK message. When a message is rejected (AR) or accepted with errors (AE), the send log displays the error description.
+
+**Key Features:**
+- `SendResult` gained `MsaStatus` (string?) and `ErrorDescription` (string?) properties
+- `Hl7NetworkSender` now parses the MSA segment from the ACK response to extract status and error text
+- `Success` is now `false` when MSA-1 is `AR` (reject) or `AE` (error accept), not just on network failure
+- The send log in `MainViewModel` shows "NACK" with the error description for rejected messages
+- ACK status display: "ACK" for AA, "ACK (with errors)" for AE, "NACK" for AR
+
+**Technical Details:**
+- New `ExtractMsaStatus(string ackMessage)` — scans for `MSA|` line, returns field[1] (AA/AE/AR)
+- New `ExtractMsaErrorDescription(string? ackMessage)` — scans for `MSA|` line, returns field[3] (error text)
+- `SendResult.Success` logic: `msaStatus == null || msaStatus == "AA"` → success; `AE`/`AR` → failure
+- `MainViewModel.OnSendClicked` updated to use `result.MsaStatus` for log display and to append `result.ErrorDescription` on NACK
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Hl7NetworkSender.cs` | Added `MsaStatus`/`ErrorDescription` to `SendResult`, `ExtractMsaStatus()`, `ExtractMsaErrorDescription()`, updated `SendAsync` success logic |
+| `HL7Tester/ViewModels/MainViewModel.cs` | Updated send log to use `MsaStatus` and display `ErrorDescription` on NACK |
+
+---
+
+## v2.0.20 Changes
 
 ### Batch Send — Save & Delete Custom Workflow Templates
 

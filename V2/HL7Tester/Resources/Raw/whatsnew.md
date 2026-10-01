@@ -1,20 +1,19 @@
-## v2.0.20
+## v2.0.21
 
-### 💾 Save Your Own Workflow Templates
-> Build a workflow once, save it, and reuse it any time.
-- Click "Save" to store your current steps as a reusable template
-- The name is generated automatically from your steps (e.g., A01 → A02 → A08)
-- Save again with the same steps to update an existing template
-- Your custom templates are saved on your device and always available
+### 📋 All ADT Messages in Batch Send
+> Every admission, movement, and discharge type is now available for stress testing.
+- Pick from all 30 ADT message types (A01 to A40) in the step editor
+- Build complex workflows with any combination of admission, movement, and discharge steps
+- No more limited selection — what you can send manually, you can now batch
 
-### 🗑️ Delete Templates You No Longer Need
-> Keep your list clean — remove custom templates with one click.
-- Select a custom template, then click "Delete"
-- Built-in templates are protected and cannot be removed
-- A confirmation message appears after each action
+### 🔀 Merge Patient Records in Batch
+> Test patient record merges (A18/A40) with a dedicated target ID field.
+- When you add a merge step, a "New Patient ID" field appears automatically
+- Leave it empty to merge into the same patient, or enter a specific ID
+- Perfect for testing merge scenarios in production-like conditions
 
-### 📋 See All Your Templates at a Glance
-> No more dropdowns — all your workflows are visible in one list.
-- Every template (built-in and custom) is listed right on the page
-- Tap any template to load it into the editor instantly
-- The list updates immediately when you save or delete
+### ⚠️ Clear Error Messages on Rejected Messages
+> When a server rejects your message, you now see exactly why.
+- The send log shows "NACK" with the server's error description
+- No more guessing why a message was rejected — the reason is right there
+- Works for both "rejected" (AR) and "accepted with errors" (AE) responses

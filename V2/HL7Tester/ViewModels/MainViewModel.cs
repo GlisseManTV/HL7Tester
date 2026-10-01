@@ -813,12 +813,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             if (result.Success)
             {
-                string ackStatus = result.AckMessage != null 
-                    ? (result.AckMessage.StartsWith("ERR") ? "NACK" : "ACK") 
-                    : "No ACK";
+                string ackStatus = result.MsaStatus switch
+                {
+                    "AA" => "ACK",
+                    "AE" => "ACK (with errors)",
+                    _ => "No ACK"
+                };
 
                 AppendToSendLog(
                     $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> {ackStatus}");
+            }
+            else if (result.MsaStatus == "AR" || result.MsaStatus == "AE")
+            {
+                _logger.LogWarning("Message {MsaStatus} by receiver at {Ip}:{Port}. {Desc}", result.MsaStatus, ip, port, result.ErrorDescription ?? "(no description)");
+                var nackLine = $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> NACK";
+                if (!string.IsNullOrWhiteSpace(result.ErrorDescription))
+                {
+                    nackLine += $"\n{result.ErrorDescription}";
+                }
+                AppendToSendLog(nackLine);
             }
             else
             {

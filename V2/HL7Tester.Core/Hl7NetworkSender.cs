@@ -13,6 +13,8 @@ public sealed class SendResult
     public bool Success { get; init; }
     public string? MessageCode { get; init; }
     public string? AckMessage { get; init; }
+    public string? MsaStatus { get; init; }
+    public string? ErrorDescription { get; init; }
     public string ErrorMessage { get; init; } = string.Empty;
 }
 
@@ -82,9 +84,10 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
 
             _logger.LogInformation("HL7 message sent to {Ip}:{Port} ({Bytes} bytes) with encoding {Encoding}", ipAddress, port, bytes.Length, encoding.EncodingName);
 
-            // Optionnel : lecture d'un ACK en retour (non parsé pour l'instant)
+            // Lecture d'un ACK en retour
             string? ackMessage = null;
-            
+            string? msaStatus = null;
+
             // On lit de manière best-effort, sans faire échouer l'envoi si rien n'arrive.
             if (stream.CanRead)
             {
@@ -96,9 +99,9 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                     if (read > 0)
                     {
                         ackMessage = encoding.GetString(buffer, 0, read);
-                        // Formater l'ACK avec des sauts de ligne pour une meilleure lisibilité
                         var ackClean = CleanAckMessage(ackMessage);
-                        _logger.LogInformation("Received ACK from {Ip}:{Port}:\n{Ack}", ipAddress, port, ackClean);
+                        msaStatus = ExtractMsaStatus(ackClean);
+                        _logger.LogInformation("Received ACK from {Ip}:{Port} (MSA-1: {MsaStatus}):\n{Ack}", ipAddress, port, msaStatus ?? "N/A", ackClean);
                     }
                     else
                     {
@@ -111,11 +114,28 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                 }
             }
 
+            // Déterminer le succès basé sur le statut MSA-1
+            // AA = Accept, AE = Error accept, AR = Reject
+            bool isSuccess = msaStatus == null || msaStatus == "AA";
+            string errorMessage = string.Empty;
+            string? errorDescription = null;
+            if (!isSuccess)
+            {
+                errorDescription = ExtractMsaErrorDescription(ackMessage);
+                errorMessage = msaStatus == "AR"
+                    ? $"Message rejected by receiver (MSA-1: AR)"
+                    : $"Message accepted with errors (MSA-1: AE)";
+                _logger.LogWarning("Message {MsaStatus} by receiver at {Ip}:{Port}. Description: {Desc}", msaStatus, ipAddress, port, errorDescription ?? "(none)");
+            }
+
             return new SendResult
             {
-                Success = true,
+                Success = isSuccess,
                 MessageCode = messageCode,
-                AckMessage = ackMessage != null ? CleanAckMessage(ackMessage) : null
+                AckMessage = ackMessage != null ? CleanAckMessage(ackMessage) : null,
+                MsaStatus = msaStatus,
+                ErrorDescription = errorDescription,
+                ErrorMessage = errorMessage
             };
         }
         catch (Exception ex)
@@ -184,6 +204,64 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
     private static string CleanAckMessage(string ack)
     {
         return ack.Replace("\x0B", "").Replace("\x1C", "").Replace("\r", "\n").TrimEnd('\n');
+    }
+
+    /// <summary>
+    /// Extrait le statut MSA-1 (Acknowledge type) d'une réponse HL7.
+    /// MSA-1: AA = Accept, AE = Error accept, AR = Reject.
+    /// </summary>
+    /// <param name="ackMessage">Le message ACK nettoyé.</param>
+    /// <returns>Le code de statut (ex: "AA", "AE", "AR") ou null si non trouvé.</returns>
+    private static string? ExtractMsaStatus(string ackMessage)
+    {
+        var lines = ackMessage.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("MSA|"))
+            {
+                // MSA|AA|controlId|...
+                // MSA-1 est le premier champ après "MSA|"
+                var fields = line.Split('|');
+                if (fields.Length >= 2)
+                {
+                    return fields[1].Trim();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Extrait le texte d'erreur MSA-3 d'une réponse HL7.
+    /// MSA-3 contient la description de l'erreur (ex: "ARTrack HL7Service is unable to upload...").
+    /// </summary>
+    /// <param name="ackMessage">Le message ACK brut (non nettoyé).</param>
+    /// <returns>Le texte d'erreur ou null si non trouvé.</returns>
+    private static string? ExtractMsaErrorDescription(string? ackMessage)
+    {
+        if (string.IsNullOrWhiteSpace(ackMessage))
+            return null;
+
+        var clean = CleanAckMessage(ackMessage);
+        var lines = clean.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("MSA|"))
+            {
+                // MSA|AR|controlId|ErrorDescription
+                var fields = line.Split('|');
+                if (fields.Length >= 4)
+                {
+                    var desc = fields[3].Trim();
+                    return string.IsNullOrEmpty(desc) ? null : desc;
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

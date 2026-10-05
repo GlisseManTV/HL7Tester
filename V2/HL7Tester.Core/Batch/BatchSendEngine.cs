@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Sockets;
 using HL7Tester.Core.Batch.Models;
 using Microsoft.Extensions.Logging;
 
@@ -15,6 +16,7 @@ public sealed class BatchSendEngine
     private readonly IHL7NetworkSender _sender;
     private readonly PatientDataRandomizer _randomizer;
     private readonly ILogger<BatchSendEngine> _logger;
+    private readonly Random _random = new();
 
     public BatchSendEngine(
         AdtMessageGenerator generator,
@@ -56,34 +58,51 @@ public sealed class BatchSendEngine
 
         // Generate all patient contexts
         var patients = _randomizer.GeneratePatients(workflow.PatientCount);
-        _logger.LogInformation("Batch started: {PatientCount} patients, {StepCount} steps, delay {DelayMs}ms → {Ip}:{Port}",
-            workflow.PatientCount, workflow.Steps.Count, workflow.GlobalDelayMs, ipAddress, port);
+        _logger.LogInformation("Batch started: {PatientCount} patients, {StepCount} steps, delay {DelayMs}ms → {Ip}:{Port}{KeepConn}",
+            workflow.PatientCount, workflow.Steps.Count, workflow.GlobalDelayMs, ipAddress, port,
+            workflow.KeepConnectionOpen ? " [KeepConnection]" : string.Empty);
 
         // Global throttle: ensures at least GlobalDelayMs between any two sends
         var throttle = new SemaphoreSlim(1, 1);
 
-        // Launch all patients in parallel
-        var tasks = patients.Select(patient => RunPatientAsync(
-            patient, workflow, ipAddress, port, encodingName, throttle, cancellationToken)).ToList();
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        // Collect results
-        foreach (var task in tasks)
+        // If KeepConnectionOpen, create a single shared TCP connection
+        TcpClient? sharedClient = null;
+        if (workflow.KeepConnectionOpen)
         {
-            result.PatientResults.Add(task.Result);
+            sharedClient = new TcpClient();
+            await sharedClient.ConnectAsync(ipAddress, port, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("Shared TCP connection established to {Ip}:{Port}", ipAddress, port);
         }
 
-        // Check if cancellation was requested
-        result.WasCancelled = cancellationToken.IsCancellationRequested;
+        try
+        {
+            // Launch all patients in parallel
+            var tasks = patients.Select(patient => RunPatientAsync(
+                patient, workflow, ipAddress, port, encodingName, throttle, sharedClient, cancellationToken)).ToList();
 
-        stopwatch.Stop();
-        result.Elapsed = stopwatch.Elapsed;
+            await Task.WhenAll(tasks).ConfigureAwait(false);
 
-        _logger.LogInformation("Batch completed: {Success}/{Total} patients OK, {Messages}/{Attempted} messages sent, elapsed {Elapsed}",
-            result.SuccessfulPatients, result.TotalPatients,
-            result.TotalMessagesSent, result.TotalMessagesAttempted,
-            result.Elapsed.ToString(@"mm\:ss\.ff"));
+            // Collect results
+            foreach (var task in tasks)
+            {
+                result.PatientResults.Add(task.Result);
+            }
+
+            // Check if cancellation was requested
+            result.WasCancelled = cancellationToken.IsCancellationRequested;
+
+            stopwatch.Stop();
+            result.Elapsed = stopwatch.Elapsed;
+
+            _logger.LogInformation("Batch completed: {Success}/{Total} patients OK, {Messages}/{Attempted} messages sent, elapsed {Elapsed}",
+                result.SuccessfulPatients, result.TotalPatients,
+                result.TotalMessagesSent, result.TotalMessagesAttempted,
+                result.Elapsed.ToString(@"mm\:ss\.ff"));
+        }
+        finally
+        {
+            sharedClient?.Dispose();
+        }
 
         return result;
     }
@@ -95,6 +114,7 @@ public sealed class BatchSendEngine
         int port,
         string? encodingName,
         SemaphoreSlim throttle,
+        TcpClient? sharedClient,
         CancellationToken cancellationToken)
     {
         var patientResult = new PatientBatchResult
@@ -102,6 +122,15 @@ public sealed class BatchSendEngine
             Patient = patient,
             TotalSteps = workflow.Steps.Count
         };
+
+        // Resolve global location fields once per patient (supports CSV: "301A, 302B, 308A")
+        var patientRoom = PickRandomValue(workflow.Room);
+        var patientBed = PickRandomValue(workflow.Bed);
+        var patientUnit = PickRandomValue(workflow.Unit);
+        var patientFloor = PickRandomValue(workflow.Floor);
+
+        // Resolved event dates per step (for "@N" reference resolution)
+        var resolvedEventDates = new string[workflow.Steps.Count];
 
         try
         {
@@ -111,7 +140,10 @@ public sealed class BatchSendEngine
 
                 var step = workflow.Steps[i];
 
-                // Build the message request with patient data + location (step override or global)
+                // Resolve EventDateTime: explicit value, "@N" reference, or DateTime.Now
+                resolvedEventDates[i] = ResolveEventDateTime(step.EventDateTime, resolvedEventDates, i);
+
+                // Build the message request with patient data + location (step override or resolved global)
                 var request = new AdtMessageRequest
                 {
                     MessageTypeCode = step.MessageType,
@@ -119,14 +151,14 @@ public sealed class BatchSendEngine
                     PatientFamilyName = step.FamilyName ?? patient.FamilyName,
                     PatientGivenName = step.GivenName ?? patient.GivenName,
                     BirthDate = patient.BirthDate,
-                    Sex = patient.Sex,
+                    Sex = string.IsNullOrEmpty(workflow.Sex) ? patient.Sex : workflow.Sex,
                     AdmissionNumber = patient.AdmissionNumber,
-                    Room = step.Room ?? workflow.Room,
-                    Bed = step.Bed ?? workflow.Bed,
-                    Unit = step.Unit ?? workflow.Unit,
-                    Floor = step.Floor ?? workflow.Floor,
+                    Room = step.Room ?? patientRoom,
+                    Bed = step.Bed ?? patientBed,
+                    Unit = step.Unit ?? patientUnit,
+                    Floor = step.Floor ?? patientFloor,
                     NewPatientId = step.NewPatientId,
-                    EventDateTime = DateTime.Now.ToString("yyyyMMddHHmm")
+                    EventDateTime = resolvedEventDates[i]
                 };
 
                 // Generate the HL7 message
@@ -136,9 +168,9 @@ public sealed class BatchSendEngine
                 await throttle.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    // Send the message
+                    // Send the message (pass shared client if KeepConnectionOpen)
                     var sendResult = await _sender.SendAsync(
-                        message, ipAddress, port, cancellationToken, encodingName).ConfigureAwait(false);
+                        message, ipAddress, port, cancellationToken, encodingName, sharedClient).ConfigureAwait(false);
 
                     if (!sendResult.Success)
                     {
@@ -181,5 +213,48 @@ public sealed class BatchSendEngine
         }
 
         return patientResult;
+    }
+
+    /// <summary>
+    /// Picks a random value from a comma-separated list.
+    /// If the input contains no comma, it is returned as-is (trimmed).
+    /// </summary>
+    private string PickRandomValue(string csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv)) return string.Empty;
+
+        var values = csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (values.Length <= 1) return values[0];
+
+        return values[_random.Next(values.Length)];
+    }
+
+    /// <summary>
+    /// Resolves the EventDateTime for a step.
+    /// - null/empty → DateTime.Now (yyyyMMddHHmm)
+    /// - "@N" → references the resolved date of step N (1-based)
+    /// - explicit value → used as-is
+    /// </summary>
+    private static string ResolveEventDateTime(string? raw, string[] resolvedDates, int currentIndex)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return DateTime.Now.ToString("yyyyMMddHHmm");
+
+        var trimmed = raw.Trim();
+
+        // Reference to another step: "@2" means use the resolved date of step 2
+        if (trimmed.StartsWith('@'))
+        {
+            var refStr = trimmed[1..];
+            if (int.TryParse(refStr, out var refIndex) && refIndex >= 1 && refIndex <= currentIndex)
+            {
+                return resolvedDates[refIndex - 1];
+            }
+            // Invalid reference → fall back to now
+            return DateTime.Now.ToString("yyyyMMddHHmm");
+        }
+
+        // Explicit date value — use as-is
+        return trimmed;
     }
 }

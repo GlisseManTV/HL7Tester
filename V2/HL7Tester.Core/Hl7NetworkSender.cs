@@ -33,7 +33,8 @@ public interface IHL7NetworkSender
     /// <param name="port">Le port du serveur cible.</param>
     /// <param name="cancellationToken">Token d'annulation.</param>
     /// <param name="encodingName">Nom de l'encodage à utiliser (ex: "UTF-8", "CP1252", "ISO-8859-1"). Si null, utilise UTF-8 par défaut.</param>
-    Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null);
+    /// <param name="existingClient">Optionnel : un TcpClient déjà connecté à réutiliser (Keep Connection Open).</param>
+    Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null, TcpClient? existingClient = null);
 }
 
 public sealed class Hl7NetworkSender : IHL7NetworkSender
@@ -50,7 +51,7 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
         return await SendAsync(hl7Message, ipAddress, port, cancellationToken, encodingName: null).ConfigureAwait(false);
     }
 
-    public async Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null)
+    public async Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null, TcpClient? existingClient = null)
     {
         if (string.IsNullOrWhiteSpace(hl7Message))
             throw new ArgumentException("HL7 message cannot be null or empty.", nameof(hl7Message));
@@ -64,7 +65,8 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
         var encoding = GetEncodingFromString(encodingName);
         var bytes = encoding.GetBytes(payload);
 
-        using var client = new TcpClient();
+        var ownsClient = existingClient is null;
+        var client = existingClient ?? new TcpClient();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         try
@@ -76,9 +78,12 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
             var msgContent = hl7Message.Replace("\r\n", Environment.NewLine).Replace("\n", Environment.NewLine);
             _logger.LogInformation("Sending HL7 message to {Ip}:{Port} (Message Code: {MessageCode}):\n{Message}", ipAddress, port, messageCode, msgContent);
 
-            await client.ConnectAsync(ipAddress, port, cts.Token).ConfigureAwait(false);
+            if (existingClient is null)
+            {
+                await client.ConnectAsync(ipAddress, port, cts.Token).ConfigureAwait(false);
+            }
 
-            using NetworkStream stream = client.GetStream();
+            var stream = client.GetStream();
             await stream.WriteAsync(bytes, 0, bytes.Length, cts.Token).ConfigureAwait(false);
             await stream.FlushAsync(cts.Token).ConfigureAwait(false);
 
@@ -147,6 +152,13 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                 Success = false,
                 ErrorMessage = ex.Message
             };
+        }
+        finally
+        {
+            if (ownsClient)
+            {
+                client.Dispose();
+            }
         }
     }
 

@@ -86,14 +86,13 @@ public static class BatchWorkflowTemplates
             },
             new()
             {
-                Name = "A01 → A02 → A08 → A12 → A02 → A31 → A03",
+                Name = "A01 → A02 → A12 → A02 → A31 → A03",
                 Description = "Full cycle with update",
                 IsBuiltIn = true,
                 Steps = new List<WorkflowStep>
                 {
                     new() { MessageType = "ADT A01 - Inpatient or Day Hospital Admission" },
                     new() { MessageType = "ADT A02 - Patient Movement" },
-                    new() { MessageType = "ADT A08 - Update Patient Stay" },
                     new() { MessageType = "ADT A12 - Movement Cancellation" },
                     new() { MessageType = "ADT A02 - Patient Movement" },
                     new() { MessageType = "ADT A31 - Update Patient" },

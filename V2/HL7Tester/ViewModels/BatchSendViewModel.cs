@@ -80,6 +80,13 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         set => SetField(ref _floor, value);
     }
 
+    private string _sex = string.Empty;
+    public string Sex
+    {
+        get => _sex;
+        set => SetField(ref _sex, value);
+    }
+
     // ─── Parameters ────────────────────────────────────────────────
 
     private int _patientCount = 10;
@@ -96,14 +103,33 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         set => SetField(ref _globalDelayMs, value);
     }
 
+    private bool _keepConnectionOpen;
+    /// <summary>
+    /// When true, a single TCP connection is reused for all messages in the batch.
+    /// </summary>
+    public bool KeepConnectionOpen
+    {
+        get => _keepConnectionOpen;
+        set => SetField(ref _keepConnectionOpen, value);
+    }
+
     // ─── State ─────────────────────────────────────────────────────
 
     private bool _isRunning;
     public bool IsRunning
     {
         get => _isRunning;
-        private set => SetField(ref _isRunning, value);
+        private set
+        {
+            if (SetField(ref _isRunning, value))
+                OnPropertyChanged(nameof(CanStart));
+        }
     }
+
+    /// <summary>
+    /// True when the Start button should be enabled (not running).
+    /// </summary>
+    public bool CanStart => !IsRunning;
 
     private string _statusText = string.Empty;
     public string StatusText
@@ -147,8 +173,8 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
 
         _selectedNewStepType = AvailableStepTypes[0];
 
-        StartCommand = new Command(OnStart, () => !IsRunning);
-        StopCommand = new Command(OnStop, () => IsRunning);
+        StartCommand = new Command(OnStart);
+        StopCommand = new Command(OnStop);
         AddStepCommand = new Command(OnAddStep);
         SaveTemplateCommand = new Command(OnSaveTemplate);
         DeleteTemplateCommand = new Command(OnDeleteTemplate);
@@ -244,7 +270,7 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         step.RemoveCommand = new Command(() =>
         {
             int index = Steps.IndexOf(step);
-            if (index < 0 || Steps.Count <= 2) return;
+            if (index < 0 || Steps.Count <= 1) return;
             Steps.RemoveAt(index);
         });
     }
@@ -263,7 +289,9 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
             Room = Room,
             Bed = Bed,
             Unit = Unit,
-            Floor = Floor
+            Floor = Floor,
+            Sex = Sex,
+            KeepConnectionOpen = KeepConnectionOpen
         };
         foreach (var step in Steps)
         {
@@ -429,3 +457,4 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         return true;
     }
 }
+

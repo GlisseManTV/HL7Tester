@@ -157,6 +157,11 @@
                                                        Placeholder="MRG.1 New Patient ID"
                                                        FontSize="12" />
                                             </Grid>
+
+                                            <!-- Row 2d: Event date/time (EVN-6.1) -->
+                                            <Entry Text="{Binding EventDateTime}"
+                                                   Placeholder="EVN.6.1 yyyyMMddHHmmss or @2"
+                                                   FontSize="12" />
                                         </VerticalStackLayout>
                                     </Border>
                                 </DataTemplate>
@@ -175,6 +180,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -184,22 +190,27 @@
                             <Label Grid.Row="0" Grid.Column="0" Text="Unit" VerticalOptions="Center" />
                             <Entry Grid.Row="0" Grid.Column="1"
                                    Text="{Binding Unit}"
-                                   Placeholder="PV1.3.1 Unit" />
+                                   Placeholder="ICU, NURSING" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Room" VerticalOptions="Center" />
                             <Entry Grid.Row="1" Grid.Column="1"
                                    Text="{Binding Room}"
-                                   Placeholder="PV1.3.2 Room" />
+                                   Placeholder="301A, 302B, 308A" />
 
                             <Label Grid.Row="2" Grid.Column="0" Text="Bed" VerticalOptions="Center" />
                             <Entry Grid.Row="2" Grid.Column="1"
                                    Text="{Binding Bed}"
-                                   Placeholder="PV1.3.3 Bed" />
+                                   Placeholder="1, 2, 3" />
 
                             <Label Grid.Row="3" Grid.Column="0" Text="Floor" VerticalOptions="Center" />
                             <Entry Grid.Row="3" Grid.Column="1"
                                    Text="{Binding Floor}"
-                                   Placeholder="PV1.3.4 Floor" />
+                                   Placeholder="4, 5" />
+
+                            <Label Grid.Row="4" Grid.Column="0" Text="Sex" VerticalOptions="Center" />
+                            <Entry Grid.Row="4" Grid.Column="1"
+                                   Text="{Binding Sex}"
+                                   Placeholder="M / F (empty = random)" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -226,10 +237,11 @@
                 </Border>
 
                 <!-- ── Start / Stop ──────────────────────────────────────────── -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="12">
                     <Button Grid.Column="0"
                             Text="▶ Start"
                             Command="{Binding StartCommand}"
+                            IsEnabled="{Binding CanStart}"
                             BackgroundColor="#10B981"
                             TextColor="White"
                             FontAttributes="Bold"
@@ -238,20 +250,40 @@
                     <Button Grid.Column="1"
                             Text="■ Stop"
                             Command="{Binding StopCommand}"
+                            IsEnabled="{Binding IsRunning}"
                             BackgroundColor="#EF4444"
                             TextColor="White"
                             FontAttributes="Bold"
                             CornerRadius="8"
                             HeightRequest="44" />
+                    <VerticalStackLayout Grid.Column="2"
+                                         VerticalOptions="Center"
+                                         Spacing="2">
+                        <Label Text="Keep Connection"
+                               FontSize="11"
+                               HorizontalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}" />
+                        <Switch IsToggled="{Binding KeepConnectionOpen}"
+                                HorizontalOptions="Center" />
+                    </VerticalStackLayout>
                 </Grid>
 
                 <!-- ── Status ────────────────────────────────────────────────── -->
                 <Border Style="{StaticResource CardBorder}"
                         IsVisible="{Binding StatusText, Converter={StaticResource StringNotEmptyConverter}}">
-                    <Label Text="{Binding StatusText}"
-                           FontSize="13"
-                           TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
-                           LineBreakMode="WordWrap" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0"
+                               Text="{Binding StatusText}"
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
+                               LineBreakMode="WordWrap"
+                               VerticalOptions="Center" />
+                        <Button Grid.Column="1"
+                                Text="Logs"
+                                FontSize="12"
+                                Padding="8,4"
+                                Clicked="OnOpenLogsClicked" />
+                    </Grid>
                 </Border>
 
                 <!-- ── Results ───────────────────────────────────────────────── -->

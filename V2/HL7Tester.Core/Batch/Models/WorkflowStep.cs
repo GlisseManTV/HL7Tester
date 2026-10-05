@@ -64,6 +64,14 @@ public sealed class WorkflowStep
     public string? NewPatientId { get; set; }
 
     /// <summary>
+    /// Optional event date/time override for EVN-6.1 (format: yyyyMMddHHmmss or yyyyMMddHHmm).
+    /// If null/empty, DateTime.Now is used.
+    /// If it starts with "@" followed by a step number (e.g. "@2"), it references the resolved
+    /// event date/time of that step (1-based index).
+    /// </summary>
+    public string? EventDateTime { get; set; }
+
+    /// <summary>
     /// True if this step is an identity update (A31), showing name fields instead of location fields.
     /// </summary>
     public bool IsIdentityStep
@@ -145,7 +153,8 @@ public sealed class WorkflowStep
         Floor = Floor,
         FamilyName = FamilyName,
         GivenName = GivenName,
-        NewPatientId = NewPatientId
+        NewPatientId = NewPatientId,
+        EventDateTime = EventDateTime
     };
 
     private void UpdateStepType()

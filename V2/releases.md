@@ -1,4 +1,49 @@
-## v2.0.21 Changes (Latest Release)
+## v2.0.22 Changes (Latest Release)
+
+### Batch Send — Keep Connection Open, EventDateTime, CSV Locations & UX Improvements
+
+Added a "Keep Connection Open" toggle to reuse a single TCP connection for all messages in a batch, per-step `EventDateTime` with `@N` reference syntax, CSV parsing for global location fields, a Logs button in the status bar, and relaxed step limits (1 min, 7 max).
+
+**Key Features:**
+- **Keep Connection Open**: Toggle next to Start/Stop. When enabled, a single TCP connection is established once and reused for all messages across all patients. Eliminates per-message connection overhead for high-throughput stress testing.
+- **EventDateTime per step**: Each step now has an optional `EventDateTime` field (format `yyyyMMddHHmm` or `yyyyMMddHHmmSS`). Supports `@N` reference syntax to link a step's event time to a previous step's resolved time (e.g., `@2` = same as step 2).
+- **CSV location parsing**: Global location fields (Room, Bed, Unit, Floor) now accept comma-separated values (e.g., `301A, 302B, 308A`). A random value is picked per patient, enabling realistic multi-unit admission scenarios.
+- **Global Sex override**: New "Sex" picker (M/F/empty) to force a specific sex for all patients instead of random.
+- **Logs button**: Added to the status bar for quick access to log files without leaving the page.
+- **Step limits relaxed**: Minimum 1 step (was 2), maximum 7 steps (was 6).
+- **Template fix**: The 7-step template now has 6 steps (removed A08) to stay within the limit.
+
+**Technical Details:**
+- `IHL7NetworkSender.SendAsync` gained `TcpClient? existingClient` parameter. When provided, the sender skips `ConnectAsync` and does not dispose the client.
+- `BatchSendEngine.RunAsync` creates a shared `TcpClient` when `KeepConnectionOpen` is true, connects once, passes it to all `SendAsync` calls, and disposes it in a `finally` block.
+- `Hl7NetworkSender` no longer uses `using` on the `NetworkStream` — the stream lives as long as the `TcpClient`.
+- `BatchWorkflow.KeepConnectionOpen` (bool) — new property.
+- `WorkflowStep.EventDateTime` (string?) — new property, included in `Clone()`.
+- `BatchSendEngine.PickRandomValue(string csv)` — splits on comma, picks randomly.
+- `BatchSendEngine.ResolveEventDateTime(string? raw, string[] resolvedDates, int currentIndex)` — resolves `@N` references (1-based, must be ≤ current step).
+- `BatchSendViewModel.CanStart` — new computed property for `IsEnabled` binding on Start button.
+- `BatchSendPage.xaml`: `IsEnabled="{Binding CanStart}"` on Start, `IsEnabled="{Binding IsRunning}"` on Stop.
+- `BatchWorkflowTemplates`: 7-step template reduced to 6 steps (removed A08).
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Batch/Models/BatchWorkflow.cs` | Added `KeepConnectionOpen` (bool) |
+| `HL7Tester.Core/Batch/Models/WorkflowStep.cs` | Added `EventDateTime` (string?), updated `Clone()` |
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | Shared `TcpClient` creation, `PickRandomValue()`, `ResolveEventDateTime()`, CSV locations, `sharedClient` parameter in `RunPatientAsync` |
+| `HL7Tester.Core/Batch/BatchWorkflowTemplates.cs` | Removed A08 from 7-step template (now 6 steps) |
+| `HL7Tester.Core/Hl7NetworkSender.cs` | `TcpClient? existingClient` parameter, no `using` on stream, conditional connect/dispose |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | `KeepConnectionOpen`, `Sex`, `CanStart` properties; `IsEnabled`-based button control |
+| `HL7Tester/BatchSendPage.xaml` | Toggle, Sex picker, EventDateTime entries, Logs button, `IsEnabled` bindings |
+| `HL7Tester/BatchSendPage.xaml.cs` | `OnOpenLogsClicked` handler, `using System.Diagnostics` |
+| `HL7Tester.Tests/BatchSendEngineTests.cs` | Updated mock for new interface, new tests for CSV/EventDateTime/Sex/KeepConnection |
+| `HL7Tester.csproj` | Version incremented to 2.0.22 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.22.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.22.0 |
+
+---
+
+## v2.0.21 Changes
 
 ### Batch Send — All ADT Message Types + Merge Step Support
 

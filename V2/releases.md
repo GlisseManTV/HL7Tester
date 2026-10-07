@@ -1,4 +1,39 @@
-## v2.0.22 Changes (Latest Release)
+## v2.0.23 Changes (Latest Release)
+
+### Local HL7 Inspector — Embedded HTML Parser
+
+Replaced the external hl7inspector.com link with a fully embedded, offline HTML parser. The "Web Inspector" button now opens a local copy of the HL7 Inspector page in the system browser, with no internet connection required.
+
+**Key Features:**
+- "Web Inspector" button now opens the local `hl7-inspector.html` file in the external browser
+- No internet connection needed — the parser is fully self-contained
+- Knowledge base merged bidirectionally: both the C# embedded parser and the HTML parser now share the same segment/field references
+- Added missing segments to C# parser: RXO, RXE, RXR, RXD, RXA, ZHH
+- Added missing segments to HTML parser: PD1, ROL, DB1, DRG, IN2, ACC, UB1, UB2, QRD, RGS, AIG, AIL, AIP, AIS, SAC, SPM, TXA, SFT, UAC, ARV, PRD, CTD, QAK, QPD, RCP, DSC, DSP, BHS, BTS, FHS, FTS, ZBE, ZFA
+- Favicon added to the HTML inspector page
+- Credit attribution in the HTML header: "made by Tim" with link to [TimSimms84/HL7-Inspector](https://github.com/TimSimms84/HL7-Inspector)
+
+**Technical Details:**
+- `NetworkSettingsViewModel.OpenWebInspector()` — extracts `hl7-inspector.html` + `favicon.png` from the MAUI asset bundle to a temp directory, then opens the HTML file via `Process.Start(new ProcessStartInfo(htmlPath) { UseShellExecute = true })`
+- `HL7KnowledgeBase.cs` — added SegmentNames entries for RXO, RXE, RXR, RXD, RXA, ZHH; added FieldInfo entries for all their fields (RXO 1-21, RXE 1-30, RXR 1-6, RXD 1-14, RXA 1-17, ZHH 1-2, IN1 1-16, GT1 1-14, ORC-29, PV2-38, PV2-40); fixed typo `OBX-7` "References Range" → "Reference Range"
+- `hl7-inspector.html` — added 32 missing segments to `HL7_FIELDS`, updated `SEG_CLASS` color categories, harmonized ~20 field names to match C# parser, added missing fields to PV1, PV2, OBR, OBX, NK1, DG1, MSA, ERR, SCH
+- `hl7-inspector.html` — added `<link rel="icon" href="favicon.png">` in `<head>`, added `.credit` CSS class and `<span class="credit">` in header
+- `favicon.png` — copied from `Resources/AppIcon/HL7 _icon_whbackground.png`
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/ViewModels/NetworkSettingsViewModel.cs` | `OpenWebInspector()` now extracts local HTML + favicon and opens via `Process.Start`; added `using System.Diagnostics` |
+| `HL7Tester.Core/Inspector/Services/HL7KnowledgeBase.cs` | Added 6 segments, 100+ field definitions, fixed OBX-7 typo |
+| `HL7Tester/Resources/Raw/hl7-inspector.html` | Added 32 segments, harmonized field names, added favicon link, added credit |
+| `HL7Tester/Resources/Raw/favicon.png` | NEW — app icon as favicon for the HTML page |
+| `HL7Tester.csproj` | Version incremented to 2.0.23 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.23.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.23.0 |
+
+---
+
+## v2.0.22 Changes
 
 ### Batch Send — Keep Connection Open, EventDateTime, CSV Locations & UX Improvements
 

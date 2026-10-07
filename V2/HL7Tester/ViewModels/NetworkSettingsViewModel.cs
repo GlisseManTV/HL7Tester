@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -132,7 +134,6 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     private const string HL7_ADT_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH3.html#Heading3";
     private const string HL7_ORM_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH4.html#Heading13";
     private const string HL7_SIU_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH10.html#Heading53";
-    private const string HL7_INSPECTOR_WEB_URL = "https://www.hl7inspector.com";
 
 
     public NetworkSettingsViewModel(INetworkSettingsService service, ILogger<NetworkSettingsViewModel> logger)
@@ -216,18 +217,34 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         }
     }
 
-    private void OpenWebInspector()
+    private async void OpenWebInspector()
     {
         try
         {
-            _logger.LogInformation("Opening HL7 Inspector: {Url}", HL7_INSPECTOR_WEB_URL);
-            
-            var uri = new Uri(HL7_INSPECTOR_WEB_URL);
-            Launcher.Default.OpenAsync(uri);
+            _logger.LogInformation("Opening local HL7 Inspector HTML file");
+
+            var tempDir = Path.Combine(Path.GetTempPath(), "HL7Tester_Inspector");
+            Directory.CreateDirectory(tempDir);
+
+            var htmlPath = Path.Combine(tempDir, "hl7-inspector.html");
+            using (var stream = await FileSystem.OpenAppPackageFileAsync("hl7-inspector.html"))
+            using (var fileStream = File.Create(htmlPath))
+            {
+                stream.CopyTo(fileStream);
+            }
+
+            var faviconPath = Path.Combine(tempDir, "favicon.png");
+            using (var stream = await FileSystem.OpenAppPackageFileAsync("favicon.png"))
+            using (var fileStream = File.Create(faviconPath))
+            {
+                stream.CopyTo(fileStream);
+            }
+
+            Process.Start(new ProcessStartInfo(htmlPath) { UseShellExecute = true });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to open HL7 Inspector URL: {Url}", HL7_INSPECTOR_WEB_URL);
+            _logger.LogError(ex, "Failed to open local HL7 Inspector file");
         }
     }
 

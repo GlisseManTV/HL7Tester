@@ -1,4 +1,34 @@
-## v2.0.23 Changes (Latest Release)
+## v2.0.24 Changes (Latest Release)
+
+### UIScene Lifecycle Adoption (Xcode 27 / macOS 27)
+
+Adopted the UIScene lifecycle required by Xcode 27 for iOS and Mac Catalyst apps. Without this change, the app crashes at launch on macOS 27.
+
+**Key Features:**
+- Added `SceneDelegate` class (inherits `MauiUISceneDelegate`) for both MacCatalyst and iOS
+- Added `UIApplicationSceneManifest` to both `Info.plist` files
+- App now complies with Apple's mandatory UIScene lifecycle requirement
+
+**Technical Details:**
+- `SceneDelegate.cs` — new file in both `Platforms/MacCatalyst/` and `Platforms/iOS/`
+- `Info.plist` — added `UIApplicationSceneManifest` dict with `UISceneDelegateClassName = "SceneDelegate"`
+- `AppDelegate.cs` — no changes needed (SDK handles scene delegation)
+- `Program.cs` — no changes needed
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/Platforms/MacCatalyst/SceneDelegate.cs` | NEW — SceneDelegate class |
+| `HL7Tester/Platforms/MacCatalyst/Info.plist` | Added UIApplicationSceneManifest |
+| `HL7Tester/Platforms/iOS/SceneDelegate.cs` | NEW — SceneDelegate class |
+| `HL7Tester/Platforms/iOS/Info.plist` | Added UIApplicationSceneManifest |
+| `HL7Tester.csproj` | Version incremented to 2.0.24 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.24.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.24.0 |
+
+---
+
+## v2.0.23 Changes
 
 ### Local HL7 Inspector — Embedded HTML Parser
 

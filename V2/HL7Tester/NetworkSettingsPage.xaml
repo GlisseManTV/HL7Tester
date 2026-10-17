@@ -116,12 +116,12 @@
                                     IsToggled="{Binding AutoUpdateCheck}" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Log level" VerticalOptions="Center" />
-                            <controls:DropdownButton Grid.Row="1" Grid.Column="1"
+                            <controls:AppDropdown Grid.Row="1" Grid.Column="1"
                                     ItemsSource="{Binding AvailableLogLevels}"
                                     SelectedItem="{Binding SelectedLogLevel}" />
 
                             <Label Grid.Row="2" Grid.Column="0" Text="Message encoding" VerticalOptions="Center" />
-                            <controls:DropdownButton Grid.Row="2" Grid.Column="1"
+                            <controls:AppDropdown Grid.Row="2" Grid.Column="1"
                                     ItemsSource="{Binding AvailableEncodings}"
                                     SelectedItem="{Binding SelectedEncoding}" />
 

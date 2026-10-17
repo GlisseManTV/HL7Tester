@@ -67,7 +67,7 @@
                     <VerticalStackLayout Spacing="10">
                         <Grid ColumnDefinitions="*,*,Auto">
                             <Label Grid.Column="0" Text="Steps" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
-                            <controls:DropdownButton Grid.Column="1"
+                            <controls:AppDropdown Grid.Column="1"
                                     Placeholder="Message type"
                                     ItemsSource="{Binding AvailableStepTypes}"
                                     SelectedItem="{Binding SelectedNewStepType}"

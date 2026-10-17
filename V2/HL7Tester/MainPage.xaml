@@ -46,7 +46,7 @@
                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
                        FontAttributes="Bold"
                        VerticalTextAlignment="Center" />
-                <controls:DropdownButton Grid.Column="1"
+                <controls:AppDropdown Grid.Column="1"
                         ItemsSource="{Binding AvailableMessageFamilies}"
                         SelectedItem="{Binding SelectedMessageFamily}"
                         Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
@@ -57,7 +57,7 @@
                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
                        FontAttributes="Bold"
                        VerticalTextAlignment="Center" />
-                <controls:DropdownButton Grid.Column="3"
+                <controls:AppDropdown Grid.Column="3"
                         ItemsSource="{Binding AvailableMessageTypes}"
                         SelectedItem="{Binding SelectedMessageType}"
                         MaxListHeight="240"
@@ -316,7 +316,7 @@
                             </Grid.ColumnDefinitions>
 
                             <Label Grid.Row="0" Grid.Column="0" Text="Order control (ORC-1)" VerticalOptions="Center" />
-                            <controls:DropdownButton Grid.Row="0" Grid.Column="1"
+                            <controls:AppDropdown Grid.Row="0" Grid.Column="1"
                                     ItemsSource="{Binding OrderControlList}"
                                     SelectedItem="{Binding OrmOrderControl}" />
 

@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
 using HL7Tester.Core;
@@ -101,7 +102,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsFhirMode
     {
         get => _isFhirMode;
-        private set => SetField(ref _isFhirMode, value);
+        private set
+        {
+            if (SetField(ref _isFhirMode, value))
+            {
+                OnPropertyChanged(nameof(ShowJsonEditButtons));
+                OnPropertyChanged(nameof(ShowJsonApplyCancel));
+            }
+        }
     }
 
     public bool IsMllpMode
@@ -253,6 +261,28 @@ public sealed class MainViewModel : INotifyPropertyChanged
         get => _generatedMessage;
         set => SetField(ref _generatedMessage, value);
     }
+
+    // ---- JSON editing (FHIR mode only) ----
+    private bool _isJsonEditing;
+    public bool IsJsonEditing
+    {
+        get => _isJsonEditing;
+        private set
+        {
+            if (SetField(ref _isJsonEditing, value))
+            {
+                OnPropertyChanged(nameof(ShowJsonEditButtons));
+                OnPropertyChanged(nameof(ShowJsonApplyCancel));
+            }
+        }
+    }
+
+    // Bool -> bool visibility flags (no Visibility-enum converters, see v2.0.21 bug)
+    public bool ShowJsonEditButtons => IsFhirMode && !IsJsonEditing;
+    public bool ShowJsonApplyCancel => IsFhirMode && IsJsonEditing;
+
+    // Backup of the message taken when entering JSON edit mode, restored on Cancel
+    private string? _jsonBackup;
 
     private string _sendLog = string.Empty;
     public string SendLog
@@ -583,6 +613,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand GenerateCommand { get; }
     public ICommand SendCommand { get; }
     public ICommand RegenerateControlIdCommand { get; }
+    public ICommand ToggleEditJsonCommand { get; }
+    public ICommand ApplyJsonCommand { get; }
+    public ICommand CancelJsonCommand { get; }
+    public ICommand PasteJsonCommand { get; }
+    public ICommand FormatJsonCommand { get; }
 
     public MainViewModel(
         AdtMessageGenerator generator,
@@ -603,6 +638,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         GenerateCommand = new Command(OnGenerate);
         SendCommand = new Command(async () => await OnSendAsync());
         RegenerateControlIdCommand = new Command(RegenerateControlId);
+        ToggleEditJsonCommand = new Command(ToggleEditJson);
+        ApplyJsonCommand = new Command(ApplyJson);
+        CancelJsonCommand = new Command(CancelJson);
+        PasteJsonCommand = new Command(async () => await PasteJsonAsync());
+        FormatJsonCommand = new Command(FormatJson);
     }
 
     /// <summary>
@@ -615,6 +655,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
         IsFhirMode = string.Equals(settings.Protocol, "FHIR", StringComparison.OrdinalIgnoreCase);
         IsMllpMode = !IsFhirMode;
         _activeFhirProfile = settings.FhirProfiles.FirstOrDefault(p => p.Id == settings.ActiveFhirProfileId);
+
+        // Leaving FHIR mode: drop any pending JSON edit state
+        if (!IsFhirMode && _isJsonEditing)
+        {
+            CancelJson();
+        }
     }
 
     private void RegenerateControlId()
@@ -689,6 +735,117 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _generatedMessage = _generatedMessage.Replace("\r", Environment.NewLine);
 
         OnPropertyChanged(nameof(GeneratedMessage));
+    }
+
+    // ---- JSON editing commands (FHIR mode) ----
+
+    private void ToggleEditJson()
+    {
+        // Toggle acts as Cancel when already editing
+        if (IsJsonEditing)
+        {
+            CancelJson();
+            return;
+        }
+
+        // Save the current content so Cancel can restore it
+        _jsonBackup = _generatedMessage;
+        IsJsonEditing = true;
+    }
+
+    private void ApplyJson()
+    {
+        if (!TryValidateJson(_generatedMessage, out var error))
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Apply JSON rejected - Invalid JSON: {error}");
+            return;
+        }
+
+        // Valid JSON: keep the edited content and leave edit mode
+        _jsonBackup = null;
+        IsJsonEditing = false;
+    }
+
+    private void CancelJson()
+    {
+        if (_jsonBackup is not null)
+        {
+            GeneratedMessage = _jsonBackup;
+            _jsonBackup = null;
+        }
+
+        IsJsonEditing = false;
+    }
+
+    private async Task PasteJsonAsync()
+    {
+        var clipboardText = await Clipboard.GetTextAsync().ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(clipboardText))
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Paste JSON cancelled - Clipboard is empty.");
+            return;
+        }
+
+        if (!TryValidateJson(clipboardText, out var error))
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Paste JSON rejected - Invalid JSON: {error}");
+            return;
+        }
+
+        // Enter edit mode so Cancel can restore the previous content
+        if (!IsJsonEditing)
+        {
+            _jsonBackup = _generatedMessage;
+            IsJsonEditing = true;
+        }
+
+        GeneratedMessage = clipboardText;
+        AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Paste JSON accepted - Valid JSON loaded. Apply to keep, Cancel to revert.");
+    }
+
+    private void FormatJson()
+    {
+        if (string.IsNullOrWhiteSpace(_generatedMessage))
+        {
+            return;
+        }
+
+        try
+        {
+            // Pretty-print the current content (useful for single-line pasted JSON)
+            using var document = JsonDocument.Parse(_generatedMessage);
+            GeneratedMessage = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (JsonException ex)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Format JSON failed - Invalid JSON: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Validates a JSON string using System.Text.Json. Returns false and a readable error on failure.
+    /// </summary>
+    private static bool TryValidateJson(string? json, out string? error)
+    {
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            error = "The message is empty.";
+            return false;
+        }
+
+        try
+        {
+            using var _ = JsonDocument.Parse(json);
+            return true;
+        }
+        catch (JsonException ex)
+        {
+            error = ex.Message;
+            return false;
+        }
     }
 
     private void RefreshMessageTypes()

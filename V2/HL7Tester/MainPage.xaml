@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.MainPage"
               xmlns:converters="clr-namespace:HL7Tester.Converters"
+              xmlns:controls="clr-namespace:HL7Tester.Controls"
               Title="HL7Tester">
         <ContentPage.Resources>
             <converters:BoolToArrowConverter x:Key="BoolToArrowConverter" />
@@ -45,10 +46,10 @@
                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
                        FontAttributes="Bold"
                        VerticalTextAlignment="Center" />
-                <Picker Grid.Column="1"
+                <controls:DropdownButton Grid.Column="1"
                         ItemsSource="{Binding AvailableMessageFamilies}"
                         SelectedItem="{Binding SelectedMessageFamily}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+                        Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
 
                 <Label Grid.Column="2"
                        Text="Message Type"
@@ -56,10 +57,12 @@
                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
                        FontAttributes="Bold"
                        VerticalTextAlignment="Center" />
-                <Picker Grid.Column="3"
+                <controls:DropdownButton Grid.Column="3"
                         ItemsSource="{Binding AvailableMessageTypes}"
                         SelectedItem="{Binding SelectedMessageType}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+                        MaxListHeight="240"
+                        ShowSearch="True"
+                        Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
             </Grid>
         </Grid>
 
@@ -314,10 +317,9 @@
                             </Grid.ColumnDefinitions>
 
                             <Label Grid.Row="0" Grid.Column="0" Text="Order control (ORC-1)" VerticalOptions="Center" />
-                            <Picker Grid.Row="0" Grid.Column="1" 
+                            <controls:DropdownButton Grid.Row="0" Grid.Column="1"
                                     ItemsSource="{Binding OrderControlList}"
-                                    SelectedItem="{Binding OrmOrderControl}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+                                    SelectedItem="{Binding OrmOrderControl}" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Placer order number (ORC-2)" VerticalOptions="Center" />
                             <Entry Grid.Row="1" Grid.Column="1" Text="{Binding OrmPlacerOrderNumber}" Placeholder="ORC-2 / OBR-2" />

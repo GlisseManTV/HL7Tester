@@ -1,18 +1,8 @@
-## v2.0.23
+## v2.0.25
 
-### 🌐 HL7 Inspector Now Works Offline
-> No more internet needed — the full parser is built right into the app.
-- Click "Web Inspector" and it opens instantly in your browser, even on a plane
-- No more dependency on an external website that could disappear
-- Same powerful tree view, same field details — just faster
-
-### 📚 Bigger Knowledge Base
-> More segments and fields recognized by both parsers.
-- The embedded inspector now understands prescription segments (RXO, RXE, RXR, RXD, RXA)
-- The web inspector now covers 30+ additional segments (insurance, billing, queries, and more)
-- Both parsers share the same field references, so you get consistent results everywhere
-
-### 🎨 Polished Touches
-> Small details that make a big difference.
-- The web inspector now has its own favicon in the browser tab
-- Proper credit shown in the page header for the original author
+### 🖱️ Dropdown Menus That Never Close on Their Own
+> On Mac, dropdown menus no longer disappear when you move through the form with the Tab key.
+- Message family, message type, and settings menus stay open until you pick one
+- Long lists now include a search box to find the right message type fast
+- Menus scroll inside their box, so the page stays stable when you open one
+- Same reliable behavior on both Mac and Windows

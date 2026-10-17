@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:HL7Tester.ViewModels"
              xmlns:converters="clr-namespace:HL7Tester.Converters"
+             xmlns:controls="clr-namespace:HL7Tester.Controls"
              xmlns:batch="clr-namespace:HL7Tester.Core.Batch;assembly=HL7Tester.Core"
              x:Class="HL7Tester.BatchSendPage"
              Title="Batch Send">
@@ -66,11 +67,12 @@
                     <VerticalStackLayout Spacing="10">
                         <Grid ColumnDefinitions="*,*,Auto">
                             <Label Grid.Column="0" Text="Steps" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
-                            <Picker Grid.Column="1"
-                                    Title="Message type"
+                            <controls:DropdownButton Grid.Column="1"
+                                    Placeholder="Message type"
                                     ItemsSource="{Binding AvailableStepTypes}"
                                     SelectedItem="{Binding SelectedNewStepType}"
-                                    FontSize="12" />
+                                    MaxListHeight="240"
+                                    ShowSearch="True" />
                             <Button Grid.Column="2" Text="+ Add"
                                     Command="{Binding AddStepCommand}"
                                     FontSize="13"

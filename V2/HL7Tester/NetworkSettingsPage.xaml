@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.NetworkSettingsPage"
+             xmlns:controls="clr-namespace:HL7Tester.Controls"
              Title="Settings">
 
     <Grid RowDefinitions="*,Auto">
@@ -115,12 +116,12 @@
                                     IsToggled="{Binding AutoUpdateCheck}" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Log level" VerticalOptions="Center" />
-                            <Picker Grid.Row="1" Grid.Column="1"
+                            <controls:DropdownButton Grid.Row="1" Grid.Column="1"
                                     ItemsSource="{Binding AvailableLogLevels}"
                                     SelectedItem="{Binding SelectedLogLevel}" />
 
                             <Label Grid.Row="2" Grid.Column="0" Text="Message encoding" VerticalOptions="Center" />
-                            <Picker Grid.Row="2" Grid.Column="1"
+                            <controls:DropdownButton Grid.Row="2" Grid.Column="1"
                                     ItemsSource="{Binding AvailableEncodings}"
                                     SelectedItem="{Binding SelectedEncoding}" />
 

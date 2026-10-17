@@ -26,28 +26,30 @@ Adopted the UIScene lifecycle required by Xcode 27 for iOS and Mac Catalyst apps
 | `Platforms/Windows/app.manifest` | Version incremented to 2.0.24.0 |
 | `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.24.0 |
 
-### DropdownButton — Replacing MAUI `Picker` (Mac Catalyst Bug Fix)
+### AppDropdown — Platform-Routed Dropdown (Mac Catalyst Bug Fix)
 
-Shipped in the same v2.0.24 release: replaced every MAUI `Picker` with a custom inline `DropdownButton` control. On Mac Catalyst, the native `Picker` renders as a UIKit popover that gets auto-dismissed when Tab navigation corrupts the first-responder chain, wedging the app until force-quit. The new control is pure MAUI: no popover, no UIKit involvement.
+Shipped in the same v2.0.24 release: replaced every MAUI `Picker` with an `AppDropdown` wrapper that routes per platform — the native `Picker` on Windows (WinUI flyout UX preserved, no layout shift) and a custom inline `DropdownButton` on Mac Catalyst. On Mac Catalyst, the native `Picker` renders as a UIKit popover that gets auto-dismissed when Tab navigation corrupts the first-responder chain, wedging the app until force-quit; the inline control is pure MAUI: no popover, no UIKit involvement.
 
 **Key Features:**
-- Header `Button` (Tab + Enter/Space accessible) showing the selection + chevron; item list rendered inline inside a `Border`
-- `MaxListHeight` (default 240) caps the opened list — the list scrolls internally, keeping the layout shift bounded
-- Optional `ShowSearch` filter box on the control (not enabled in this app)
-- TwoWay bindings round-trip to the ViewModels; theme aware via `RequestedThemeChanged`
+- `AppDropdown` wrapper (`Border`, `StrokeThickness=0`): identical bindable surface on both platforms — TwoWay `SelectedItem`/`SelectedIndex`, `Placeholder`, `DisplayConverter`, `DisplayMemberPath`
+- Windows → native `Picker`; `Placeholder` mapped to `Title`, display options mapped to `ItemDisplayBinding`
+- Mac Catalyst → inline `DropdownButton`: header `Button` (Tab + Enter/Space) + list in `Border`/`ScrollView`; `MaxListHeight="240"` caps the expansion
+- Selection re-pushed after `ItemsSource` changes; anti-echo `_syncGuard` for wrapper↔implementation and `SelectedItem`↔`SelectedIndex` sync
 
 **Technical Details:**
-- New `Controls/DropdownButton.cs` (`HL7Tester.Controls`) — inherits `Border`, paints its own outline (`#C8C8C8` light / `#404040` dark, matching `Gray200`/`Gray600` from `Colors.xaml`)
+- New `Controls/AppDropdown.cs` + `Controls/DropdownButton.cs` (`HL7Tester.Controls`); both inherit `Border`, `DropdownButton` paints its own outline (`#C8C8C8` light / `#404040` dark, matching `Gray200`/`Gray600` from `Colors.xaml`)
+- MAUI 10 gotcha: `Picker.ItemsSource` is typed `IList` — lists/`ObservableCollection` passed through as-is (live updates), other sequences materialized
 - 6 `Picker` instances replaced: `MainPage.xaml` (Message Family, Message Type, ORC-1 Order control), `NetworkSettingsPage.xaml` (Log level, Message encoding), `BatchSendPage.xaml` (step type, `Title` → `Placeholder`)
 - Header pickers keep `Background="{AppThemeBinding Light=White, Dark=OffBlack}"` to preserve contrast on the purple header
 
 **Additional Modified Files:**
 | File | Changes |
 |------|---------|
-| `HL7Tester/Controls/DropdownButton.cs` | NEW — inline dropdown control replacing the native Picker |
-| `HL7Tester/MainPage.xaml` | 3 Pickers → DropdownButton; xmlns:controls; MaxListHeight on Message Type |
-| `HL7Tester/NetworkSettingsPage.xaml` | 2 Pickers → DropdownButton; xmlns:controls |
-| `HL7Tester/BatchSendPage.xaml` | 1 Picker → DropdownButton; xmlns:controls; MaxListHeight on step types |
+| `HL7Tester/Controls/AppDropdown.cs` | NEW — platform-routed wrapper (native Picker on WinUI / inline on Catalyst) |
+| `HL7Tester/Controls/DropdownButton.cs` | NEW — inline dropdown control (Mac Catalyst implementation) |
+| `HL7Tester/MainPage.xaml` | 3 Pickers → AppDropdown; xmlns:controls; MaxListHeight on Message Type |
+| `HL7Tester/NetworkSettingsPage.xaml` | 2 Pickers → AppDropdown; xmlns:controls |
+| `HL7Tester/BatchSendPage.xaml` | 1 Picker → AppDropdown; xmlns:controls; MaxListHeight on step types |
 | `HL7Tester/Resources/Raw/whatsnew.md` | Dropdown announcement merged into the v2.0.23 block |
 
 ---

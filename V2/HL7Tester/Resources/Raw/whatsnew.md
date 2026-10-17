@@ -3,8 +3,8 @@
 ### 🖱️ Dropdown Menus That Never Close on Their Own
 > On Mac, dropdown menus no longer disappear when you move through the form with the Tab key.
 - Message family, message type, and settings menus stay open until you pick one
-- Menus scroll inside their box, so the page stays stable when you open one
-- Same reliable behavior on both Mac and Windows
+- On Mac, menus scroll inside their box, so the page stays stable when you open one
+- Windows keeps its familiar native drop-down menus
 
 ### 🌐 HL7 Inspector Now Works Offline
 > No more internet needed — the full parser is built right into the app.

@@ -3,13 +3,30 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.NetworkSettingsPage"
              xmlns:controls="clr-namespace:HL7Tester.Controls"
+             xmlns:converters="clr-namespace:HL7Tester.Resources.Converters"
              Title="Settings">
+
+    <ContentPage.Resources>
+        <converters:ProtocolDisplayConverter x:Key="ProtocolDisplayConverter" />
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
 
         <!-- Scrollable content area -->
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20" Spacing="16">
+
+                <!-- Active mode badge: purple = HL7v2, teal = FHIR -->
+                <Border BackgroundColor="{Binding ModeBadgeColor}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 6"
+                        Padding="12,6"
+                        HorizontalOptions="Start">
+                    <Label Text="{Binding ModeBadgeText}"
+                           TextColor="White"
+                           FontSize="13"
+                           FontAttributes="Bold" />
+                </Border>
 
                 <!-- Migration notice: Connections moved to a dedicated page -->
                 <Border Style="{StaticResource CardBorder}" Padding="16">
@@ -40,27 +57,34 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Text="Check updates" VerticalOptions="Center" />
-                            <Switch Grid.Row="0" Grid.Column="1"
+                            <Label Grid.Row="0" Grid.Column="0" Text="Protocol" VerticalOptions="Center" />
+                            <controls:AppDropdown Grid.Row="0" Grid.Column="1"
+                                    ItemsSource="{Binding AvailableProtocols}"
+                                    SelectedItem="{Binding SelectedProtocol}"
+                                    DisplayConverter="{StaticResource ProtocolDisplayConverter}" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="Check updates" VerticalOptions="Center" />
+                            <Switch Grid.Row="1" Grid.Column="1"
                                     IsToggled="{Binding AutoUpdateCheck}" />
 
-                            <Label Grid.Row="1" Grid.Column="0" Text="Log level" VerticalOptions="Center" />
-                            <controls:AppDropdown Grid.Row="1" Grid.Column="1"
+                            <Label Grid.Row="2" Grid.Column="0" Text="Log level" VerticalOptions="Center" />
+                            <controls:AppDropdown Grid.Row="2" Grid.Column="1"
                                     ItemsSource="{Binding AvailableLogLevels}"
                                     SelectedItem="{Binding SelectedLogLevel}" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="Message encoding" VerticalOptions="Center" />
-                            <controls:AppDropdown Grid.Row="2" Grid.Column="1"
+                            <Label Grid.Row="3" Grid.Column="0" Text="Message encoding" VerticalOptions="Center" />
+                            <controls:AppDropdown Grid.Row="3" Grid.Column="1"
                                     ItemsSource="{Binding AvailableEncodings}"
                                     SelectedItem="{Binding SelectedEncoding}" />
 
-                            <Grid Grid.Row="3" Grid.ColumnSpan="2"
+                            <Grid Grid.Row="4" Grid.ColumnSpan="2"
                                   ColumnDefinitions="Auto,*"
                                   IsVisible="{Binding UseCustomEncoding}">
                                 <Label Text="Use custom encoding" VerticalOptions="Center" />
@@ -69,12 +93,12 @@
                                         IsToggled="{Binding UseCustomEncoding}" />
                             </Grid>
 
-                            <Entry Grid.Row="4" Grid.ColumnSpan="2"
+                            <Entry Grid.Row="5" Grid.ColumnSpan="2"
                                    Text="{Binding CustomEncoding}"
                                    Placeholder="e.g., ISO-8859-2, KOI8-R..."
                                    IsVisible="{Binding UseCustomEncoding}" />
 
-                            <Button Grid.Row="5" Grid.ColumnSpan="2"
+                            <Button Grid.Row="6" Grid.ColumnSpan="2"
                                     Text="Save Application settings"
                                     Command="{Binding SaveApplicationSettingsCommand}"
                                     HorizontalOptions="Fill" />

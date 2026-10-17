@@ -543,7 +543,7 @@ Convention : fichiers en **anglais**, chemins relatifs à `V2/`. Complexité : *
   - Tests unitaires de génération (snapshot JSON).
 - **Complexité** : **L**.
 
-### Phase 3 — UI `ConnectionsPage` : section FHIR (profils, auth, endpoints) + toggle global
+### Phase 3 — UI `ConnectionsPage` : section FHIR (profils, auth, endpoints) + toggle global ✅ DONE (2026-10-17)
 
 - **Objectif** : ajouter la section FHIR dans `ConnectionsPage` (créée en Phase 0.5). Le toggle MLLP/FHIR est dans `NetworkSettingsPage` ; la gestion des profils FHIR est dans `ConnectionsPage`.
 - **Fichiers à créer** :

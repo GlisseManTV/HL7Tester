@@ -8,6 +8,7 @@ using System.Windows.Input;
 using HL7Tester.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Graphics;
 
 namespace HL7Tester.ViewModels;
 
@@ -92,6 +93,41 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         get => _selectedLogLevel;
         set => SetField(ref _selectedLogLevel, value);
     }
+
+    /// <summary>
+    /// Raw protocol values bound to the protocol AppDropdown (display labels are
+    /// applied through ProtocolDisplayConverter).
+    /// </summary>
+    public ObservableCollection<string> AvailableProtocols { get; } = new(["MLLP", "FHIR"]);
+
+    private string _selectedProtocol = "MLLP";
+    /// <summary>
+    /// Active transport protocol: "MLLP" (HL7 v2) or "FHIR" (REST).
+    /// </summary>
+    public string SelectedProtocol
+    {
+        get => _selectedProtocol;
+        set
+        {
+            if (SetField(ref _selectedProtocol, value))
+            {
+                OnPropertyChanged(nameof(IsFhirMode));
+                OnPropertyChanged(nameof(ModeBadgeText));
+                OnPropertyChanged(nameof(ModeBadgeColor));
+            }
+        }
+    }
+
+    /// <summary>
+    /// True when the active protocol is FHIR — drives the mode badge.
+    /// </summary>
+    public bool IsFhirMode => SelectedProtocol == "FHIR";
+
+    public string ModeBadgeText => IsFhirMode ? "FHIR Mode" : "HL7v2 Mode";
+
+    public Color ModeBadgeColor => IsFhirMode
+        ? Color.FromArgb("#009688") // teal
+        : Color.FromArgb("#512BD4"); // purple (Primary)
 
     public ICommand SaveApplicationSettingsCommand { get; }
     public ICommand OpenDocumentationCommand { get; }
@@ -249,6 +285,10 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
 
         AutoUpdateCheck = _settings.AutoUpdateCheck;
 
+        SelectedProtocol = string.Equals(_settings.Protocol, "FHIR", StringComparison.OrdinalIgnoreCase)
+            ? "FHIR"
+            : "MLLP";
+
         SelectedLogLevel = string.IsNullOrWhiteSpace(_settings.LogLevel)
             ? "Debug"
             : _settings.LogLevel;
@@ -265,9 +305,13 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     {
         var oldLogLevel = _settings.LogLevel ?? "Debug";
         var oldAutoUpdateCheck = _settings.AutoUpdateCheck;
+        var oldProtocol = _settings.Protocol ?? "MLLP";
 
         _settings.LogLevel = SelectedLogLevel;
         _settings.AutoUpdateCheck = AutoUpdateCheck;
+
+        // Persist the global protocol toggle (MLLP / FHIR)
+        _settings.Protocol = SelectedProtocol;
 
         // Sauvegarder l'encodage du message
         if (UseCustomEncoding && !string.IsNullOrWhiteSpace(CustomEncoding))
@@ -289,6 +333,11 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         if (oldAutoUpdateCheck != AutoUpdateCheck)
         {
             _logger.LogInformation("Auto update check changed to {AutoUpdateCheck}.", AutoUpdateCheck);
+        }
+
+        if (!string.Equals(oldProtocol, SelectedProtocol, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation("Protocol changed from {OldProtocol} to {NewProtocol}.", oldProtocol, SelectedProtocol);
         }
     }
 

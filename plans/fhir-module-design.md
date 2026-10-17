@@ -563,7 +563,7 @@ Convention : fichiers en **anglais**, chemins relatifs à `V2/`. Complexité : *
   - Badge du mode visible sur `NetworkSettingsPage` et `MainPage`.
 - **Complexité** : **L**.
 
-### Phase 4 — Intégration MainPage (génération FHIR, adaptation UI complète)
+### Phase 4 — Intégration MainPage (génération FHIR, adaptation UI complète) ✅ DONE (2026-10-17)
 
 - **Objectif** : quand le protocole est FHIR, la `MainPage` change de ton : dropdowns de ressources FHIR, champs adaptés, output JSON au lieu de HL7 pipe-delimited, envoi HTTP au lieu de TCP.
 - **Fichiers à modifier** :

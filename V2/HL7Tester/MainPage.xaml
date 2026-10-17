@@ -28,12 +28,28 @@
                 <Label Text="HL7 messages generator"
                        TextColor="{AppThemeBinding Light={StaticResource SecondaryDarkText}, Dark={StaticResource Gray300}}"
                        FontSize="14" />
+                <Border BackgroundColor="#009688"
+                        StrokeThickness="0"
+                        Padding="8,3"
+                        HorizontalOptions="Start"
+                        Margin="0,4,0,0"
+                        IsVisible="{Binding IsFhirMode}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="4" />
+                    </Border.StrokeShape>
+                    <Label Text="FHIR Mode"
+                           TextColor="White"
+                           FontSize="12"
+                           FontAttributes="Bold" />
+                </Border>
             </VerticalStackLayout>
 
+            <!-- MLLP dropdowns (visible only in MLLP mode) -->
             <Grid Grid.Column="1"
                   ColumnSpacing="8"
                   HorizontalOptions="End"
-                  VerticalOptions="Center">
+                  VerticalOptions="Center"
+                  IsVisible="{Binding IsMllpMode}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="220" />
@@ -61,6 +77,41 @@
                         ItemsSource="{Binding AvailableMessageTypes}"
                         SelectedItem="{Binding SelectedMessageType}"
                         MaxListHeight="240"
+                        Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+            </Grid>
+
+            <!-- FHIR dropdowns (visible only in FHIR mode) -->
+            <Grid Grid.Column="1"
+                  ColumnSpacing="8"
+                  HorizontalOptions="End"
+                  VerticalOptions="Center"
+                  IsVisible="{Binding IsFhirMode}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="150" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0"
+                       Text="Resource Type"
+                       TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                       FontAttributes="Bold"
+                       VerticalTextAlignment="Center" />
+                <controls:AppDropdown Grid.Column="1"
+                        ItemsSource="{Binding AvailableFhirResourceTypes}"
+                        SelectedItem="{Binding SelectedFhirResourceType}"
+                        Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+
+                <Label Grid.Column="2"
+                       Text="HTTP Method"
+                       Margin="8,0,0,0"
+                       TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                       FontAttributes="Bold"
+                       VerticalTextAlignment="Center" />
+                <controls:AppDropdown Grid.Column="3"
+                        ItemsSource="{Binding AvailableFhirHttpMethods}"
+                        SelectedItem="{Binding SelectedFhirHttpMethod}"
                         Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
             </Grid>
         </Grid>

@@ -6,6 +6,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
 using HL7Tester.Core;
+using HL7Tester.Core.Fhir;
+using HL7Tester.Core.Sending;
 using Microsoft.Extensions.Logging;
 
 namespace HL7Tester.ViewModels;
@@ -63,13 +65,50 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private readonly AdtMessageGenerator _generator;
     private readonly INetworkSettingsService _networkSettingsService;
-    private readonly IHL7NetworkSender _networkSender;
+    private readonly IMessageSender _messageSender;
+    private readonly IFhirResourceGenerator _fhirGenerator;
     private readonly ILogger<MainViewModel> _logger;
+    private FhirProfile? _activeFhirProfile;
+    private bool _isFhirMode;
+    private bool _isMllpMode = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<string> AvailableMessageFamilies { get; } = new(["ADT", "ORM", "SIU"]);
     public ObservableCollection<string> AvailableMessageTypes { get; } = new();
+
+    // ---- FHIR mode properties ----
+    public ObservableCollection<string> AvailableFhirResourceTypes { get; } =
+        new(["Bundle (Transaction)", "Patient", "Encounter", "Observation", "ServiceRequest", "Appointment"]);
+
+    private string _selectedFhirResourceType = "Bundle (Transaction)";
+    public string SelectedFhirResourceType
+    {
+        get => _selectedFhirResourceType;
+        set => SetField(ref _selectedFhirResourceType, value ?? "Bundle (Transaction)");
+    }
+
+    public ObservableCollection<string> AvailableFhirHttpMethods { get; } =
+        new(["POST", "PUT", "PATCH", "DELETE"]);
+
+    private string _selectedFhirHttpMethod = "POST";
+    public string SelectedFhirHttpMethod
+    {
+        get => _selectedFhirHttpMethod;
+        set => SetField(ref _selectedFhirHttpMethod, value ?? "POST");
+    }
+
+    public bool IsFhirMode
+    {
+        get => _isFhirMode;
+        private set => SetField(ref _isFhirMode, value);
+    }
+
+    public bool IsMllpMode
+    {
+        get => _isMllpMode;
+        private set => SetField(ref _isMllpMode, value);
+    }
 
     // Liste des contrôles de commande pour ORC-1 (Order Control Code)
     public IReadOnlyList<string> OrderControlList { get; } = new[]
@@ -548,12 +587,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public MainViewModel(
         AdtMessageGenerator generator,
         INetworkSettingsService networkSettingsService,
-        IHL7NetworkSender networkSender,
+        IMessageSender messageSender,
+        IFhirResourceGenerator fhirGenerator,
         ILogger<MainViewModel> logger)
     {
         _generator = generator;
         _networkSettingsService = networkSettingsService;
-        _networkSender = networkSender;
+        _messageSender = messageSender;
+        _fhirGenerator = fhirGenerator;
         _logger = logger;
 
         RefreshMessageTypes();
@@ -562,6 +603,18 @@ public sealed class MainViewModel : INotifyPropertyChanged
         GenerateCommand = new Command(OnGenerate);
         SendCommand = new Command(async () => await OnSendAsync());
         RegenerateControlIdCommand = new Command(RegenerateControlId);
+    }
+
+    /// <summary>
+    /// Loads the active protocol and FHIR profile from settings.
+    /// Called from MainPage.OnAppearing() to refresh mode before user interaction.
+    /// </summary>
+    public async Task LoadProtocolAsync()
+    {
+        var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
+        IsFhirMode = string.Equals(settings.Protocol, "FHIR", StringComparison.OrdinalIgnoreCase);
+        IsMllpMode = !IsFhirMode;
+        _activeFhirProfile = settings.FhirProfiles.FirstOrDefault(p => p.Id == settings.ActiveFhirProfileId);
     }
 
     private void RegenerateControlId()
@@ -708,9 +761,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         try
         {
+            var messageTypeCode = IsFhirMode
+                ? MapFhirResourceTypeToMessageTypeCode(SelectedFhirResourceType)
+                : SelectedMessageType;
+
             var request = new AdtMessageRequest
             {
-                MessageTypeCode = SelectedMessageType,
+                MessageTypeCode = messageTypeCode,
 
                 PatientId = PatientId ?? string.Empty,
                 NewPatientId = NewPatientId,
@@ -764,87 +821,178 @@ public sealed class MainViewModel : INotifyPropertyChanged
             request.ObxEntries.Add(new ObxEntry { Type = Obx2Type, Reason = Obx2Reason });
             request.ObxEntries.Add(new ObxEntry { Type = Obx3Type, Reason = Obx3Reason });
 
-            string hl7 = _generator.Generate(request);
-            _logger.LogDebug("HL7 message generated. Type={MessageType}", request.MessageTypeCode);
-            GeneratedMessage = hl7.Replace("\r", Environment.NewLine);
+            if (IsFhirMode)
+            {
+                var resource = _fhirGenerator.Generate(request);
+                var json = _fhirGenerator.ToJson(resource);
+                _logger.LogDebug("FHIR resource generated. ResourceType={ResourceType}", SelectedFhirResourceType);
+                GeneratedMessage = json;
+            }
+            else
+            {
+                string hl7 = _generator.Generate(request);
+                _logger.LogDebug("HL7 message generated. Type={MessageType}", request.MessageTypeCode);
+                GeneratedMessage = hl7.Replace("\r", Environment.NewLine);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating HL7 message.");
+            _logger.LogError(ex, "Error generating message.");
             GeneratedMessage = $"Error generating message: {ex.Message}";
         }
     }
+
+    /// <summary>
+    /// Maps a FHIR resource type selection to the MessageTypeCode used by FhirR4Generator.
+    /// </summary>
+    private static string MapFhirResourceTypeToMessageTypeCode(string resourceType) => resourceType switch
+    {
+        "Bundle (Transaction)" => "ADT A01",
+        "Patient" => "ADT A08",
+        "Encounter" => "ADT A02",
+        "ServiceRequest" => "ORM O01",
+        "Appointment" => "SIU S12",
+        "Observation" => "ADT A01",
+        _ => "ADT A01"
+    };
 
     private async Task OnSendAsync()
     {
         try
         {
-            string messageToSend = (GeneratedMessage ?? string.Empty).Replace(Environment.NewLine, "\r");
-            if (string.IsNullOrWhiteSpace(messageToSend))
+            if (string.IsNullOrWhiteSpace(GeneratedMessage))
             {
-                _logger.LogWarning("Send requested but HL7 message is empty.");
-                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message send cancelled - Nothing to send (HL7 message is empty).");
+                _logger.LogWarning("Send requested but message is empty.");
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Send cancelled - Nothing to send.");
                 return;
             }
 
-            var settings = await _networkSettingsService.LoadAsync();
-            string ip = settings.LastIpAddress ?? string.Empty;
-            string portStr = settings.LastPort ?? string.Empty;
-
-            if (!int.TryParse(portStr, out int port) || port < 1 || port > 65535)
+            if (IsFhirMode)
             {
-                _logger.LogWarning("Invalid port configured: {Port}", portStr);
-                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message send cancelled - Invalid port configured.");
-                return;
-            }
-
-            _logger.LogInformation("Sending HL7 message to {Ip}:{Port}.", ip, port);
-            _logger.LogDebug("HL7 message length: {Length} characters.", messageToSend.Length);
-
-            // Récupérer l'encodage configuré
-            string? encodingName = settings.MessageEncoding;
-            _logger.LogDebug("Using message encoding: {Encoding}", encodingName ?? "(default)");
-
-            var result = await _networkSender.SendAsync(messageToSend, ip, port, encodingName: encodingName);
-
-            string messageTypeStr = !string.IsNullOrWhiteSpace(result.MessageCode) 
-                ? result.MessageCode 
-                : "Unknown";
-
-            if (result.Success)
-            {
-                string ackStatus = result.MsaStatus switch
-                {
-                    "AA" => "ACK",
-                    "AE" => "ACK (with errors)",
-                    _ => "No ACK"
-                };
-
-                AppendToSendLog(
-                    $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> {ackStatus}");
-            }
-            else if (result.MsaStatus == "AR" || result.MsaStatus == "AE")
-            {
-                _logger.LogWarning("Message {MsaStatus} by receiver at {Ip}:{Port}. {Desc}", result.MsaStatus, ip, port, result.ErrorDescription ?? "(no description)");
-                var nackLine = $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> NACK";
-                if (!string.IsNullOrWhiteSpace(result.ErrorDescription))
-                {
-                    nackLine += $"\n{result.ErrorDescription}";
-                }
-                AppendToSendLog(nackLine);
+                await SendFhirAsync().ConfigureAwait(false);
             }
             else
             {
-                _logger.LogError("Failed to send HL7 message to {Ip}:{Port}: {Error}", ip, port, result.ErrorMessage);
-                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED to {ip}:{port}. Error: {result.ErrorMessage}");
+                await SendMllpAsync().ConfigureAwait(false);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while sending HL7 message.");
-            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED - Error: {ex.Message}");
+            _logger.LogError(ex, "Error while sending message.");
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] SEND FAILED - Error: {ex.Message}");
         }
     }
+
+    private async Task SendFhirAsync()
+    {
+        var sendRequest = new SendRequest
+        {
+            Protocol = "FHIR",
+            Payload = GeneratedMessage ?? string.Empty,
+            Profile = _activeFhirProfile,
+            ResourceType = MapFhirResourceTypeToEndpoint(SelectedFhirResourceType),
+            HttpMethod = ParseHttpMethod(SelectedFhirHttpMethod)
+        };
+
+        _logger.LogInformation("Sending FHIR {Method} {ResourceType} to profile '{Profile}'.",
+            SelectedFhirHttpMethod, SelectedFhirResourceType, _activeFhirProfile?.Name ?? "(none)");
+
+        var result = await _messageSender.SendAsync(sendRequest).ConfigureAwait(false);
+
+        if (result.Success)
+        {
+            AppendToSendLog(
+                $"[{DateTime.Now:HH:mm:ss}] FHIR {SelectedFhirHttpMethod} {SelectedFhirResourceType} -> HTTP {result.HttpStatusCode} OK");
+        }
+        else
+        {
+            var errorLine = $"[{DateTime.Now:HH:mm:ss}] FHIR {SelectedFhirHttpMethod} {SelectedFhirResourceType} -> HTTP {result.HttpStatusCode} ERROR";
+            if (!string.IsNullOrWhiteSpace(result.ErrorDescription))
+                errorLine += $"\n{result.ErrorDescription}";
+            else if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+                errorLine += $"\n{result.ErrorMessage}";
+            AppendToSendLog(errorLine);
+        }
+    }
+
+    private async Task SendMllpAsync()
+    {
+        string messageToSend = (GeneratedMessage ?? string.Empty).Replace(Environment.NewLine, "\r");
+
+        var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
+        string ip = settings.LastIpAddress ?? string.Empty;
+        string portStr = settings.LastPort ?? string.Empty;
+
+        if (!int.TryParse(portStr, out int port) || port < 1 || port > 65535)
+        {
+            _logger.LogWarning("Invalid port configured: {Port}", portStr);
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Send cancelled - Invalid port configured.");
+            return;
+        }
+
+        _logger.LogInformation("Sending HL7 message to {Ip}:{Port}.", ip, port);
+
+        var sendRequest = new SendRequest
+        {
+            Protocol = "MLLP",
+            Payload = messageToSend,
+            Ip = ip,
+            Port = port,
+            EncodingName = settings.MessageEncoding
+        };
+
+        var result = await _messageSender.SendAsync(sendRequest).ConfigureAwait(false);
+
+        string messageTypeStr = SelectedMessageType ?? "Unknown";
+
+        if (result.Success)
+        {
+            string ackStatus = result.MsaStatus switch
+            {
+                "AA" => "ACK",
+                "AE" => "ACK (with errors)",
+                _ => "No ACK"
+            };
+
+            AppendToSendLog(
+                $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> {ackStatus}");
+        }
+        else if (result.MsaStatus == "AR" || result.MsaStatus == "AE")
+        {
+            _logger.LogWarning("Message {MsaStatus} by receiver at {Ip}:{Port}. {Desc}", result.MsaStatus, ip, port, result.ErrorDescription ?? "(no description)");
+            var nackLine = $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> NACK";
+            if (!string.IsNullOrWhiteSpace(result.ErrorDescription))
+            {
+                nackLine += $"\n{result.ErrorDescription}";
+            }
+            AppendToSendLog(nackLine);
+        }
+        else
+        {
+            _logger.LogError("Failed to send HL7 message to {Ip}:{Port}: {Error}", ip, port, result.ErrorMessage);
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED to {ip}:{port}. Error: {result.ErrorMessage}");
+        }
+    }
+
+    private static string MapFhirResourceTypeToEndpoint(string resourceType) => resourceType switch
+    {
+        "Bundle (Transaction)" => "Bundle",
+        "Patient" => "Patient",
+        "Encounter" => "Encounter",
+        "Observation" => "Observation",
+        "ServiceRequest" => "ServiceRequest",
+        "Appointment" => "Appointment",
+        _ => "Bundle"
+    };
+
+    private static FhirHttpMethod ParseHttpMethod(string method) => method switch
+    {
+        "PUT" => FhirHttpMethod.Put,
+        "PATCH" => FhirHttpMethod.Patch,
+        "DELETE" => FhirHttpMethod.Delete,
+        "GET" => FhirHttpMethod.Get,
+        _ => FhirHttpMethod.Post
+    };
 
     private void AppendToSendLog(string line)
     {

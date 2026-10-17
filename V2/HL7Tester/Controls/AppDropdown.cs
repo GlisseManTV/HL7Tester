@@ -35,7 +35,7 @@ public class AppDropdown : Border
             propertyChanged: (b, _, _) => ((AppDropdown)b).PushDisplay());
 
     public static readonly BindableProperty PlaceholderProperty =
-        BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(AppDropdown), "Select...",
+        BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(AppDropdown), null,
             propertyChanged: (b, _, _) => ((AppDropdown)b).PushPlaceholder());
 
     public static readonly BindableProperty MaxListHeightProperty =
@@ -76,9 +76,14 @@ public class AppDropdown : Border
         set => SetValue(DisplayMemberPathProperty, value);
     }
 
-    public string Placeholder
+    /// <summary>
+    /// Null by default: on Windows, Picker.Title renders as a header above the value,
+    /// so it is only applied when explicitly set (same look as a bare native Picker).
+    /// The inline implementation falls back to "Select..." when no placeholder is given.
+    /// </summary>
+    public string? Placeholder
     {
-        get => (string)GetValue(PlaceholderProperty);
+        get => (string?)GetValue(PlaceholderProperty);
         set => SetValue(PlaceholderProperty, value);
     }
 
@@ -181,11 +186,14 @@ public class AppDropdown : Border
     {
         if (_picker is not null)
         {
+            // WinUI renders Picker.Title as a header above the selected value: apply it
+            // only when a Placeholder was explicitly provided, so pickers without one
+            // render exactly like the original native Picker (no header text).
             _picker.Title = Placeholder;
         }
         if (_inline is not null)
         {
-            _inline.Placeholder = Placeholder;
+            _inline.Placeholder = Placeholder ?? "Select...";
         }
     }
 

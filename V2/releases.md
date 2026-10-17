@@ -32,7 +32,7 @@ Shipped in the same v2.0.24 release: replaced every MAUI `Picker` with an `AppDr
 
 **Key Features:**
 - `AppDropdown` wrapper (`Border`, `StrokeThickness=0`): identical bindable surface on both platforms — TwoWay `SelectedItem`/`SelectedIndex`, `Placeholder`, `DisplayConverter`, `DisplayMemberPath`
-- Windows → native `Picker`; `Placeholder` mapped to `Title`, display options mapped to `ItemDisplayBinding`
+- Windows → native `Picker`; explicit `Placeholder` only mapped to `Title` (no header when unset, identical to the original bare `Picker`), display options mapped to `ItemDisplayBinding`
 - Mac Catalyst → inline `DropdownButton`: header `Button` (Tab + Enter/Space) + list in `Border`/`ScrollView`; `MaxListHeight="240"` caps the expansion
 - Selection re-pushed after `ItemsSource` changes; anti-echo `_syncGuard` for wrapper↔implementation and `SelectedItem`↔`SelectedIndex` sync
 

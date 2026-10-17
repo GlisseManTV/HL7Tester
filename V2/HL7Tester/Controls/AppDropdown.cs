@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using Microsoft.Maui.Controls.Shapes;
 
 namespace HL7Tester.Controls;
 
@@ -124,6 +125,11 @@ public class AppDropdown : Border
             _inline.PropertyChanged += OnInlinePropertyChanged;
             Content = _inline;
         }
+
+        // Pages may paint the wrapper Background for contrast (e.g. white on the purple
+        // header). The wrapper must follow the inner control's corner radius, otherwise
+        // square background corners peek out behind the rounded native/inline chrome.
+        StrokeShape = new RoundRectangle { CornerRadius = _picker is not null ? 4 : 8 };
 
         PushAll();
     }

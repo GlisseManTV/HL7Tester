@@ -50,7 +50,7 @@ public sealed class SenderRouter : IMessageSender
         }
 
         var sendResult = await _hl7Sender
-            .SendAsync(request.Payload, request.Ip, request.Port.Value, ct, request.EncodingName)
+            .SendAsync(request.Payload, request.Ip, request.Port.Value, ct, request.EncodingName, request.ExistingClient)
             .ConfigureAwait(false);
 
         return new MessageSendResult

@@ -35,11 +35,25 @@ public sealed class PatientBatchResult
     /// </summary>
     public int FailedStepIndex { get; set; }
 
+    /// <summary>
+    /// Transport protocol used for this patient run: "MLLP" or "FHIR".
+    /// </summary>
+    public string Protocol { get; set; } = "MLLP";
+
+    /// <summary>
+    /// Last HTTP status code received from the FHIR server (FHIR mode only), null in MLLP mode.
+    /// </summary>
+    public int? LastHttpStatusCode { get; set; }
+
     public override string ToString()
     {
+        var status = Protocol == "FHIR" && LastHttpStatusCode.HasValue
+            ? $" [HTTP {LastHttpStatusCode}]"
+            : string.Empty;
+
         if (Success)
-            return $"✓ {Patient.PatientId} (Adm: {Patient.AdmissionNumber}) → {TotalSteps}/{TotalSteps} steps OK";
-        return $"✗ {Patient.PatientId} (Adm: {Patient.AdmissionNumber}) → {SuccessfulSteps}/{TotalSteps} (step {FailedStepIndex} failed)";
+            return $"✓ {Patient.PatientId} (Adm: {Patient.AdmissionNumber}) → {TotalSteps}/{TotalSteps} steps OK{status}";
+        return $"✗ {Patient.PatientId} (Adm: {Patient.AdmissionNumber}) → {SuccessfulSteps}/{TotalSteps} (step {FailedStepIndex} failed){status}";
     }
 }
 

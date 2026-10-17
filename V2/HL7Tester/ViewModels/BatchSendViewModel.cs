@@ -5,6 +5,7 @@ using System.Windows.Input;
 using HL7Tester.Core;
 using HL7Tester.Core.Batch;
 using HL7Tester.Core.Batch.Models;
+using HL7Tester.Core.Fhir;
 using Microsoft.Extensions.Logging;
 
 namespace HL7Tester.ViewModels;
@@ -106,12 +107,36 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
     private bool _keepConnectionOpen;
     /// <summary>
     /// When true, a single TCP connection is reused for all messages in the batch.
+    /// Only meaningful in MLLP mode; ignored by the engine in FHIR mode.
     /// </summary>
     public bool KeepConnectionOpen
     {
         get => _keepConnectionOpen;
         set => SetField(ref _keepConnectionOpen, value);
     }
+
+    // ─── Protocol / FHIR mode ──────────────────────────────────────
+
+    private bool _isFhirMode;
+    /// <summary>
+    /// True when the active protocol is FHIR (resources sent over HTTP).
+    /// </summary>
+    public bool IsFhirMode
+    {
+        get => _isFhirMode;
+        private set
+        {
+            if (SetField(ref _isFhirMode, value))
+                OnPropertyChanged(nameof(IsMllpMode));
+        }
+    }
+
+    /// <summary>
+    /// True when the active protocol is MLLP (HL7 v2 over TCP).
+    /// </summary>
+    public bool IsMllpMode => !_isFhirMode;
+
+    private FhirProfile? _activeFhirProfile;
 
     // ─── State ─────────────────────────────────────────────────────
 
@@ -304,16 +329,28 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
             return;
         }
 
-        // Load network settings
+        // Load network settings: protocol, active FHIR profile, MLLP endpoint
         var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
-        var ip = settings.LastIpAddress;
-        var port = int.TryParse(settings.LastPort, out var p) ? p : 6667;
+        var isFhir = string.Equals(settings.Protocol, "FHIR", StringComparison.OrdinalIgnoreCase);
+        IsFhirMode = isFhir;
+        _activeFhirProfile = settings.FhirProfiles.FirstOrDefault(p => p.Id == settings.ActiveFhirProfileId);
 
-        if (string.IsNullOrWhiteSpace(ip))
+        if (isFhir)
+        {
+            if (_activeFhirProfile is null)
+            {
+                StatusText = "Error: No active FHIR profile. Select one in Connections.";
+                return;
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(settings.LastIpAddress))
         {
             StatusText = "Error: No IP address configured. Set it in Network Settings.";
             return;
         }
+
+        var ip = settings.LastIpAddress ?? string.Empty;
+        var port = int.TryParse(settings.LastPort, out var p) ? p : 6667;
 
         // Start
         IsRunning = true;
@@ -328,7 +365,9 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
             var result = await _engine.RunAsync(
                 workflow, ip, port,
                 settings.MessageEncoding,
-                _cts.Token).ConfigureAwait(false);
+                _cts.Token,
+                settings.Protocol,
+                _activeFhirProfile).ConfigureAwait(false);
 
             // Populate results
             foreach (var pr in result.PatientResults)
@@ -336,9 +375,10 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
                 Results.Add(pr);
             }
 
+            var protocolLabel = isFhir ? "FHIR" : "MLLP";
             SummaryText = result.WasCancelled
-                ? $"Stopped: {result.SuccessfulPatients}/{result.TotalPatients} patients completed, {result.TotalMessagesSent}/{result.TotalMessagesAttempted} messages sent"
-                : $"Done: {result.SuccessfulPatients}/{result.TotalPatients} patients OK, {result.TotalMessagesSent}/{result.TotalMessagesAttempted} messages sent, {result.Elapsed:mm\\:ss}";
+                ? $"Stopped: {result.SuccessfulPatients}/{result.TotalPatients} patients completed, {result.TotalMessagesSent}/{result.TotalMessagesAttempted} messages sent ({protocolLabel})"
+                : $"Done: {result.SuccessfulPatients}/{result.TotalPatients} patients OK, {result.TotalMessagesSent}/{result.TotalMessagesAttempted} messages sent, {result.Elapsed:mm\\:ss} ({protocolLabel})";
 
             StatusText = SummaryText;
         }

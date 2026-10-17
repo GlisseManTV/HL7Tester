@@ -1,45 +1,48 @@
-using System.Net.Sockets;
 using HL7Tester.Core;
 using HL7Tester.Core.Batch;
 using HL7Tester.Core.Batch.Models;
+using HL7Tester.Core.Fhir;
+using HL7Tester.Core.Sending;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace HL7Tester.Tests;
 
 /// <summary>
-/// A mock HL7 network sender for testing BatchSendEngine.
+/// A mock protocol-agnostic message sender for testing BatchSendEngine.
+/// Captures the payload of every <see cref="SendRequest"/> so MLLP-mode
+/// assertions on HL7 content keep working unchanged.
 /// </summary>
-internal sealed class MockHl7NetworkSender : IHL7NetworkSender
+internal sealed class MockMessageSender : IMessageSender
 {
     public List<string> SentMessages { get; } = new();
+    public List<SendRequest> SentRequests { get; } = new();
     public bool ShouldFail { get; set; }
     public string? FailureMessage { get; set; }
 
-    public Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default)
-    {
-        return SendAsync(hl7Message, ipAddress, port, cancellationToken, null, null);
-    }
-
-    public Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null, TcpClient? existingClient = null)
+    public Task<MessageSendResult> SendAsync(SendRequest request, CancellationToken ct = default)
     {
         lock (SentMessages)
         {
-            SentMessages.Add(hl7Message);
+            SentMessages.Add(request.Payload);
+            SentRequests.Add(request);
         }
 
         if (ShouldFail)
         {
-            return Task.FromResult(new SendResult
+            return Task.FromResult(new MessageSendResult
             {
                 Success = false,
+                Protocol = request.Protocol,
                 ErrorMessage = FailureMessage ?? "Mock failure"
             });
         }
 
-        return Task.FromResult(new SendResult
+        return Task.FromResult(new MessageSendResult
         {
             Success = true,
-            MessageCode = "ACK"
+            Protocol = request.Protocol,
+            MsaStatus = "AA",
+            HttpStatusCode = 200
         });
     }
 }
@@ -47,12 +50,13 @@ internal sealed class MockHl7NetworkSender : IHL7NetworkSender
 [TestClass]
 public class BatchSendEngineTests
 {
-    private static BatchSendEngine CreateEngine(MockHl7NetworkSender? sender = null)
+    private static BatchSendEngine CreateEngine(MockMessageSender? sender = null)
     {
         var generator = new AdtMessageGenerator();
-        sender ??= new MockHl7NetworkSender();
+        sender ??= new MockMessageSender();
+        var fhirGenerator = new FhirR4Generator();
         var randomizer = new PatientDataRandomizer(42);
-        return new BatchSendEngine(generator, sender, randomizer, NullLogger<BatchSendEngine>.Instance);
+        return new BatchSendEngine(generator, sender, fhirGenerator, randomizer, NullLogger<BatchSendEngine>.Instance);
     }
 
     private static BatchWorkflow CreateSimpleWorkflow(int patientCount = 2, int delayMs = 0)
@@ -74,7 +78,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_AllPatientsCompleteSuccessfully()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 3);
 
@@ -90,7 +94,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_SendsCorrectNumberOfMessagesPerPatient()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 5);
 
@@ -102,7 +106,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_FailureStopsPatientAtFailedStep()
     {
-        var sender = new MockHl7NetworkSender
+        var sender = new MockMessageSender
         {
             ShouldFail = true,
             FailureMessage = "Connection refused"
@@ -127,7 +131,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_CancellationStopsAllPatients()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 2, delayMs: 100);
 
@@ -163,7 +167,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_StepsAreSequentialPerPatient()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
 
         var workflow = new BatchWorkflow
@@ -189,7 +193,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_PatientContextIsConsistentAcrossSteps()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
 
         var workflow = new BatchWorkflow
@@ -248,7 +252,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_SingleStep_Works()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = new BatchWorkflow
         {
@@ -269,7 +273,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_EventDateTime_ExplicitValue_UsedInMessage()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 1);
         workflow.Steps[0].EventDateTime = "20261005120000";
@@ -285,7 +289,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_EventDateTime_ReferenceToPreviousStep_UsesSameValue()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 1);
         workflow.Steps[0].EventDateTime = "20261005120000";
@@ -307,7 +311,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_GlobalSexOverride_ForcesSexForAllPatients()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 5);
         workflow.Sex = "F";
@@ -328,7 +332,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_CsvLocation_PicksValidValuePerPatient()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 10);
         workflow.Room = "301A, 302B, 308A";
@@ -367,7 +371,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_SingleLocation_NoCsv_ReturnsAsIs()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 5);
         workflow.Room = "405";
@@ -398,7 +402,7 @@ public class BatchSendEngineTests
     [TestMethod]
     public async Task RunAsync_EmptyGlobalSex_UsesRandomSex()
     {
-        var sender = new MockHl7NetworkSender();
+        var sender = new MockMessageSender();
         var engine = CreateEngine(sender);
         var workflow = CreateSimpleWorkflow(patientCount: 10);
         // Sex is empty (default) → random M/F
@@ -413,5 +417,58 @@ public class BatchSendEngineTests
             var fields = pidLine.Split('|');
             Assert.IsTrue(fields[8] is "M" or "F", $"Expected 'M' or 'F' in PID-8, got '{fields[8]}'");
         }
+    }
+
+    [TestMethod]
+    public async Task RunAsync_FhirProtocol_SendsJsonWithMappedEndpointsAndVerbs()
+    {
+        var sender = new MockMessageSender();
+        var engine = CreateEngine(sender);
+        var workflow = CreateSimpleWorkflow(patientCount: 1); // A01 then A03
+        var profile = new FhirProfile { Name = "Test", BaseUrl = "http://localhost/fhir" };
+
+        var result = await engine.RunAsync(workflow, "127.0.0.1", 6667,
+            protocol: "FHIR", fhirProfile: profile);
+
+        Assert.AreEqual(2, sender.SentRequests.Count);
+
+        // A01 → transaction Bundle via POST
+        var first = sender.SentRequests[0];
+        Assert.AreEqual("FHIR", first.Protocol);
+        Assert.AreEqual("Bundle", first.ResourceType);
+        Assert.AreEqual(FhirHttpMethod.Post, first.HttpMethod);
+        Assert.IsTrue(sender.SentMessages[0].TrimStart().StartsWith("{"), "FHIR payload should be JSON");
+
+        // A03 → Encounter via PATCH (discharge)
+        var second = sender.SentRequests[1];
+        Assert.AreEqual("Encounter", second.ResourceType);
+        Assert.AreEqual(FhirHttpMethod.Patch, second.HttpMethod);
+
+        Assert.AreEqual(1, result.SuccessfulPatients);
+    }
+
+    [TestMethod]
+    public async Task RunAsync_FhirMergeStep_PostsToMergeEndpoint()
+    {
+        var sender = new MockMessageSender();
+        var engine = CreateEngine(sender);
+        var workflow = new BatchWorkflow { PatientCount = 1, GlobalDelayMs = 0, Room = "101" };
+        workflow.Steps.Add(new WorkflowStep
+        {
+            MessageType = "ADT A18 - Merge Patient Records",
+            NewPatientId = "NEW-1"
+        });
+        var profile = new FhirProfile { Name = "Test", BaseUrl = "http://localhost/fhir" };
+
+        var result = await engine.RunAsync(workflow, "127.0.0.1", 6667,
+            protocol: "FHIR", fhirProfile: profile);
+
+        Assert.AreEqual(1, result.TotalMessagesSent);
+
+        var req = sender.SentRequests[0];
+        Assert.AreEqual("Patient", req.ResourceType);
+        Assert.AreEqual(FhirHttpMethod.Post, req.HttpMethod);
+        Assert.IsNotNull(req.ResourceId);
+        Assert.IsTrue(req.ResourceId!.EndsWith("/$merge"), $"Merge endpoint should end with '/$merge', got '{req.ResourceId}'");
     }
 }

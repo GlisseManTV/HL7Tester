@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using HL7Tester.Core.Fhir;
 
 namespace HL7Tester.Core.Sending;
@@ -18,6 +19,13 @@ public sealed class SendRequest
     public string? Ip { get; init; }
     public int? Port { get; init; }
     public string? EncodingName { get; init; }
+
+    /// <summary>
+    /// Optional pre-connected <see cref="TcpClient"/> to reuse (MLLP keep-alive).
+    /// When set, the MLLP transport writes to this client instead of opening a new
+    /// connection. Ignored by the FHIR transport.
+    /// </summary>
+    public TcpClient? ExistingClient { get; init; }
 
     // ---- FHIR ----
     public FhirProfile? Profile { get; init; }

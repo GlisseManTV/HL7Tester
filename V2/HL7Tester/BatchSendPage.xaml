@@ -21,6 +21,26 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="16" Spacing="12">
 
+                <!-- ── FHIR mode badge ───────────────────────────────────────── -->
+                <Border IsVisible="{Binding IsFhirMode}"
+                        Padding="10,6"
+                        BackgroundColor="{AppThemeBinding Light=#EEF2FF, Dark=#1E1B4B}"
+                        StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="⚡ FHIR Mode"
+                               FontAttributes="Bold"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light=#3730A3, Dark=#A5B4FC}" />
+                        <Label Text="Resources are sent over HTTP (POST/PUT/PATCH)"
+                               FontSize="12"
+                               VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}" />
+                    </HorizontalStackLayout>
+                </Border>
+
                 <!-- ── Template selector ─────────────────────────────────────── -->
                 <Border Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="10">
@@ -259,7 +279,8 @@
                             HeightRequest="44" />
                     <VerticalStackLayout Grid.Column="2"
                                          VerticalOptions="Center"
-                                         Spacing="2">
+                                         Spacing="2"
+                                         IsVisible="{Binding IsMllpMode}">
                         <Label Text="Keep Connection"
                                FontSize="11"
                                HorizontalOptions="Center"

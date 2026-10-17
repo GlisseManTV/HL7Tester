@@ -580,7 +580,7 @@ Convention : fichiers en **anglais**, chemins relatifs à `V2/`. Complexité : *
   - En mode MLLP, comportement strictement identique à aujourd'hui.
 - **Complexité** : **M**.
 
-### Phase 5 — BatchSend en mode FHIR
+### Phase 5 — BatchSend en mode FHIR ✅ DONE (2026-10-17)
 
 - **Objectif** : réutiliser `BatchSendEngine` en FHIR.
 - **Fichiers à modifier** :

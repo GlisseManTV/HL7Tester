@@ -524,7 +524,7 @@ Convention : fichiers en **anglais**, chemins relatifs à `V2/`. Complexité : *
   - Le build passe avec le NuGet `Hl7.Fhir.R4` résolu.
 - **Complexité** : **L**.
 
-### Phase 2 — Génération de ressources FHIR (SDK Firely) + `FhirResourceGenerator`
+### Phase 2 — Génération de ressources FHIR (SDK Firely) + `FhirResourceGenerator` ✅ DONE (2026-10-17)
 
 - **Objectif** : produire des ressources FHIR (types `Hl7.Fhir.Model.*`) depuis `AdtMessageRequest`, avec une abstraction multi-version.
 - **Fichiers à créer** :

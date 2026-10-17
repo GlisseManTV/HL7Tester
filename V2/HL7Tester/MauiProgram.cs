@@ -63,6 +63,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<HL7Tester.Core.Security.ISecretStore, Services.InMemorySecretStore>();
 		builder.Services.AddSingleton<HL7Tester.Core.Fhir.FhirRestClient>();
 		builder.Services.AddSingleton<HL7Tester.Core.Sending.IMessageSender, HL7Tester.Core.Sending.SenderRouter>();
+
+		// FHIR module (Phase 2): R4 resource generator (Firely SDK) consumed by MainPage in Phase 4.
+		builder.Services.AddSingleton<HL7Tester.Core.Fhir.IFhirResourceGenerator, HL7Tester.Core.Fhir.FhirR4Generator>();
 		builder.Services.AddTransient<MainViewModel>();
 		builder.Services.AddTransient<MainPage>();
 

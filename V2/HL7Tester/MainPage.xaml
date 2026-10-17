@@ -61,7 +61,6 @@
                         ItemsSource="{Binding AvailableMessageTypes}"
                         SelectedItem="{Binding SelectedMessageType}"
                         MaxListHeight="240"
-                        ShowSearch="True"
                         Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
             </Grid>
         </Grid>

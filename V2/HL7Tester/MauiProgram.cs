@@ -57,6 +57,12 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AdtMessageGenerator>();
 		builder.Services.AddSingleton<IHL7NetworkSender, Hl7NetworkSender>();
 		builder.Services.AddSingleton<IUpdateChecker, GitHubUpdateChecker>();
+
+		// FHIR module (Phase 1): protocol-agnostic sender + FHIR REST client + secret store.
+		// ISecretStore is an in-memory stub for now; OS-protected storage (DPAPI/Keychain) arrives in Phase 3.
+		builder.Services.AddSingleton<HL7Tester.Core.Security.ISecretStore, Services.InMemorySecretStore>();
+		builder.Services.AddSingleton<HL7Tester.Core.Fhir.FhirRestClient>();
+		builder.Services.AddSingleton<HL7Tester.Core.Sending.IMessageSender, HL7Tester.Core.Sending.SenderRouter>();
 		builder.Services.AddTransient<MainViewModel>();
 		builder.Services.AddTransient<MainPage>();
 

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using HL7Tester.Core.Fhir;
 
 namespace HL7Tester.Core;
 
@@ -46,6 +47,28 @@ public sealed class NetworkSettings
     /// Si null ou différent de InstalledVersion, le popup est affiché au démarrage.
     /// </summary>
     public string? LastShownWhatNewVersion { get; set; }
+
+    /// <summary>
+    /// Active transport protocol: "MLLP" (HL7 v2, default) or "FHIR" (REST).
+    /// A v1 settings file without this field deserializes to "MLLP".
+    /// </summary>
+    public string Protocol { get; set; } = "MLLP";
+
+    /// <summary>
+    /// Id of the FHIR profile currently selected as active (see <see cref="FhirProfiles"/>).
+    /// </summary>
+    public string? ActiveFhirProfileId { get; set; }
+
+    /// <summary>
+    /// All configured FHIR connection profiles.
+    /// </summary>
+    public List<FhirProfile> FhirProfiles { get; set; } = new();
+
+    /// <summary>
+    /// Schema version of the settings document. A v1 document (no such field) loads
+    /// with the default value; newly written documents are stamped as version 2.
+    /// </summary>
+    public int SettingsSchemaVersion { get; set; } = 2;
 }
 
 public sealed class ConnectionHistoryEntry

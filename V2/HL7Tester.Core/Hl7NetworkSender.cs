@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Text;
+using HL7Tester.Core.Sending;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -37,7 +38,7 @@ public interface IHL7NetworkSender
     Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null, TcpClient? existingClient = null);
 }
 
-public sealed class Hl7NetworkSender : IHL7NetworkSender
+public sealed class Hl7NetworkSender : IHL7NetworkSender, IMessageSender
 {
     private readonly ILogger<Hl7NetworkSender> _logger;
 
@@ -160,6 +161,46 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                 client.Dispose();
             }
         }
+    }
+
+    /// <summary>
+    /// Protocol-agnostic entry point (<see cref="IMessageSender"/>). Adapts a
+    /// <see cref="SendRequest"/> to the existing MLLP API and maps the legacy
+    /// <see cref="SendResult"/> onto a unified <see cref="MessageSendResult"/>.
+    /// The original <c>SendAsync(string, string, int, ...)</c> API is preserved so
+    /// existing callers (BatchSendEngine / MainViewModel) keep working unchanged.
+    /// </summary>
+    public async Task<MessageSendResult> SendAsync(SendRequest request, CancellationToken ct = default)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        if (string.IsNullOrWhiteSpace(request.Ip) || request.Port is null)
+        {
+            return new MessageSendResult
+            {
+                Success = false,
+                Protocol = "MLLP",
+                ErrorMessage = "MLLP send requires an IP address and a port.",
+                ErrorDescription = "Missing IP or port."
+            };
+        }
+
+        var result = await SendAsync(
+            request.Payload,
+            request.Ip,
+            request.Port.Value,
+            ct,
+            request.EncodingName).ConfigureAwait(false);
+
+        return new MessageSendResult
+        {
+            Success = result.Success,
+            Protocol = "MLLP",
+            MsaStatus = result.MsaStatus,
+            AckMessage = result.AckMessage,
+            ErrorDescription = result.ErrorDescription,
+            ErrorMessage = result.ErrorMessage
+        };
     }
 
     /// <summary>

@@ -499,7 +499,7 @@ Convention : fichiers en **anglais**, chemins relatifs à `V2/`. Complexité : *
   - Les tests existants passent inchangés.
 - **Complexité** : **S**.
 
-### Phase 1 — Abstraction `IMessageSender` + `FhirRestClient` + `FhirSettings` + DI + SDK Firely
+### Phase 1 — Abstraction `IMessageSender` + `FhirRestClient` + `FhirSettings` + DI + SDK Firely ✅ DONE (2026-10-17)
 
 - **Objectif** : découpler l'envoi du protocole ; poser les settings FHIR et le socle HTTP ; intégrer le SDK `Hl7.Fhir.R4` (Firely) comme dépendance du Core.
 - **Fichiers à créer** :

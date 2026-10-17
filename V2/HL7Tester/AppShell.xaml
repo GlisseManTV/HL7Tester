@@ -26,6 +26,11 @@
             Title="Batch Send"
             ContentTemplate="{DataTemplate local:BatchSendPage}"
             Route="BatchSendPage" />
+
+        <ShellContent
+            Title="Connections"
+            ContentTemplate="{DataTemplate local:ConnectionsPage}"
+            Route="ConnectionsPage" />
     </TabBar>
 
 </Shell>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HL7Tester.ConnectionsPage"
+             Title="Connections">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Scrollable content area -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20" Spacing="16">
+
+                <!-- Row 1: Active Connection (left) + Connection History (right) -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+
+                    <!-- Active Connection card -->
+                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="Active Connection" Style="{StaticResource SubHeadline}" />
+                            <Grid RowSpacing="10" ColumnSpacing="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Text="IP (*)" VerticalOptions="Center" />
+                                <Entry Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding IpAddress}"
+                                       Keyboard="Numeric"
+                                       Placeholder="e.g., 192.168.1.10" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Text="Port (*)" VerticalOptions="Center" />
+                                <Entry Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding Port}"
+                                       Keyboard="Numeric"
+                                       Placeholder="e.g., 70" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Text="Nickname (optional)" VerticalOptions="Center" />
+                                <Entry Grid.Row="2" Grid.Column="1"
+                                       Text="{Binding Nickname}"
+                                       Placeholder="e.g., Server A, Test Lab" />
+
+                                <Button Grid.Row="3" Grid.ColumnSpan="2"
+                                        Text="Save Connection"
+                                        Command="{Binding SaveConnectionCommand}"
+                                        HorizontalOptions="Fill" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Connection History card -->
+                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Text="Saved Connections" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
+                                <Button Grid.Column="1" Text="Delete History"
+                                        Command="{Binding DeleteHistoryCommand}"
+                                        FontSize="14"
+                                        Padding="8,4" />
+                            </Grid>
+                            <CollectionView ItemsSource="{Binding HistoryEntries}"
+                                            HeightRequest="160"
+                                            SelectionMode="Single">
+                                <CollectionView.EmptyView>
+                                    <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
+                                </CollectionView.EmptyView>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="10" Style="{StaticResource ClickableListItemBorder}">
+                                            <Grid.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectHistoryEntryCommand}"
+                                                    CommandParameter="{Binding DisplayText}" />
+                                            </Grid.GestureRecognizers>
+                                            <Label Text="{Binding DisplayText}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+
+                </Grid>
+
+                <!-- Row 2: Protocol section (placeholder for Phase 3 FHIR) -->
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Protocol" Style="{StaticResource SubHeadline}" />
+                        <Label Text="MLLP (HL7 v2 over TCP)" FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}" />
+                        <Label Text="FHIR server profiles will appear here when enabled in Settings."
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Static footer with Home button -->
+        <Grid Grid.Row="1" Padding="16,10" ColumnDefinitions="*,Auto" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
+            <Label Grid.Column="0"
+                   Text="Connections"
+                   HorizontalOptions="Start"
+                   FontSize="14"
+                   TextColor="{DynamicResource Primary}" />
+
+            <Button Grid.Column="1"
+                    Text="Home"
+                    HorizontalOptions="End"
+                    Clicked="OnHomeClicked" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

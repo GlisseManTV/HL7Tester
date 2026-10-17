@@ -11,89 +11,24 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20" Spacing="16">
 
-                <!-- Row 1: Network Settings (left) + Connection History (right) -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                    
-                    <!-- Carte Network Settings -->
-                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorder}">
-                        <VerticalStackLayout Spacing="12">
-                            <Label Text="Network Settings" Style="{StaticResource SubHeadline}" />
-                            <Grid RowSpacing="10" ColumnSpacing="10">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-
-                                <Label Grid.Row="0" Grid.Column="0" Text="IP (*)" VerticalOptions="Center" />
-                                <Entry Grid.Row="0" Grid.Column="1"
-                                       Text="{Binding IpAddress}"
-                                       Keyboard="Numeric"
-                                       Placeholder="e.g., 192.168.1.10" />
-
-                                <Label Grid.Row="1" Grid.Column="0" Text="Port (*)" VerticalOptions="Center" />
-                                <Entry Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding Port}"
-                                       Keyboard="Numeric"
-                                       Placeholder="e.g., 70" />
-
-                                <Label Grid.Row="2" Grid.Column="0" Text="Nickname (optional)" VerticalOptions="Center" />
-                                <Entry Grid.Row="2" Grid.Column="1"
-                                       Text="{Binding Nickname}"
-                                       Placeholder="e.g., Server A, Test Lab" />
-
-                                <Button Grid.Row="3" Grid.ColumnSpan="2"
-                                        Text="Save Network settings"
-                                        Command="{Binding SaveNetworkSettingsCommand}"
-                                        HorizontalOptions="Fill" />
-                            </Grid>
+                <!-- Migration notice: Connections moved to a dedicated page -->
+                <Border Style="{StaticResource CardBorder}" Padding="16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4" VerticalOptions="Center">
+                            <Label Text="Network settings have moved" FontAttributes="Bold" FontSize="15" />
+                            <Label Text="IP address, port and connection history are now managed in the Connections page."
+                                   FontSize="13"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
                         </VerticalStackLayout>
-                    </Border>
+                        <Button Grid.Column="1"
+                                Text="Open Connections"
+                                Command="{Binding OpenConnectionsCommand}"
+                                VerticalOptions="Center"
+                                Padding="12,8" />
+                    </Grid>
+                </Border>
 
-                    <!-- Carte Connection History -->
-                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
-                        <VerticalStackLayout Spacing="12">
-                            <Grid ColumnSpacing="10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Label Grid.Column="0" Text="Connection History" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
-                                <Button Grid.Column="1" Text="Delete History" 
-                                        Command="{Binding DeleteHistoryCommand}"
-                                        FontSize="14"
-                                        Padding="8,4" />
-                            </Grid>
-                            <CollectionView ItemsSource="{Binding HistoryEntries}"
-                                            HeightRequest="160"
-                                            SelectionMode="Single">
-                                <CollectionView.EmptyView>
-                                    <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
-                                </CollectionView.EmptyView>
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Padding="10" Style="{StaticResource ClickableListItemBorder}">
-                                            <Grid.GestureRecognizers>
-                                                <TapGestureRecognizer
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectHistoryEntryCommand}"
-                                                    CommandParameter="{Binding DisplayText}" />
-                                            </Grid.GestureRecognizers>
-                                            <Label Text="{Binding DisplayText}" />
-                                        </Border>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                        </VerticalStackLayout>
-                    </Border>
-
-                </Grid>
-
-                <!-- Row 2: Application Settings (full width) -->
+                <!-- Row 1: Application Settings (full width) -->
                 <Border Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="Application Settings" Style="{StaticResource SubHeadline}" />

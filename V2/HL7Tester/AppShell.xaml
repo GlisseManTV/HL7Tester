@@ -4,43 +4,43 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:HL7Tester"
+    FlyoutBehavior="Disabled"
+    NavBarIsVisible="False"
     Title="HL7Tester">
 
-    <TabBar Shell.TabBarIsVisible="False">
-        <ShellContent
-            Title="Home"
-            ContentTemplate="{DataTemplate local:MainPage}"
-            Route="MainPage" />
+    <ShellContent
+        Title="Home"
+        ContentTemplate="{DataTemplate local:MainPage}"
+        Route="MainPage" />
 
-        <ShellContent
-            Title="HL7 Inspector"
-            ContentTemplate="{DataTemplate local:Hl7InspectorPage}"
-            Route="Hl7InspectorPage" />
+    <ShellContent
+        Title="HL7 Inspector"
+        ContentTemplate="{DataTemplate local:Hl7InspectorPage}"
+        Route="Hl7InspectorPage" />
 
-        <ShellContent
-            Title="Network"
-            ContentTemplate="{DataTemplate local:NetworkSettingsPage}"
-            Route="NetworkSettingsPage" />
+    <ShellContent
+        Title="Network"
+        ContentTemplate="{DataTemplate local:NetworkSettingsPage}"
+        Route="NetworkSettingsPage" />
 
-        <ShellContent
-            Title="Batch Send"
-            ContentTemplate="{DataTemplate local:BatchSendPage}"
-            Route="BatchSendPage" />
+    <ShellContent
+        Title="Batch Send"
+        ContentTemplate="{DataTemplate local:BatchSendPage}"
+        Route="BatchSendPage" />
 
-        <ShellContent
-            Title="Converter"
-            ContentTemplate="{DataTemplate local:FhirConverterPage}"
-            Route="FhirConverterPage" />
+    <ShellContent
+        Title="Converter"
+        ContentTemplate="{DataTemplate local:FhirConverterPage}"
+        Route="FhirConverterPage" />
 
-        <ShellContent
-            Title="FHIR Explorer"
-            ContentTemplate="{DataTemplate local:FhirExplorerPage}"
-            Route="FhirExplorerPage" />
+    <ShellContent
+        Title="FHIR Explorer"
+        ContentTemplate="{DataTemplate local:FhirExplorerPage}"
+        Route="FhirExplorerPage" />
 
-        <ShellContent
-            Title="Connections"
-            ContentTemplate="{DataTemplate local:ConnectionsPage}"
-            Route="ConnectionsPage" />
-    </TabBar>
+    <ShellContent
+        Title="Connections"
+        ContentTemplate="{DataTemplate local:ConnectionsPage}"
+        Route="ConnectionsPage" />
 
 </Shell>

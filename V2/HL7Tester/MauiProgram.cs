@@ -100,6 +100,10 @@ public static class MauiProgram
 		builder.Services.AddTransient<HL7Tester.ViewModels.BatchSendViewModel>();
 		builder.Services.AddTransient<HL7Tester.BatchSendPage>();
 
+		// HL7 ⇄ FHIR Converter (Phase 7)
+		builder.Services.AddTransient<HL7Tester.ViewModels.FhirConverterViewModel>();
+		builder.Services.AddTransient<HL7Tester.FhirConverterPage>();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif

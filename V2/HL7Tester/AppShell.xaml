@@ -28,6 +28,11 @@
             Route="BatchSendPage" />
 
         <ShellContent
+            Title="Converter"
+            ContentTemplate="{DataTemplate local:FhirConverterPage}"
+            Route="FhirConverterPage" />
+
+        <ShellContent
             Title="Connections"
             ContentTemplate="{DataTemplate local:ConnectionsPage}"
             Route="ConnectionsPage" />

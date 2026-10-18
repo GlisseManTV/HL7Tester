@@ -6,6 +6,8 @@
              xmlns:controls="clr-namespace:HL7Tester.Controls"
              xmlns:batch="clr-namespace:HL7Tester.Core.Batch;assembly=HL7Tester.Core"
              x:Class="HL7Tester.BatchSendPage"
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False"
              Title="Batch Send">
 
     <ContentPage.Resources>

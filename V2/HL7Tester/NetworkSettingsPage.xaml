@@ -4,6 +4,8 @@
              x:Class="HL7Tester.NetworkSettingsPage"
              xmlns:controls="clr-namespace:HL7Tester.Controls"
              xmlns:converters="clr-namespace:HL7Tester.Resources.Converters"
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False"
              Title="Settings">
 
     <ContentPage.Resources>

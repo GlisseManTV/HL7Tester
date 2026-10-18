@@ -4,6 +4,8 @@
              x:Class="HL7Tester.FhirExplorerPage"
              xmlns:controls="clr-namespace:HL7Tester.Controls"
              xmlns:converters="clr-namespace:HL7Tester.Converters"
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False"
              Title="FHIR Explorer">
 
     <ContentPage.Resources>

@@ -4,6 +4,8 @@
              xmlns:viewmodels="clr-namespace:HL7Tester.ViewModels"
              xmlns:converters="clr-namespace:HL7Tester.Converters"
              x:Class="HL7Tester.Hl7InspectorPage"
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False"
              Title="HL7 Inspector">
 
     <ContentPage.Resources>

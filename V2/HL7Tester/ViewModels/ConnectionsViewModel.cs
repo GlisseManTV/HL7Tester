@@ -55,6 +55,9 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
     public ICommand SelectHistoryEntryCommand { get; }
     public ICommand DeleteHistoryCommand { get; }
 
+    /// <summary>Deletes a single connection history entry (parameter: the history item).</summary>
+    public ICommand DeleteHistoryEntryCommand { get; }
+
     // ---------------------------------------------------------------------
     // Mode badge (global protocol toggle lives in NetworkSettingsPage)
     // ---------------------------------------------------------------------
@@ -346,6 +349,12 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
     public ICommand SaveProfileCommand { get; }
     public ICommand DeleteProfileCommand { get; }
 
+    /// <summary>Selects a FHIR profile from the profile list (parameter: the profile).</summary>
+    public ICommand SelectProfileCommand { get; }
+
+    /// <summary>Deletes a single FHIR profile from the profile list (parameter: the profile).</summary>
+    public ICommand DeleteProfileEntryCommand { get; }
+
     public ConnectionsViewModel(
         INetworkSettingsService service,
         ISecretStore secretStore,
@@ -358,10 +367,13 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
         SaveConnectionCommand = new Command(async () => await SaveConnectionAsync());
         SelectHistoryEntryCommand = new Command<string>(OnSelectHistoryEntry);
         DeleteHistoryCommand = new Command(OnDeleteHistory);
+        DeleteHistoryEntryCommand = new Command<HistoryEntryViewModel>(OnDeleteHistoryEntry);
 
         AddProfileCommand = new Command(OnAddProfile);
         SaveProfileCommand = new Command(async () => await SaveProfileAsync());
         DeleteProfileCommand = new Command(async () => await DeleteProfileAsync());
+        SelectProfileCommand = new Command<FhirProfile>(OnSelectProfile);
+        DeleteProfileEntryCommand = new Command<FhirProfile>(async profile => await DeleteProfileAsync(profile));
     }
 
     public async Task LoadAsync()
@@ -556,7 +568,11 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
 
     private async Task DeleteProfileAsync()
     {
-        var profile = SelectedProfile;
+        await DeleteProfileAsync(SelectedProfile);
+    }
+
+    private async Task DeleteProfileAsync(FhirProfile? profile)
+    {
         if (profile is null)
         {
             return;
@@ -671,6 +687,34 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
         HistoryEntries.Clear();
 
         _logger.LogInformation("Connection history deleted.");
+    }
+
+    /// <summary>
+    /// Removes a single entry from the connection history and persists the settings.
+    /// </summary>
+    private void OnDeleteHistoryEntry(HistoryEntryViewModel? item)
+    {
+        if (item?.Entry is null)
+        {
+            return;
+        }
+
+        _settings.History.RemoveAll(entry => ReferenceEquals(entry, item.Entry));
+        Task.Run(async () => await _service.SaveAsync(_settings)).Wait();
+        RefreshHistory();
+
+        _logger.LogInformation("Connection history entry deleted: {Entry}.", item.DisplayText);
+    }
+
+    /// <summary>
+    /// Loads the tapped FHIR profile into the editor panel (left column).
+    /// </summary>
+    private void OnSelectProfile(FhirProfile? profile)
+    {
+        if (profile is not null)
+        {
+            SelectedProfile = profile;
+        }
     }
 
     public sealed class HistoryEntryViewModel

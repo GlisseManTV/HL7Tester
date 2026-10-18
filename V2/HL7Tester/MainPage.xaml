@@ -690,12 +690,12 @@
                         Text="Copy"
                         Clicked="OnCopyMessageClicked" />
 
-                <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="8">
+                <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="8" HeightRequest="150">
                     <Border.GestureRecognizers>
                         <DropGestureRecognizer AllowDrop="True" Drop="OnGeneratedMessageFileDropped" />
                     </Border.GestureRecognizers>
-                    <Editor Text="{Binding GeneratedMessage}" 
-                            AutoSize="TextChanges"
+                    <Editor Text="{Binding GeneratedMessage}"
+                            VerticalOptions="Fill"
                             Placeholder="HL7 message will appear here after generation or file drop" />
                 </Border>
 

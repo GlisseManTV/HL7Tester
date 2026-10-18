@@ -133,16 +133,30 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     public ICommand OpenDocumentationCommand { get; }
     public ICommand OpenOrmDocumentationCommand { get; }
     public ICommand OpenSiuDocumentationCommand { get; }
+    public ICommand OpenAdtV29Command { get; }
+    public ICommand OpenOrmV29Command { get; }
+    public ICommand OpenSiuV29Command { get; }
     public ICommand OpenInspectorCommand { get; }
     public ICommand OpenInspectorWebCommand { get; }
     public ICommand OpenBatchSendCommand { get; }
     public ICommand OpenConnectionsCommand { get; }
     public ICommand OpenConverterCommand { get; }
     public ICommand OpenFhirExplorerCommand { get; }
+    public ICommand OpenFhirR4DocsCommand { get; }
+    public ICommand OpenFhirR5DocsCommand { get; }
 
     private const string HL7_ADT_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH3.html#Heading3";
     private const string HL7_ORM_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH4.html#Heading13";
     private const string HL7_SIU_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH10.html#Heading53";
+
+    // HL7 v2.9 documentation links
+    private const string HL7_ADT_V29_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v29/std29/ch03.html#Heading1";
+    private const string HL7_ORM_V29_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v29/std29/ch04.html#Heading1";
+    private const string HL7_SIU_V29_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v29/std29/ch10.html#Heading1";
+
+    // FHIR documentation links
+    private const string FHIR_R4_DOCUMENTATION_URL = "https://hl7.org/fhir/R4/documentation.html";
+    private const string FHIR_R5_DOCUMENTATION_URL = "https://hl7.org/fhir/R5/documentation.html";
 
 
     public NetworkSettingsViewModel(INetworkSettingsService service, ILogger<NetworkSettingsViewModel> logger)
@@ -160,12 +174,17 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         OpenDocumentationCommand = new Command(OpenAdtDocumentation);
         OpenOrmDocumentationCommand = new Command(OpenOrmDocumentation);
         OpenSiuDocumentationCommand = new Command(OpenSiuDocumentation);
+        OpenAdtV29Command = new Command(OpenAdtV29Documentation);
+        OpenOrmV29Command = new Command(OpenOrmV29Documentation);
+        OpenSiuV29Command = new Command(OpenSiuV29Documentation);
         OpenInspectorCommand = new Command(OpenInspector);
         OpenInspectorWebCommand = new Command(OpenWebInspector);
         OpenBatchSendCommand = new Command(OpenBatchSend);
         OpenConnectionsCommand = new Command(OpenConnections);
         OpenConverterCommand = new Command(OpenConverter);
         OpenFhirExplorerCommand = new Command(OpenFhirExplorer);
+        OpenFhirR4DocsCommand = new Command(OpenFhirR4Docs);
+        OpenFhirR5DocsCommand = new Command(OpenFhirR5Docs);
     }
 
     private async void OpenConverter()
@@ -262,6 +281,81 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to open HL7 SIU documentation URL: {Url}", HL7_SIU_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenAdtV29Documentation()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 v2.9 ADT documentation: {Url}", HL7_ADT_V29_DOCUMENTATION_URL);
+
+            var uri = new Uri(HL7_ADT_V29_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 v2.9 ADT documentation URL: {Url}", HL7_ADT_V29_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenOrmV29Documentation()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 v2.9 ORM documentation: {Url}", HL7_ORM_V29_DOCUMENTATION_URL);
+
+            var uri = new Uri(HL7_ORM_V29_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 v2.9 ORM documentation URL: {Url}", HL7_ORM_V29_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenSiuV29Documentation()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 v2.9 SIU documentation: {Url}", HL7_SIU_V29_DOCUMENTATION_URL);
+
+            var uri = new Uri(HL7_SIU_V29_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 v2.9 SIU documentation URL: {Url}", HL7_SIU_V29_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenFhirR4Docs()
+    {
+        try
+        {
+            _logger.LogInformation("Opening FHIR R4 documentation: {Url}", FHIR_R4_DOCUMENTATION_URL);
+
+            var uri = new Uri(FHIR_R4_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open FHIR R4 documentation URL: {Url}", FHIR_R4_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenFhirR5Docs()
+    {
+        try
+        {
+            _logger.LogInformation("Opening FHIR R5 documentation: {Url}", FHIR_R5_DOCUMENTATION_URL);
+
+            var uri = new Uri(FHIR_R5_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open FHIR R5 documentation URL: {Url}", FHIR_R5_DOCUMENTATION_URL);
         }
     }
 

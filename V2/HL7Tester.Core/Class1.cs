@@ -97,11 +97,6 @@ public sealed class AdtMessageGenerator
 {
     private readonly ILogger<AdtMessageGenerator> _logger;
 
-    static AdtMessageGenerator()
-    {
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-    }
-
     public AdtMessageGenerator(ILogger<AdtMessageGenerator>? logger = null)
     {
         _logger = logger ?? NullLogger<AdtMessageGenerator>.Instance;

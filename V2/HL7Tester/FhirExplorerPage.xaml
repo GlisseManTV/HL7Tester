@@ -48,7 +48,8 @@
                 <controls:AppDropdown Grid.Column="0"
                                       VerticalOptions="Center"
                                       ItemsSource="{Binding AvailableResourceTypes}"
-                                      SelectedItem="{Binding SelectedResourceType}" />
+                                      SelectedItem="{Binding SelectedResourceType}"
+                                      MaxListHeight="150" />
 
                 <!-- Mode toggle: active button colored, inactive gray -->
                 <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="8">

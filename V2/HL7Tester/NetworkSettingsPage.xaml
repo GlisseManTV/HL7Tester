@@ -106,41 +106,73 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Row 3: Documentation (left) + HL7 Tools (right) -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                    
+                <!-- Row 3: Documentation (left) + HL7v2 Tools (center) + FHIR Tools (right) -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+
                     <!-- Carte Documentation HL7 -->
                     <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorder}">
                         <VerticalStackLayout Spacing="12">
                             <Label Text="HL7 Documentation" Style="{StaticResource SubHeadline}" />
-                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                                <Button Grid.Column="0"
+                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                <Button Grid.Row="0" Grid.Column="0"
                                         Text="ADT v2.3 ↗"
                                         Command="{Binding OpenDocumentationCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="8,6"
                                         FontSize="11" />
-                                <Button Grid.Column="1"
+                                <Button Grid.Row="0" Grid.Column="1"
                                         Text="ORM v2.3 ↗"
                                         Command="{Binding OpenOrmDocumentationCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="8,6"
                                         FontSize="11" />
-                                <Button Grid.Column="2"
+                                <Button Grid.Row="0" Grid.Column="2"
                                         Text="SIU v2.3 ↗"
                                         Command="{Binding OpenSiuDocumentationCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="8,6"
                                         FontSize="11" />
+                                <Button Grid.Row="1" Grid.Column="0"
+                                        Text="ADT v2.9 ↗"
+                                        Command="{Binding OpenAdtV29Command}"
+                                        HorizontalOptions="Fill"
+                                        Padding="8,6"
+                                        FontSize="11" />
+                                <Button Grid.Row="1" Grid.Column="1"
+                                        Text="ORM v2.9 ↗"
+                                        Command="{Binding OpenOrmV29Command}"
+                                        HorizontalOptions="Fill"
+                                        Padding="8,6"
+                                        FontSize="11" />
+                                <Button Grid.Row="1" Grid.Column="2"
+                                        Text="SIU v2.9 ↗"
+                                        Command="{Binding OpenSiuV29Command}"
+                                        HorizontalOptions="Fill"
+                                        Padding="8,6"
+                                        FontSize="11" />
+                                <Grid Grid.Row="2" Grid.ColumnSpan="3" ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <Button Grid.Column="0"
+                                            Text="📖 FHIR R4 ↗"
+                                            Command="{Binding OpenFhirR4DocsCommand}"
+                                            HorizontalOptions="Fill"
+                                            Padding="8,6"
+                                            FontSize="11" />
+                                    <Button Grid.Column="1"
+                                            Text="📖 FHIR R5 ↗"
+                                            Command="{Binding OpenFhirR5DocsCommand}"
+                                            HorizontalOptions="Fill"
+                                            Padding="8,6"
+                                            FontSize="11" />
+                                </Grid>
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
 
-                    <!-- Carte HL7 Tools -->
+                    <!-- Carte HL7v2 Tools -->
                     <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
-                        <VerticalStackLayout Spacing="12">                        
-                            <Label Text="HL7 Tools" Style="{StaticResource SubHeadline}" />
-                            <Grid RowDefinitions="*,*,*,*,*" RowSpacing="8">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="🔧 HL7v2 Tools" Style="{StaticResource SubHeadline}" />
+                            <Grid RowDefinitions="*,*,*" RowSpacing="8">
                                 <Button Grid.Row="0"
                                         Text="Embedded HL7 Inspector"
                                         Command="{Binding OpenInspectorCommand}"
@@ -156,14 +188,23 @@
                                         Command="{Binding OpenBatchSendCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="12,8" />
-                                <Button Grid.Row="3"
-                                        Text="HL7 ⇄ FHIR Converter"
-                                        Command="{Binding OpenConverterCommand}"
-                                        HorizontalOptions="Fill"
-                                        Padding="12,8" />
-                                <Button Grid.Row="4"
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Carte FHIR Tools -->
+                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="🔍 FHIR Tools" Style="{StaticResource SubHeadline}" />
+                            <Grid RowDefinitions="*,*" RowSpacing="8">
+                                <Button Grid.Row="0"
                                         Text="🔍 FHIR Explorer"
                                         Command="{Binding OpenFhirExplorerCommand}"
+                                        HorizontalOptions="Fill"
+                                        Padding="12,8" />
+                                <Button Grid.Row="1"
+                                        Text="HL7 ⇄ FHIR Converter"
+                                        Command="{Binding OpenConverterCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="12,8" />
                             </Grid>

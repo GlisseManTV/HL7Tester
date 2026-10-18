@@ -65,6 +65,7 @@
                 <controls:AppDropdown Grid.Column="1"
                         ItemsSource="{Binding AvailableMessageFamilies}"
                         SelectedItem="{Binding SelectedMessageFamily}"
+                        MaxListHeight="150"
                         Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
 
                 <Label Grid.Column="2"
@@ -76,7 +77,7 @@
                 <controls:AppDropdown Grid.Column="3"
                         ItemsSource="{Binding AvailableMessageTypes}"
                         SelectedItem="{Binding SelectedMessageType}"
-                        MaxListHeight="240"
+                        MaxListHeight="150"
                         Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
             </Grid>
 
@@ -101,6 +102,7 @@
                 <controls:AppDropdown Grid.Column="1"
                         ItemsSource="{Binding AvailableFhirResourceTypes}"
                         SelectedItem="{Binding SelectedFhirResourceType}"
+                        MaxListHeight="150"
                         Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
 
                 <Label Grid.Column="2"
@@ -112,6 +114,7 @@
                 <controls:AppDropdown Grid.Column="3"
                         ItemsSource="{Binding AvailableFhirHttpMethods}"
                         SelectedItem="{Binding SelectedFhirHttpMethod}"
+                        MaxListHeight="150"
                         Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
             </Grid>
         </Grid>

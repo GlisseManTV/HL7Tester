@@ -91,7 +91,7 @@
                                     Placeholder="Message type"
                                     ItemsSource="{Binding AvailableStepTypes}"
                                     SelectedItem="{Binding SelectedNewStepType}"
-                                    MaxListHeight="240" />
+                                    MaxListHeight="150" />
                             <Button Grid.Column="2" Text="+ Add"
                                     Command="{Binding AddStepCommand}"
                                     FontSize="13"

@@ -138,6 +138,7 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     public ICommand OpenBatchSendCommand { get; }
     public ICommand OpenConnectionsCommand { get; }
     public ICommand OpenConverterCommand { get; }
+    public ICommand OpenFhirExplorerCommand { get; }
 
     private const string HL7_ADT_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH3.html#Heading3";
     private const string HL7_ORM_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH4.html#Heading13";
@@ -164,6 +165,7 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         OpenBatchSendCommand = new Command(OpenBatchSend);
         OpenConnectionsCommand = new Command(OpenConnections);
         OpenConverterCommand = new Command(OpenConverter);
+        OpenFhirExplorerCommand = new Command(OpenFhirExplorer);
     }
 
     private async void OpenConverter()
@@ -176,6 +178,19 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to open HL7 ⇄ FHIR Converter page.");
+        }
+    }
+
+    private async void OpenFhirExplorer()
+    {
+        try
+        {
+            _logger.LogInformation("Opening FHIR Explorer page.");
+            await Shell.Current.GoToAsync("//FhirExplorerPage");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open FHIR Explorer page.");
         }
     }
 

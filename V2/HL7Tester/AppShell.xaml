@@ -33,6 +33,11 @@
             Route="FhirConverterPage" />
 
         <ShellContent
+            Title="FHIR Explorer"
+            ContentTemplate="{DataTemplate local:FhirExplorerPage}"
+            Route="FhirExplorerPage" />
+
+        <ShellContent
             Title="Connections"
             ContentTemplate="{DataTemplate local:ConnectionsPage}"
             Route="ConnectionsPage" />

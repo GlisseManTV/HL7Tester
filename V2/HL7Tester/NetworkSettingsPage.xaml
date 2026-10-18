@@ -140,7 +140,7 @@
                     <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
                         <VerticalStackLayout Spacing="12">                        
                             <Label Text="HL7 Tools" Style="{StaticResource SubHeadline}" />
-                            <Grid RowDefinitions="*,*,*,*" RowSpacing="8">
+                            <Grid RowDefinitions="*,*,*,*,*" RowSpacing="8">
                                 <Button Grid.Row="0"
                                         Text="Embedded HL7 Inspector"
                                         Command="{Binding OpenInspectorCommand}"
@@ -159,6 +159,11 @@
                                 <Button Grid.Row="3"
                                         Text="HL7 ⇄ FHIR Converter"
                                         Command="{Binding OpenConverterCommand}"
+                                        HorizontalOptions="Fill"
+                                        Padding="12,8" />
+                                <Button Grid.Row="4"
+                                        Text="🔍 FHIR Explorer"
+                                        Command="{Binding OpenFhirExplorerCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="12,8" />
                             </Grid>

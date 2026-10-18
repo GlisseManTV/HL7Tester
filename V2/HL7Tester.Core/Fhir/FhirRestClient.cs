@@ -99,6 +99,68 @@ public sealed class FhirRestClient
     }
 
     /// <summary>
+    /// Performs a read-only GET and returns the raw response body (no Firely deserialization).
+    /// Accepts either a path relative to the profile BaseUrl (e.g. "Patient?name=Smith" or
+    /// "Patient/patient-123") or an absolute URL (e.g. a Bundle "next" page link). Authentication,
+    /// TLS verification and timeout follow the same rules as <see cref="SendAsync"/>.
+    /// </summary>
+    public async Task<FhirSendResult> GetRawAsync(FhirProfile profile, string pathOrUrl, CancellationToken ct = default)
+    {
+        if (profile is null)
+            return new FhirSendResult { Success = false, ErrorMessage = "No FHIR profile configured." };
+        if (string.IsNullOrWhiteSpace(profile.BaseUrl))
+            return new FhirSendResult { Success = false, ErrorMessage = "FHIR profile BaseUrl is empty." };
+        if (string.IsNullOrWhiteSpace(pathOrUrl))
+            return new FhirSendResult { Success = false, ErrorMessage = "Request path is empty." };
+
+        try
+        {
+            using var httpClient = BuildHttpClient(profile);
+
+            var url = IsAbsoluteUrl(pathOrUrl)
+                ? pathOrUrl
+                : $"{profile.BaseUrl.TrimEnd('/')}/{pathOrUrl.TrimStart('/')}";
+
+            using var message = new HttpRequestMessage(HttpMethod.Get, url);
+
+            var accept = string.IsNullOrWhiteSpace(profile.FhirVersion)
+                ? FhirJsonMediaType
+                : $"{FhirJsonMediaType}; fhirVersion={profile.FhirVersion}";
+            message.Headers.TryAddWithoutValidation("Accept", accept);
+
+            using var response = await httpClient.SendAsync(message, ct).ConfigureAwait(false);
+            var status = (int)response.StatusCode;
+            var body = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+
+            return new FhirSendResult
+            {
+                Success = response.IsSuccessStatusCode,
+                HttpStatusCode = status,
+                ResponseBody = body,
+                ErrorDescription = response.IsSuccessStatusCode
+                    ? null
+                    : $"{status} {response.ReasonPhrase}".Trim(),
+                ErrorMessage = response.IsSuccessStatusCode
+                    ? string.Empty
+                    : $"{status} {response.ReasonPhrase}".Trim()
+            };
+        }
+        catch (Exception ex)
+        {
+            return new FhirSendResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message,
+                ErrorDescription = ex.Message
+            };
+        }
+    }
+
+    private static bool IsAbsoluteUrl(string value)
+        => Uri.TryCreate(value, UriKind.Absolute, out var uri)
+           && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+
+    /// <summary>
     /// Convenience helper used by the acceptance test: issues GET [base]/metadata and
     /// deserializes the result into a Firely <see cref="CapabilityStatement"/>.
     /// </summary>

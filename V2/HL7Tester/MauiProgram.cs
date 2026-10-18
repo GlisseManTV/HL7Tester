@@ -104,6 +104,10 @@ public static class MauiProgram
 		builder.Services.AddTransient<HL7Tester.ViewModels.FhirConverterViewModel>();
 		builder.Services.AddTransient<HL7Tester.FhirConverterPage>();
 
+		// FHIR Explorer — read-only server exploration (Phase 8)
+		builder.Services.AddTransient<HL7Tester.ViewModels.FhirExplorerViewModel>();
+		builder.Services.AddTransient<HL7Tester.FhirExplorerPage>();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif

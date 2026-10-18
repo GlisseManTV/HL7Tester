@@ -21,6 +21,7 @@ public sealed class FhirExplorerViewModel : INotifyPropertyChanged
 {
     private static readonly Color ActiveSearchColor = Color.FromArgb("#009688"); // teal
     private static readonly Color ActiveReadColor = Color.FromArgb("#512BD4");   // indigo / Primary
+    private static readonly Color ActiveCapabilitiesColor = Color.FromArgb("#0EA5E9"); // sky blue
     private static readonly Color InactiveColor = Color.FromArgb("#9CA3AF");     // gray
 
     private readonly FhirRestClient _restClient;
@@ -59,28 +60,81 @@ public sealed class FhirExplorerViewModel : INotifyPropertyChanged
         set => SetField(ref _selectedResourceType, value);
     }
 
+    // Three mutually-exclusive explorer modes: Search, Read, Capabilities.
     private bool _isSearchMode = true;
+    private bool _isReadMode;
+    private bool _isCapabilitiesMode;
+
     public bool IsSearchMode
     {
         get => _isSearchMode;
-        set
-        {
-            if (SetField(ref _isSearchMode, value))
-            {
-                OnPropertyChanged(nameof(IsReadMode));
-                OnPropertyChanged(nameof(SearchButtonColor));
-                OnPropertyChanged(nameof(ReadButtonColor));
-            }
-        }
+        set { if (value) SelectSearchMode(); }
     }
 
-    public bool IsReadMode => !IsSearchMode;
+    public bool IsReadMode
+    {
+        get => _isReadMode;
+        set { if (value) SelectReadMode(); }
+    }
+
+    public bool IsCapabilitiesMode
+    {
+        get => _isCapabilitiesMode;
+        set { if (value) SelectCapabilitiesMode(); }
+    }
+
+    private void SelectSearchMode()
+    {
+        if (_isSearchMode && !_isReadMode && !_isCapabilitiesMode)
+            return;
+        _isSearchMode = true;
+        _isReadMode = false;
+        _isCapabilitiesMode = false;
+        NotifyModeChanged();
+    }
+
+    private void SelectReadMode()
+    {
+        if (_isReadMode && !_isSearchMode && !_isCapabilitiesMode)
+            return;
+        _isReadMode = true;
+        _isSearchMode = false;
+        _isCapabilitiesMode = false;
+        NotifyModeChanged();
+    }
+
+    private void SelectCapabilitiesMode()
+    {
+        if (_isCapabilitiesMode && !_isSearchMode && !_isReadMode)
+            return;
+        _isCapabilitiesMode = true;
+        _isSearchMode = false;
+        _isReadMode = false;
+        NotifyModeChanged();
+    }
+
+    private void NotifyModeChanged()
+    {
+        OnPropertyChanged(nameof(IsSearchMode));
+        OnPropertyChanged(nameof(IsReadMode));
+        OnPropertyChanged(nameof(IsCapabilitiesMode));
+        OnPropertyChanged(nameof(SearchButtonColor));
+        OnPropertyChanged(nameof(ReadButtonColor));
+        OnPropertyChanged(nameof(CapabilitiesButtonColor));
+        OnPropertyChanged(nameof(ExecuteButtonText));
+    }
 
     /// <summary>Background of the "Search" toggle button.</summary>
-    public Color SearchButtonColor => IsSearchMode ? ActiveSearchColor : InactiveColor;
+    public Color SearchButtonColor => _isSearchMode ? ActiveSearchColor : InactiveColor;
 
     /// <summary>Background of the "Read" toggle button.</summary>
-    public Color ReadButtonColor => IsReadMode ? ActiveReadColor : InactiveColor;
+    public Color ReadButtonColor => _isReadMode ? ActiveReadColor : InactiveColor;
+
+    /// <summary>Background of the "Capabilities" toggle button.</summary>
+    public Color CapabilitiesButtonColor => _isCapabilitiesMode ? ActiveCapabilitiesColor : InactiveColor;
+
+    /// <summary>Label of the primary action button (changes in Capabilities mode).</summary>
+    public string ExecuteButtonText => _isCapabilitiesMode ? "Fetch Capabilities" : "Execute";
 
     private string _searchParams = string.Empty;
     public string SearchParams
@@ -142,9 +196,19 @@ public sealed class FhirExplorerViewModel : INotifyPropertyChanged
     /// <summary>True when the last Bundle carried a "next" page link.</summary>
     public bool HasNextPage => !string.IsNullOrEmpty(_nextPageUrl);
 
+    private string _activeServerUrl = string.Empty;
+
+    /// <summary>BaseUrl of the active FHIR profile (shown in Capabilities mode).</summary>
+    public string ActiveServerUrl
+    {
+        get => _activeServerUrl;
+        private set => SetField(ref _activeServerUrl, value);
+    }
+
     // ── Commands ──────────────────────────────────────────────────────────────
 
     public ICommand ExecuteCommand { get; }
+    public ICommand DiscoverCapabilitiesCommand { get; }
     public ICommand NextPageCommand { get; }
     public ICommand CopyResponseCommand { get; }
     public ICommand ClearCommand { get; }
@@ -162,6 +226,7 @@ public sealed class FhirExplorerViewModel : INotifyPropertyChanged
         _logger = logger ?? NullLogger<FhirExplorerViewModel>.Instance;
 
         ExecuteCommand = new Command(async () => await ExecuteAsync());
+        DiscoverCapabilitiesCommand = new Command(async () => await DiscoverCapabilitiesAsync());
         NextPageCommand = new Command(async () => await NextPageAsync());
         CopyResponseCommand = new Command(async () => await CopyResponseAsync());
         ClearCommand = new Command(Clear);
@@ -184,9 +249,12 @@ public sealed class FhirExplorerViewModel : INotifyPropertyChanged
         // Convenience fallback: if none is explicitly active but exactly one exists, use it.
         _activeProfile ??= settings.FhirProfiles.Count == 1 ? settings.FhirProfiles[0] : null;
 
+        ActiveServerUrl = _activeProfile?.BaseUrl ?? string.Empty;
+
         OnPropertyChanged(nameof(IsFhirMode));
         OnPropertyChanged(nameof(ModeBadgeText));
         OnPropertyChanged(nameof(ModeBadgeColor));
+        OnPropertyChanged(nameof(ActiveServerUrl));
 
         if (_activeProfile is null)
         {
@@ -206,6 +274,13 @@ public sealed class FhirExplorerViewModel : INotifyPropertyChanged
         if (_activeProfile is null)
         {
             StatusMessage = "No active FHIR profile. Configure one in Connections and select FHIR protocol.";
+            return;
+        }
+
+        // Capabilities mode: hit GET [base]/metadata instead of a search/read.
+        if (IsCapabilitiesMode)
+        {
+            await DiscoverCapabilitiesAsync().ConfigureAwait(false);
             return;
         }
 
@@ -281,6 +356,111 @@ public sealed class FhirExplorerViewModel : INotifyPropertyChanged
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    // ── CapabilityStatement discovery ───────────────────────────────────────
+
+    /// <summary>
+    /// Fetches the server CapabilityStatement via GET [base]/metadata, pretty-prints
+    /// the JSON and summarizes fhirVersion + software name/version in the status bar.
+    /// </summary>
+    private async Task DiscoverCapabilitiesAsync()
+    {
+        if (_activeProfile is null)
+        {
+            StatusMessage = "No active FHIR profile. Configure one in Connections and select FHIR protocol.";
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = string.Empty;
+        SetNextPageUrl(null);
+
+        try
+        {
+            var result = await _restClient.GetRawAsync(_activeProfile!, "metadata").ConfigureAwait(false);
+            var status = result.HttpStatusCode ?? 0;
+            var body = result.ResponseBody ?? string.Empty;
+
+            ResponseBody = PrettyPrintJson(body);
+
+            if (result.Success)
+            {
+                var summary = SummarizeCapabilityStatement(body);
+                StatusMessage = string.IsNullOrEmpty(summary)
+                    ? $"{status} OK — CapabilityStatement"
+                    : $"{status} OK — CapabilityStatement ({summary})";
+                _logger.LogInformation("FHIR capabilities discovery succeeded for {BaseUrl}.", _activeProfile!.BaseUrl);
+            }
+            else
+            {
+                var err = string.IsNullOrWhiteSpace(result.ErrorDescription)
+                    ? result.ErrorMessage
+                    : result.ErrorDescription;
+                StatusMessage = string.IsNullOrWhiteSpace(body)
+                    ? $"{err}"
+                    : $"{err} — see response body";
+                _logger.LogWarning("FHIR capabilities discovery failed: {Error}.", err);
+            }
+        }
+        catch (Exception ex)
+        {
+            ResponseBody = string.Empty;
+            StatusMessage = $"Capabilities request failed: {ex.Message}";
+            _logger.LogError(ex, "FHIR capabilities discovery threw.");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Extracts "FHIR v{fhirVersion}, {software.name} {software.version}" from a
+    /// CapabilityStatement JSON. Returns an empty string when not parseable.
+    /// </summary>
+    private static string SummarizeCapabilityStatement(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return string.Empty;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+                return string.Empty;
+
+            var version = root.TryGetProperty("fhirVersion", out var v) && v.ValueKind == JsonValueKind.String
+                ? v.GetString()
+                : null;
+
+            string? software = null;
+            if (root.TryGetProperty("software", out var sw) && sw.ValueKind == JsonValueKind.Object)
+            {
+                var name = sw.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String
+                    ? n.GetString()
+                    : null;
+                var ver = sw.TryGetProperty("version", out var sv) && sv.ValueKind == JsonValueKind.String
+                    ? sv.GetString()
+                    : null;
+
+                if (!string.IsNullOrWhiteSpace(name))
+                    software = string.IsNullOrWhiteSpace(ver) ? name : $"{name} {ver}";
+            }
+
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(version))
+                parts.Add($"FHIR v{version}");
+            if (!string.IsNullOrWhiteSpace(software))
+                parts.Add(software!);
+
+            return string.Join(", ", parts);
+        }
+        catch (JsonException)
+        {
+            return string.Empty;
         }
     }
 

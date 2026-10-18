@@ -25,7 +25,10 @@ public partial class FhirExplorerPage : ContentPage
         => _viewModel.IsSearchMode = true;
 
     private void OnReadClicked(object? sender, EventArgs e)
-        => _viewModel.IsSearchMode = false;
+        => _viewModel.IsReadMode = true;
+
+    private void OnCapabilitiesClicked(object? sender, EventArgs e)
+        => _viewModel.IsCapabilitiesMode = true;
 
     // ── Navigation ────────────────────────────────────────────────────────────
 

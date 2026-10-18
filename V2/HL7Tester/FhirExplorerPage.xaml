@@ -51,7 +51,7 @@
                                       SelectedItem="{Binding SelectedResourceType}" />
 
                 <!-- Mode toggle: active button colored, inactive gray -->
-                <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+                <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
                     <Button Grid.Column="0"
                             Text="Search"
                             BackgroundColor="{Binding SearchButtonColor}"
@@ -66,6 +66,13 @@
                             FontAttributes="Bold"
                             Padding="12,8"
                             Clicked="OnReadClicked" />
+                    <Button Grid.Column="2"
+                            Text="Capabilities"
+                            BackgroundColor="{Binding CapabilitiesButtonColor}"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            Padding="12,8"
+                            Clicked="OnCapabilitiesClicked" />
                 </Grid>
             </Grid>
         </Border>
@@ -93,6 +100,13 @@
                 <Entry Text="{Binding ResourceId}"
                        IsVisible="{Binding IsReadMode}"
                        Placeholder="Enter resource ID, e.g. patient-123" />
+
+                <!-- Capabilities mode: no input, just show the active server BaseUrl -->
+                <Label Text="{Binding ActiveServerUrl, StringFormat='Server: {0}'}"
+                       FontAttributes="Bold"
+                       FontSize="14"
+                       IsVisible="{Binding IsCapabilitiesMode}"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
 
             </VerticalStackLayout>
         </Border>
@@ -149,7 +163,7 @@
                     Clicked="OnSettingsClicked" />
 
             <Button Grid.Column="1"
-                    Text="Execute"
+                    Text="{Binding ExecuteButtonText}"
                     IsEnabled="{Binding IsNotBusy}"
                     Command="{Binding ExecuteCommand}" />
 

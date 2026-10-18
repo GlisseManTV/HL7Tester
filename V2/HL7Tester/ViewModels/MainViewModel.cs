@@ -108,6 +108,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(ShowJsonEditButtons));
                 OnPropertyChanged(nameof(ShowJsonApplyCancel));
+                OnPropertyChanged(nameof(ShowValidateButton));
             }
         }
     }
@@ -273,6 +274,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(ShowJsonEditButtons));
                 OnPropertyChanged(nameof(ShowJsonApplyCancel));
+                OnPropertyChanged(nameof(ShowValidateButton));
             }
         }
     }
@@ -280,6 +282,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     // Bool -> bool visibility flags (no Visibility-enum converters, see v2.0.21 bug)
     public bool ShowJsonEditButtons => IsFhirMode && !IsJsonEditing;
     public bool ShowJsonApplyCancel => IsFhirMode && IsJsonEditing;
+
+    // The "Validate" button is a tool shown in FHIR mode outside JSON editing.
+    public bool ShowValidateButton => IsFhirMode && !IsJsonEditing;
 
     // Backup of the message taken when entering JSON edit mode, restored on Cancel
     private string? _jsonBackup;
@@ -618,6 +623,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand CancelJsonCommand { get; }
     public ICommand PasteJsonCommand { get; }
     public ICommand FormatJsonCommand { get; }
+    public ICommand ValidateFhirCommand { get; }
 
     public MainViewModel(
         AdtMessageGenerator generator,
@@ -643,6 +649,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         CancelJsonCommand = new Command(CancelJson);
         PasteJsonCommand = new Command(async () => await PasteJsonAsync());
         FormatJsonCommand = new Command(FormatJson);
+        ValidateFhirCommand = new Command(async () => await ValidateFhirAsync());
     }
 
     /// <summary>
@@ -1039,6 +1046,175 @@ public sealed class MainViewModel : INotifyPropertyChanged
             AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] SEND FAILED - Error: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Runs the FHIR $validate operation against the active server using the current
+    /// GeneratedMessage. Reads the root resourceType to build POST [base]/{type}/$validate,
+    /// then reports the OperationOutcome issues in the send log.
+    /// </summary>
+    private async Task ValidateFhirAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_generatedMessage))
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validate skipped - Nothing to validate.");
+            return;
+        }
+
+        if (_activeFhirProfile is null)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validate failed - No active FHIR profile. Select FHIR protocol and a profile in Connections.");
+            return;
+        }
+
+        string resourceType;
+        try
+        {
+            using var doc = JsonDocument.Parse(_generatedMessage);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("resourceType", out var rt) ||
+                rt.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(rt.GetString()))
+            {
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validate failed - Could not read resourceType from the JSON.");
+                return;
+            }
+            resourceType = rt.GetString()!;
+        }
+        catch (JsonException ex)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validate failed - Invalid JSON: {ex.Message}");
+            return;
+        }
+
+        var sendRequest = new SendRequest
+        {
+            Protocol = "FHIR",
+            Payload = _generatedMessage,
+            Profile = _activeFhirProfile,
+            ResourceType = $"{resourceType}/$validate",
+            HttpMethod = FhirHttpMethod.Post
+        };
+
+        _logger.LogInformation("Validating FHIR {ResourceType} via $validate on profile '{Profile}'.",
+            resourceType, _activeFhirProfile.Name);
+
+        var result = await _messageSender.SendAsync(sendRequest).ConfigureAwait(false);
+        var status = result.HttpStatusCode ?? 0;
+
+        // Server does not advertise/support the operation.
+        if (status is 404 or 405 or 501)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validation not supported by server (HTTP {status}).");
+            return;
+        }
+
+        var outcomeJson = result.OperationOutcomeJson ?? result.ResponseBody;
+        if (TryReadOperationOutcome(outcomeJson, out var issues, out int errorCount, out int warningCount))
+        {
+            if (errorCount > 0)
+            {
+                // Keep header + up to (MaxLogLines - 1) issue lines visible in the log.
+                var shown = issues.Take(Math.Max(1, MaxLogLines - 1)).ToList();
+                var block = $"[{DateTime.Now:HH:mm:ss}] ✗ Validation failed - {errorCount} error(s), {warningCount} warning(s):";
+                foreach (var issue in shown)
+                    block += Environment.NewLine + issue;
+                if (issues.Count > shown.Count)
+                    block += Environment.NewLine + $"  ... and {issues.Count - shown.Count} more issue(s).";
+                AppendToSendLog(block);
+            }
+            else
+            {
+                var suffix = warningCount > 0 ? $" ({warningCount} warning(s))" : string.Empty;
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] ✓ Validation passed{suffix}");
+            }
+            return;
+        }
+
+        if (result.Success)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] ✓ Validation passed (no OperationOutcome returned).");
+        }
+        else
+        {
+            var err = !string.IsNullOrWhiteSpace(result.ErrorDescription) ? result.ErrorDescription
+                    : !string.IsNullOrWhiteSpace(result.ErrorMessage) ? result.ErrorMessage
+                    : $"HTTP {status}";
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validation failed - {err}");
+        }
+    }
+
+    /// <summary>
+    /// Parses an OperationOutcome JSON body. Returns false when the payload is not an
+    /// OperationOutcome. On success, fills the formatted issue lines and counts errors/warnings.
+    /// </summary>
+    private static bool TryReadOperationOutcome(string? json, out List<string> issues, out int errorCount, out int warningCount)
+    {
+        issues = new List<string>();
+        errorCount = 0;
+        warningCount = 0;
+
+        if (string.IsNullOrWhiteSpace(json))
+            return false;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+                return false;
+
+            if (!root.TryGetProperty("resourceType", out var rt) ||
+                rt.ValueKind != JsonValueKind.String ||
+                !string.Equals(rt.GetString(), "OperationOutcome", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (!root.TryGetProperty("issue", out var issueArr) || issueArr.ValueKind != JsonValueKind.Array)
+                return true; // OperationOutcome with no issues = valid
+
+            foreach (var issue in issueArr.EnumerateArray())
+            {
+                if (issue.ValueKind != JsonValueKind.Object)
+                    continue;
+
+                var severity = GetJsonString(issue, "severity") ?? "unknown";
+                if (string.Equals(severity, "error", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(severity, "fatal", StringComparison.OrdinalIgnoreCase))
+                    errorCount++;
+                else
+                    warningCount++;
+
+                string? details = null;
+                if (issue.TryGetProperty("details", out var d) && d.ValueKind == JsonValueKind.Object)
+                    details = GetJsonString(d, "text");
+
+                string? expression = null;
+                if (issue.TryGetProperty("expression", out var e) && e.ValueKind == JsonValueKind.Array && e.GetArrayLength() > 0)
+                    expression = string.Join(", ", e.EnumerateArray()
+                        .Where(x => x.ValueKind == JsonValueKind.String)
+                        .Select(x => x.GetString()));
+
+                var code = GetJsonString(issue, "code");
+                var msg = $"  [{severity}]";
+                if (!string.IsNullOrWhiteSpace(code))
+                    msg += $" {code}";
+                if (!string.IsNullOrWhiteSpace(details))
+                    msg += $": {details}";
+                if (!string.IsNullOrWhiteSpace(expression))
+                    msg += $" ({expression})";
+                issues.Add(msg);
+            }
+
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static string? GetJsonString(JsonElement obj, string prop)
+        => obj.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
     private async Task SendFhirAsync()
     {

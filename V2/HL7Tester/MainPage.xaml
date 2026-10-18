@@ -626,10 +626,11 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Idle state: Edit / Paste / Format -->
+                <!-- Idle state: Edit / Paste / Format / Validate -->
                 <Button Grid.Column="0"
                         Text="✏️ Edit JSON"
                         IsVisible="{Binding ShowJsonEditButtons}"
@@ -645,6 +646,13 @@
                         IsVisible="{Binding ShowJsonEditButtons}"
                         Command="{Binding FormatJsonCommand}" />
 
+                <!-- Secondary tool: $validate against the active FHIR server -->
+                <Button Grid.Column="3"
+                        Text="✓ Validate"
+                        IsVisible="{Binding ShowValidateButton}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray600}}"
+                        Command="{Binding ValidateFhirCommand}" />
+
                 <!-- Editing state: Apply / Cancel -->
                 <Button Grid.Column="0"
                         Text="✓ Apply"
@@ -656,7 +664,7 @@
                         IsVisible="{Binding ShowJsonApplyCancel}"
                         Command="{Binding CancelJsonCommand}" />
 
-                <Label Grid.Column="3"
+                <Label Grid.Column="4"
                        Text="Editing JSON — Apply validates the syntax, Cancel restores the previous content."
                        FontSize="12"
                        VerticalOptions="Center"

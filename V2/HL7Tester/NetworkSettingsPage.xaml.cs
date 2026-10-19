@@ -21,11 +21,6 @@ public partial class NetworkSettingsPage : ContentPage
         await _viewModel.LoadAsync();
     }
 
-    private async void OnHomeClicked(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//MainPage");
-    }
-
     private async void OnInspectorClicked(object? sender, EventArgs e)
     {
         await Shell.Current.GoToAsync("//Hl7InspectorPage");

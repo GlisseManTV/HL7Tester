@@ -1,18 +1,20 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using System.Xml;
 using HL7Tester.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Graphics;
 
 namespace HL7Tester.ViewModels;
 
 /// <summary>
-/// ViewModel pour la configuration réseau (IP/Port + historique) côté MAUI.
+/// ViewModel for application settings (log level, encoding, auto-update, tools navigation).
+/// Network connection management (IP/Port/History) has been extracted to ConnectionsViewModel (Phase 0.5).
 /// </summary>
 public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
 {
@@ -21,32 +23,6 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     private readonly ILogger<NetworkSettingsViewModel> _logger;
 
     public event PropertyChangedEventHandler? PropertyChanged;
-
-    private string _ipAddress = string.Empty;
-    public string IpAddress
-    {
-        get => _ipAddress;
-        set => SetField(ref _ipAddress, value);
-    }
-
-    private string _port = string.Empty;
-    public string Port
-    {
-        get => _port;
-        set => SetField(ref _port, value);
-    }
-
-    private string _nickname = string.Empty;
-    /// <summary>
-    /// Surnom ou nom familier pour l'adresse IP (optionnel).
-    /// </summary>
-    public string Nickname
-    {
-        get => _nickname;
-        set => SetField(ref _nickname, value);
-    }
-
-    public ObservableCollection<HistoryEntryViewModel> HistoryEntries { get; } = new();
 
     public ObservableCollection<string> AvailableLogLevels { get; } =
         new(["Debug", "Information", "Warning"]);
@@ -118,21 +94,69 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         set => SetField(ref _selectedLogLevel, value);
     }
 
-    public ICommand SaveNetworkSettingsCommand { get; }
+    /// <summary>
+    /// Raw protocol values bound to the protocol AppDropdown (display labels are
+    /// applied through ProtocolDisplayConverter).
+    /// </summary>
+    public ObservableCollection<string> AvailableProtocols { get; } = new(["MLLP", "FHIR"]);
+
+    private string _selectedProtocol = "MLLP";
+    /// <summary>
+    /// Active transport protocol: "MLLP" (HL7 v2) or "FHIR" (REST).
+    /// </summary>
+    public string SelectedProtocol
+    {
+        get => _selectedProtocol;
+        set
+        {
+            if (SetField(ref _selectedProtocol, value))
+            {
+                OnPropertyChanged(nameof(IsFhirMode));
+                OnPropertyChanged(nameof(ModeBadgeText));
+                OnPropertyChanged(nameof(ModeBadgeColor));
+            }
+        }
+    }
+
+    /// <summary>
+    /// True when the active protocol is FHIR — drives the mode badge.
+    /// </summary>
+    public bool IsFhirMode => SelectedProtocol == "FHIR";
+
+    public string ModeBadgeText => IsFhirMode ? "FHIR Mode" : "HL7v2 Mode";
+
+    public Color ModeBadgeColor => IsFhirMode
+        ? Color.FromArgb("#009688") // teal
+        : Color.FromArgb("#512BD4"); // purple (Primary)
+
     public ICommand SaveApplicationSettingsCommand { get; }
-    public ICommand SelectHistoryEntryCommand { get; }
-    public ICommand DeleteHistoryCommand { get; }
     public ICommand OpenDocumentationCommand { get; }
     public ICommand OpenOrmDocumentationCommand { get; }
     public ICommand OpenSiuDocumentationCommand { get; }
+    public ICommand OpenAdtV29Command { get; }
+    public ICommand OpenOrmV29Command { get; }
+    public ICommand OpenSiuV29Command { get; }
     public ICommand OpenInspectorCommand { get; }
     public ICommand OpenInspectorWebCommand { get; }
     public ICommand OpenBatchSendCommand { get; }
+    public ICommand OpenConnectionsCommand { get; }
+    public ICommand OpenConverterCommand { get; }
+    public ICommand OpenFhirExplorerCommand { get; }
+    public ICommand OpenFhirR4DocsCommand { get; }
+    public ICommand OpenFhirR5DocsCommand { get; }
 
     private const string HL7_ADT_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH3.html#Heading3";
     private const string HL7_ORM_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH4.html#Heading13";
     private const string HL7_SIU_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v231/std231/CH10.html#Heading53";
-    private const string HL7_INSPECTOR_WEB_URL = "https://www.hl7inspector.com";
+
+    // HL7 v2.9 documentation links
+    private const string HL7_ADT_V29_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v29/std29/ch03.html#Heading1";
+    private const string HL7_ORM_V29_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v29/std29/ch04.html#Heading1";
+    private const string HL7_SIU_V29_DOCUMENTATION_URL = "https://www.hl7.eu/HL7v2x/v29/std29/ch10.html#Heading1";
+
+    // FHIR documentation links
+    private const string FHIR_R4_DOCUMENTATION_URL = "https://hl7.org/fhir/R4/documentation.html";
+    private const string FHIR_R5_DOCUMENTATION_URL = "https://hl7.org/fhir/R5/documentation.html";
 
 
     public NetworkSettingsViewModel(INetworkSettingsService service, ILogger<NetworkSettingsViewModel> logger)
@@ -146,16 +170,47 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         var assemblyVersion = assembly.GetName().Version;
         AssemblyVersion = $"{assemblyTitleAttribute?.Title} v{assemblyVersion?.ToString(3) ?? "1.0.0"}";
 
-        SaveNetworkSettingsCommand = new Command(async () => await SaveNetworkSettingsAsync());
         SaveApplicationSettingsCommand = new Command(async () => await SaveApplicationSettingsAsync());
-        SelectHistoryEntryCommand = new Command<string>(OnSelectHistoryEntry);
-        DeleteHistoryCommand = new Command(OnDeleteHistory);
         OpenDocumentationCommand = new Command(OpenAdtDocumentation);
         OpenOrmDocumentationCommand = new Command(OpenOrmDocumentation);
         OpenSiuDocumentationCommand = new Command(OpenSiuDocumentation);
+        OpenAdtV29Command = new Command(OpenAdtV29Documentation);
+        OpenOrmV29Command = new Command(OpenOrmV29Documentation);
+        OpenSiuV29Command = new Command(OpenSiuV29Documentation);
         OpenInspectorCommand = new Command(OpenInspector);
         OpenInspectorWebCommand = new Command(OpenWebInspector);
         OpenBatchSendCommand = new Command(OpenBatchSend);
+        OpenConnectionsCommand = new Command(OpenConnections);
+        OpenConverterCommand = new Command(OpenConverter);
+        OpenFhirExplorerCommand = new Command(OpenFhirExplorer);
+        OpenFhirR4DocsCommand = new Command(OpenFhirR4Docs);
+        OpenFhirR5DocsCommand = new Command(OpenFhirR5Docs);
+    }
+
+    private async void OpenConverter()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 ⇄ FHIR Converter page.");
+            await Shell.Current.GoToAsync("//FhirConverterPage");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 ⇄ FHIR Converter page.");
+        }
+    }
+
+    private async void OpenFhirExplorer()
+    {
+        try
+        {
+            _logger.LogInformation("Opening FHIR Explorer page.");
+            await Shell.Current.GoToAsync("//FhirExplorerPage");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open FHIR Explorer page.");
+        }
     }
 
     private async void OpenBatchSend()
@@ -168,6 +223,19 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to open Batch Send page.");
+        }
+    }
+
+    private async void OpenConnections()
+    {
+        try
+        {
+            _logger.LogInformation("Opening Connections page.");
+            await Shell.Current.GoToAsync("//ConnectionsPage");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open Connections page.");
         }
     }
 
@@ -216,18 +284,109 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         }
     }
 
-    private void OpenWebInspector()
+    private void OpenAdtV29Documentation()
     {
         try
         {
-            _logger.LogInformation("Opening HL7 Inspector: {Url}", HL7_INSPECTOR_WEB_URL);
-            
-            var uri = new Uri(HL7_INSPECTOR_WEB_URL);
+            _logger.LogInformation("Opening HL7 v2.9 ADT documentation: {Url}", HL7_ADT_V29_DOCUMENTATION_URL);
+
+            var uri = new Uri(HL7_ADT_V29_DOCUMENTATION_URL);
             Launcher.Default.OpenAsync(uri);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to open HL7 Inspector URL: {Url}", HL7_INSPECTOR_WEB_URL);
+            _logger.LogError(ex, "Failed to open HL7 v2.9 ADT documentation URL: {Url}", HL7_ADT_V29_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenOrmV29Documentation()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 v2.9 ORM documentation: {Url}", HL7_ORM_V29_DOCUMENTATION_URL);
+
+            var uri = new Uri(HL7_ORM_V29_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 v2.9 ORM documentation URL: {Url}", HL7_ORM_V29_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenSiuV29Documentation()
+    {
+        try
+        {
+            _logger.LogInformation("Opening HL7 v2.9 SIU documentation: {Url}", HL7_SIU_V29_DOCUMENTATION_URL);
+
+            var uri = new Uri(HL7_SIU_V29_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open HL7 v2.9 SIU documentation URL: {Url}", HL7_SIU_V29_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenFhirR4Docs()
+    {
+        try
+        {
+            _logger.LogInformation("Opening FHIR R4 documentation: {Url}", FHIR_R4_DOCUMENTATION_URL);
+
+            var uri = new Uri(FHIR_R4_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open FHIR R4 documentation URL: {Url}", FHIR_R4_DOCUMENTATION_URL);
+        }
+    }
+
+    private void OpenFhirR5Docs()
+    {
+        try
+        {
+            _logger.LogInformation("Opening FHIR R5 documentation: {Url}", FHIR_R5_DOCUMENTATION_URL);
+
+            var uri = new Uri(FHIR_R5_DOCUMENTATION_URL);
+            Launcher.Default.OpenAsync(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open FHIR R5 documentation URL: {Url}", FHIR_R5_DOCUMENTATION_URL);
+        }
+    }
+
+    private async void OpenWebInspector()
+    {
+        try
+        {
+            _logger.LogInformation("Opening local HL7 Inspector HTML file");
+
+            var tempDir = Path.Combine(Path.GetTempPath(), "HL7Tester_Inspector");
+            Directory.CreateDirectory(tempDir);
+
+            var htmlPath = Path.Combine(tempDir, "hl7-inspector.html");
+            using (var stream = await FileSystem.OpenAppPackageFileAsync("hl7-inspector.html"))
+            using (var fileStream = File.Create(htmlPath))
+            {
+                stream.CopyTo(fileStream);
+            }
+
+            var faviconPath = Path.Combine(tempDir, "favicon.png");
+            using (var stream = await FileSystem.OpenAppPackageFileAsync("favicon.png"))
+            using (var fileStream = File.Create(faviconPath))
+            {
+                stream.CopyTo(fileStream);
+            }
+
+            Process.Start(new ProcessStartInfo(htmlPath) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open local HL7 Inspector file");
         }
     }
 
@@ -248,88 +407,35 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
     {
         _settings = await _service.LoadAsync();
 
-        IpAddress = _settings.LastIpAddress ?? string.Empty;
-        Port = _settings.LastPort ?? string.Empty;
-        Nickname = _settings.Nickname ?? string.Empty;
-
         AutoUpdateCheck = _settings.AutoUpdateCheck;
+
+        SelectedProtocol = string.Equals(_settings.Protocol, "FHIR", StringComparison.OrdinalIgnoreCase)
+            ? "FHIR"
+            : "MLLP";
 
         SelectedLogLevel = string.IsNullOrWhiteSpace(_settings.LogLevel)
             ? "Debug"
             : _settings.LogLevel;
 
-        // Charger l'encodage depuis les settings
+        // Load encoding from settings
         SelectedEncoding = string.IsNullOrWhiteSpace(_settings.MessageEncoding)
             ? "UTF-8"
             : _settings.MessageEncoding;
         UseCustomEncoding = false;
         CustomEncoding = string.Empty;
-
-        HistoryEntries.Clear();
-        foreach (var entry in _settings.History)
-        {
-            if (!string.IsNullOrWhiteSpace(entry.Ip) || !string.IsNullOrWhiteSpace(entry.Port))
-            {
-                var displayText = string.IsNullOrEmpty(entry.Nickname) 
-                    ? $"{entry.Ip}:{entry.Port}" 
-                    : $"{entry.Ip}:{entry.Port} ({entry.Nickname})";
-                HistoryEntries.Add(new HistoryEntryViewModel { DisplayText = displayText, Entry = entry });
-            }
-        }
-    }
-
-    public class HistoryEntryViewModel
-    {
-        public string DisplayText { get; set; } = string.Empty;
-        public ConnectionHistoryEntry? Entry { get; set; }
-    }
-
-    private async Task SaveNetworkSettingsAsync()
-    {
-        var oldIp = _settings.LastIpAddress ?? string.Empty;
-        var oldPort = _settings.LastPort ?? string.Empty;
-        
-        // Trim to remove leading/trailing spaces from IP, port and nickname
-        var newIp = IpAddress?.Trim() ?? string.Empty;
-        var newPort = Port?.Trim() ?? string.Empty;
-        var newNickname = Nickname?.Trim() ?? string.Empty;
-
-        // Appliquer uniquement les paramètres réseau - sauvegarder aussi le nickname
-        _service.AddToHistory(_settings, newIp, newPort, newNickname);
-        
-        // Mettre à jour les settings avec le nouveau nickname avant de sauvegarder
-        _settings.Nickname = newNickname;
-        
-        await _service.SaveAsync(_settings);
-        
-        // Rafraîchir l'historique (tout en gardant IP, Port, Nickname)
-        HistoryEntries.Clear();
-        foreach (var entry in _settings.History)
-        {
-            if (!string.IsNullOrWhiteSpace(entry.Ip) || !string.IsNullOrWhiteSpace(entry.Port))
-            {
-                var displayText = string.IsNullOrEmpty(entry.Nickname) 
-                    ? $"{entry.Ip}:{entry.Port}" 
-                    : $"{entry.Ip}:{entry.Port} ({entry.Nickname})";
-                HistoryEntries.Add(new HistoryEntryViewModel { DisplayText = displayText, Entry = entry });
-            }
-        }
-
-        if (!string.Equals(oldIp, newIp, StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(oldPort, newPort, StringComparison.OrdinalIgnoreCase))
-        {
-            _logger.LogInformation("IP changed from {OldIp}:{OldPort} to {NewIp}:{NewPort}.", oldIp, oldPort, newIp, newPort);
-            _logger.LogDebug("Network settings updated. Previous endpoint {OldIp}:{OldPort}, new endpoint {NewIp}:{NewPort}.", oldIp, oldPort, newIp, newPort);
-        }
     }
 
     private async Task SaveApplicationSettingsAsync()
     {
         var oldLogLevel = _settings.LogLevel ?? "Debug";
         var oldAutoUpdateCheck = _settings.AutoUpdateCheck;
+        var oldProtocol = _settings.Protocol ?? "MLLP";
 
         _settings.LogLevel = SelectedLogLevel;
         _settings.AutoUpdateCheck = AutoUpdateCheck;
+
+        // Persist the global protocol toggle (MLLP / FHIR)
+        _settings.Protocol = SelectedProtocol;
 
         // Sauvegarder l'encodage du message
         if (UseCustomEncoding && !string.IsNullOrWhiteSpace(CustomEncoding))
@@ -352,51 +458,11 @@ public sealed class NetworkSettingsViewModel : INotifyPropertyChanged
         {
             _logger.LogInformation("Auto update check changed to {AutoUpdateCheck}.", AutoUpdateCheck);
         }
-    }
 
-    private void OnSelectHistoryEntry(string? entry)
-    {
-        if (string.IsNullOrWhiteSpace(entry))
+        if (!string.Equals(oldProtocol, SelectedProtocol, StringComparison.OrdinalIgnoreCase))
         {
-            return;
+            _logger.LogInformation("Protocol changed from {OldProtocol} to {NewProtocol}.", oldProtocol, SelectedProtocol);
         }
-
-        // Format attendu: "IP:Port" ou "IP:Port (Nickname)"
-        var nicknameStart = entry.IndexOf('(');
-        
-        if (nicknameStart > 0)
-        {
-            // Il y a un nickname, extraire IP, Port et Nickname
-            var beforeNickname = entry.Substring(0, nicknameStart).Trim();
-            var nickname = entry.Substring(nicknameStart + 1, entry.IndexOf(')', nicknameStart) - nicknameStart - 1);
-
-            var parts = beforeNickname.Split(':', 2);
-            if (parts.Length == 2)
-            {
-                IpAddress = parts[0].Trim();
-                Port = parts[1].Trim();
-                Nickname = nickname;
-            }
-        }
-        else
-        {
-            // Pas de nickname, extraire juste IP et Port
-            var parts = entry.Split(':', 2);
-            if (parts.Length == 2)
-            {
-                IpAddress = parts[0].Trim();
-                Port = parts[1].Trim();
-            }
-        }
-    }
-
-    private void OnDeleteHistory()
-    {
-        _settings.History.Clear();
-        Task.Run(async () => await _service.SaveAsync(_settings)).Wait();
-        HistoryEntries.Clear();
-        
-        _logger.LogInformation("Connection history deleted.");
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

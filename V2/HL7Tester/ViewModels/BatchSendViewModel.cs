@@ -5,6 +5,7 @@ using System.Windows.Input;
 using HL7Tester.Core;
 using HL7Tester.Core.Batch;
 using HL7Tester.Core.Batch.Models;
+using HL7Tester.Core.Fhir;
 using Microsoft.Extensions.Logging;
 
 namespace HL7Tester.ViewModels;
@@ -13,6 +14,7 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
 {
     private readonly BatchSendEngine _engine;
     private readonly INetworkSettingsService _networkSettingsService;
+    private readonly IBatchTemplateService _templateService;
     private readonly ILogger<BatchSendViewModel> _logger;
 
     private CancellationTokenSource? _cts;
@@ -21,20 +23,14 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
 
     // ─── Templates ───────────────────────────────────────────────
 
-    public IReadOnlyList<BatchWorkflowTemplate> Templates { get; } = BatchWorkflowTemplates.All;
+    public ObservableCollection<BatchWorkflowTemplate> Templates { get; } = new();
 
-    private BatchWorkflowTemplate _selectedTemplate;
-    public BatchWorkflowTemplate SelectedTemplate
-    {
-        get => _selectedTemplate;
-        set
-        {
-            if (SetField(ref _selectedTemplate, value))
-            {
-                LoadTemplateIntoWorkflow();
-            }
-        }
-    }
+    private BatchWorkflowTemplate? _selectedTemplate;
+
+    /// <summary>
+    /// True if the currently selected template is a custom (non-built-in) template that can be deleted.
+    /// </summary>
+    public bool CanDeleteTemplate => _selectedTemplate is not null && !_selectedTemplate.IsBuiltIn;
 
     // ─── Workflow steps ────────────────────────────────────────────
 
@@ -85,6 +81,13 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         set => SetField(ref _floor, value);
     }
 
+    private string _sex = string.Empty;
+    public string Sex
+    {
+        get => _sex;
+        set => SetField(ref _sex, value);
+    }
+
     // ─── Parameters ────────────────────────────────────────────────
 
     private int _patientCount = 10;
@@ -101,14 +104,57 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         set => SetField(ref _globalDelayMs, value);
     }
 
+    private bool _keepConnectionOpen;
+    /// <summary>
+    /// When true, a single TCP connection is reused for all messages in the batch.
+    /// Only meaningful in MLLP mode; ignored by the engine in FHIR mode.
+    /// </summary>
+    public bool KeepConnectionOpen
+    {
+        get => _keepConnectionOpen;
+        set => SetField(ref _keepConnectionOpen, value);
+    }
+
+    // ─── Protocol / FHIR mode ──────────────────────────────────────
+
+    private bool _isFhirMode;
+    /// <summary>
+    /// True when the active protocol is FHIR (resources sent over HTTP).
+    /// </summary>
+    public bool IsFhirMode
+    {
+        get => _isFhirMode;
+        private set
+        {
+            if (SetField(ref _isFhirMode, value))
+                OnPropertyChanged(nameof(IsMllpMode));
+        }
+    }
+
+    /// <summary>
+    /// True when the active protocol is MLLP (HL7 v2 over TCP).
+    /// </summary>
+    public bool IsMllpMode => !_isFhirMode;
+
+    private FhirProfile? _activeFhirProfile;
+
     // ─── State ─────────────────────────────────────────────────────
 
     private bool _isRunning;
     public bool IsRunning
     {
         get => _isRunning;
-        private set => SetField(ref _isRunning, value);
+        private set
+        {
+            if (SetField(ref _isRunning, value))
+                OnPropertyChanged(nameof(CanStart));
+        }
     }
+
+    /// <summary>
+    /// True when the Start button should be enabled (not running).
+    /// </summary>
+    public bool CanStart => !IsRunning;
 
     private string _statusText = string.Empty;
     public string StatusText
@@ -133,32 +179,80 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
     public ICommand StartCommand { get; }
     public ICommand StopCommand { get; }
     public ICommand AddStepCommand { get; }
+    public ICommand SaveTemplateCommand { get; }
+    public ICommand DeleteTemplateCommand { get; }
+    public ICommand SelectTemplateCommand { get; }
 
     // ─── Constructor ───────────────────────────────────────────────
 
     public BatchSendViewModel(
         BatchSendEngine engine,
         INetworkSettingsService networkSettingsService,
+        IBatchTemplateService templateService,
         ILogger<BatchSendViewModel> logger)
     {
         _engine = engine;
         _networkSettingsService = networkSettingsService;
+        _templateService = templateService;
         _logger = logger;
 
-        _selectedTemplate = Templates[0];
         _selectedNewStepType = AvailableStepTypes[0];
-        LoadTemplateIntoWorkflow();
 
-        StartCommand = new Command(OnStart, () => !IsRunning);
-        StopCommand = new Command(OnStop, () => IsRunning);
+        StartCommand = new Command(OnStart);
+        StopCommand = new Command(OnStop);
         AddStepCommand = new Command(OnAddStep);
+        SaveTemplateCommand = new Command(OnSaveTemplate);
+        DeleteTemplateCommand = new Command(OnDeleteTemplate);
+        SelectTemplateCommand = new Command<BatchWorkflowTemplate>(OnSelectTemplate);
+    }
+
+    /// <summary>
+    /// Loads all templates (built-in + custom) into the Templates collection.
+    /// </summary>
+    public async Task LoadTemplatesAsync()
+    {
+        Templates.Clear();
+
+        // Add built-in templates
+        foreach (var template in BatchWorkflowTemplates.All)
+        {
+            Templates.Add(template);
+        }
+
+        // Add custom templates from file
+        try
+        {
+            var customTemplates = await _templateService.LoadAsync().ConfigureAwait(false);
+            foreach (var template in customTemplates)
+            {
+                Templates.Add(template);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load custom batch templates");
+        }
+
+        // Select first template
+        if (Templates.Count > 0)
+        {
+            OnSelectTemplate(Templates[0]);
+        }
     }
 
     // ─── Template loading ──────────────────────────────────────────
 
+    private void OnSelectTemplate(BatchWorkflowTemplate template)
+    {
+        _selectedTemplate = template;
+        OnPropertyChanged(nameof(CanDeleteTemplate));
+        LoadTemplateIntoWorkflow();
+    }
+
     private void LoadTemplateIntoWorkflow()
     {
         Steps.Clear();
+        if (_selectedTemplate is null) return;
         var workflow = _selectedTemplate.CreateWorkflow();
         foreach (var step in workflow.Steps)
         {
@@ -201,7 +295,7 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         step.RemoveCommand = new Command(() =>
         {
             int index = Steps.IndexOf(step);
-            if (index < 0 || Steps.Count <= 2) return;
+            if (index < 0 || Steps.Count <= 1) return;
             Steps.RemoveAt(index);
         });
     }
@@ -220,7 +314,9 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
             Room = Room,
             Bed = Bed,
             Unit = Unit,
-            Floor = Floor
+            Floor = Floor,
+            Sex = Sex,
+            KeepConnectionOpen = KeepConnectionOpen
         };
         foreach (var step in Steps)
         {
@@ -233,16 +329,28 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
             return;
         }
 
-        // Load network settings
+        // Load network settings: protocol, active FHIR profile, MLLP endpoint
         var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
-        var ip = settings.LastIpAddress;
-        var port = int.TryParse(settings.LastPort, out var p) ? p : 6667;
+        var isFhir = string.Equals(settings.Protocol, "FHIR", StringComparison.OrdinalIgnoreCase);
+        IsFhirMode = isFhir;
+        _activeFhirProfile = settings.FhirProfiles.FirstOrDefault(p => p.Id == settings.ActiveFhirProfileId);
 
-        if (string.IsNullOrWhiteSpace(ip))
+        if (isFhir)
+        {
+            if (_activeFhirProfile is null)
+            {
+                StatusText = "Error: No active FHIR profile. Select one in Connections.";
+                return;
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(settings.LastIpAddress))
         {
             StatusText = "Error: No IP address configured. Set it in Network Settings.";
             return;
         }
+
+        var ip = settings.LastIpAddress ?? string.Empty;
+        var port = int.TryParse(settings.LastPort, out var p) ? p : 6667;
 
         // Start
         IsRunning = true;
@@ -257,7 +365,9 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
             var result = await _engine.RunAsync(
                 workflow, ip, port,
                 settings.MessageEncoding,
-                _cts.Token).ConfigureAwait(false);
+                _cts.Token,
+                settings.Protocol,
+                _activeFhirProfile).ConfigureAwait(false);
 
             // Populate results
             foreach (var pr in result.PatientResults)
@@ -265,9 +375,10 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
                 Results.Add(pr);
             }
 
+            var protocolLabel = isFhir ? "FHIR" : "MLLP";
             SummaryText = result.WasCancelled
-                ? $"Stopped: {result.SuccessfulPatients}/{result.TotalPatients} patients completed, {result.TotalMessagesSent}/{result.TotalMessagesAttempted} messages sent"
-                : $"Done: {result.SuccessfulPatients}/{result.TotalPatients} patients OK, {result.TotalMessagesSent}/{result.TotalMessagesAttempted} messages sent, {result.Elapsed:mm\\:ss}";
+                ? $"Stopped: {result.SuccessfulPatients}/{result.TotalPatients} patients completed, {result.TotalMessagesSent}/{result.TotalMessagesAttempted} messages sent ({protocolLabel})"
+                : $"Done: {result.SuccessfulPatients}/{result.TotalPatients} patients OK, {result.TotalMessagesSent}/{result.TotalMessagesAttempted} messages sent, {result.Elapsed:mm\\:ss} ({protocolLabel})";
 
             StatusText = SummaryText;
         }
@@ -295,13 +406,95 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         StatusText = "Stopping...";
     }
 
+    // ─── Template management ───────────────────────────────────────
+
+    private async void OnSaveTemplate()
+    {
+        if (Steps.Count < 2)
+        {
+            StatusText = "Cannot save: workflow must have at least 2 steps.";
+            return;
+        }
+
+        var name = BatchWorkflowTemplate.GenerateNameFromSteps(Steps.ToList());
+
+        // Prevent overwriting a built-in template
+        var existing = Templates.FirstOrDefault(t => t.Name == name);
+        if (existing is not null && existing.IsBuiltIn)
+        {
+            StatusText = $"Cannot save: \"{name}\" is a built-in template.";
+            return;
+        }
+
+        var template = new BatchWorkflowTemplate
+        {
+            Name = name,
+            Description = "Custom template",
+            IsBuiltIn = false,
+            Steps = Steps.Select(s => s.Clone()).ToList()
+        };
+
+        try
+        {
+            await _templateService.SaveAsync(template).ConfigureAwait(false);
+
+            // Update the collection in-place (no Clear)
+            if (existing is not null)
+            {
+                // Overwrite existing custom template
+                int index = Templates.IndexOf(existing);
+                Templates[index] = template;
+            }
+            else
+            {
+                Templates.Add(template);
+            }
+
+            // Select the saved template (loads workflow into steps)
+            OnSelectTemplate(template);
+
+            StatusText = $"Template \"{name}\" saved.";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Error saving template: {ex.Message}";
+            _logger.LogError(ex, "Failed to save batch template");
+        }
+    }
+
+    private async void OnDeleteTemplate()
+    {
+        if (_selectedTemplate is null || _selectedTemplate.IsBuiltIn) return;
+
+        var name = _selectedTemplate.Name;
+
+        try
+        {
+            await _templateService.DeleteAsync(name).ConfigureAwait(false);
+            // Reload templates — LoadTemplatesAsync selects the first template
+            await LoadTemplatesAsync().ConfigureAwait(false);
+            StatusText = $"Template \"{name}\" deleted.";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Error deleting template: {ex.Message}";
+            _logger.LogError(ex, "Failed to delete batch template");
+        }
+    }
+
     // ─── INotifyPropertyChanged ────────────────────────────────────
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value)) return false;
         field = value;
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        OnPropertyChanged(propertyName);
         return true;
     }
 }
+

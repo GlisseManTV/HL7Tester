@@ -20,7 +20,7 @@ public partial class MainPage : ContentPage
 		BindingContext = viewModel;
 	}
 
-	protected override void OnAppearing()
+	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
 
@@ -31,6 +31,13 @@ public partial class MainPage : ContentPage
 			var viewModel = BindingContext as MainViewModel;
 			viewModel!.GeneratedMessage = pendingMessage;
 			Hl7InspectorViewModel.PendingParsedMessage = null!;
+		}
+
+		// Load protocol mode (MLLP vs FHIR) from settings
+		var vm = BindingContext as MainViewModel;
+		if (vm is not null)
+		{
+			await vm.LoadProtocolAsync();
 		}
 	}
 

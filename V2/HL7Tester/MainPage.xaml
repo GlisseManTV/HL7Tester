@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.MainPage"
               xmlns:converters="clr-namespace:HL7Tester.Converters"
+              xmlns:controls="clr-namespace:HL7Tester.Controls"
               Title="HL7Tester">
         <ContentPage.Resources>
             <converters:BoolToArrowConverter x:Key="BoolToArrowConverter" />
@@ -27,12 +28,28 @@
                 <Label Text="HL7 messages generator"
                        TextColor="{AppThemeBinding Light={StaticResource SecondaryDarkText}, Dark={StaticResource Gray300}}"
                        FontSize="14" />
+                <Border BackgroundColor="#009688"
+                        StrokeThickness="0"
+                        Padding="8,3"
+                        HorizontalOptions="Start"
+                        Margin="0,4,0,0"
+                        IsVisible="{Binding IsFhirMode}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="4" />
+                    </Border.StrokeShape>
+                    <Label Text="FHIR Mode"
+                           TextColor="White"
+                           FontSize="12"
+                           FontAttributes="Bold" />
+                </Border>
             </VerticalStackLayout>
 
+            <!-- MLLP dropdowns (visible only in MLLP mode) -->
             <Grid Grid.Column="1"
                   ColumnSpacing="8"
                   HorizontalOptions="End"
-                  VerticalOptions="Center">
+                  VerticalOptions="Center"
+                  IsVisible="{Binding IsMllpMode}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="220" />
@@ -45,10 +62,11 @@
                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
                        FontAttributes="Bold"
                        VerticalTextAlignment="Center" />
-                <Picker Grid.Column="1"
+                <controls:AppDropdown Grid.Column="1"
                         ItemsSource="{Binding AvailableMessageFamilies}"
                         SelectedItem="{Binding SelectedMessageFamily}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+                        MaxListHeight="150"
+                        Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
 
                 <Label Grid.Column="2"
                        Text="Message Type"
@@ -56,10 +74,48 @@
                        TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
                        FontAttributes="Bold"
                        VerticalTextAlignment="Center" />
-                <Picker Grid.Column="3"
+                <controls:AppDropdown Grid.Column="3"
                         ItemsSource="{Binding AvailableMessageTypes}"
                         SelectedItem="{Binding SelectedMessageType}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+                        MaxListHeight="150"
+                        Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+            </Grid>
+
+            <!-- FHIR dropdowns (visible only in FHIR mode) -->
+            <Grid Grid.Column="1"
+                  ColumnSpacing="8"
+                  HorizontalOptions="End"
+                  VerticalOptions="Center"
+                  IsVisible="{Binding IsFhirMode}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="150" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0"
+                       Text="Resource Type"
+                       TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                       FontAttributes="Bold"
+                       VerticalTextAlignment="Center" />
+                <controls:AppDropdown Grid.Column="1"
+                        ItemsSource="{Binding AvailableFhirResourceTypes}"
+                        SelectedItem="{Binding SelectedFhirResourceType}"
+                        MaxListHeight="150"
+                        Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+
+                <Label Grid.Column="2"
+                       Text="HTTP Method"
+                       Margin="8,0,0,0"
+                       TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}"
+                       FontAttributes="Bold"
+                       VerticalTextAlignment="Center" />
+                <controls:AppDropdown Grid.Column="3"
+                        ItemsSource="{Binding AvailableFhirHttpMethods}"
+                        SelectedItem="{Binding SelectedFhirHttpMethod}"
+                        MaxListHeight="150"
+                        Background="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
             </Grid>
         </Grid>
 
@@ -314,10 +370,9 @@
                             </Grid.ColumnDefinitions>
 
                             <Label Grid.Row="0" Grid.Column="0" Text="Order control (ORC-1)" VerticalOptions="Center" />
-                            <Picker Grid.Row="0" Grid.Column="1" 
+                            <controls:AppDropdown Grid.Row="0" Grid.Column="1"
                                     ItemsSource="{Binding OrderControlList}"
-                                    SelectedItem="{Binding OrmOrderControl}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" />
+                                    SelectedItem="{Binding OrmOrderControl}" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Placer order number (ORC-2)" VerticalOptions="Center" />
                             <Entry Grid.Row="1" Grid.Column="1" Text="{Binding OrmPlacerOrderNumber}" Placeholder="ORC-2 / OBR-2" />
@@ -564,9 +619,64 @@
         </ScrollView>
 
         <!-- Persistent footer with generated message and actions (generated message expands automatically with content lines) -->
-        <Grid Grid.Row="3" Padding="20,8" RowDefinitions="Auto,Auto">
-            <!-- Generated HL7 message editor (expands automatically with content lines) -->
-            <Grid Grid.Row="0" ColumnSpacing="6" ZIndex="1">
+        <Grid Grid.Row="3" Padding="20,8" RowDefinitions="Auto,Auto,Auto">
+            <!-- JSON editing toolbar (visible only in FHIR mode) -->
+            <Grid Grid.Row="0"
+                  ColumnSpacing="6"
+                  Padding="0,0,0,6"
+                  IsVisible="{Binding IsFhirMode}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Idle state: Edit / Paste / Format / Validate -->
+                <Button Grid.Column="0"
+                        Text="✏️ Edit JSON"
+                        IsVisible="{Binding ShowJsonEditButtons}"
+                        Command="{Binding ToggleEditJsonCommand}" />
+
+                <Button Grid.Column="1"
+                        Text="📋 Paste JSON"
+                        IsVisible="{Binding ShowJsonEditButtons}"
+                        Command="{Binding PasteJsonCommand}" />
+
+                <Button Grid.Column="2"
+                        Text="✨ Format JSON"
+                        IsVisible="{Binding ShowJsonEditButtons}"
+                        Command="{Binding FormatJsonCommand}" />
+
+                <!-- Secondary tool: $validate against the active FHIR server -->
+                <Button Grid.Column="3"
+                        Text="✓ Validate"
+                        IsVisible="{Binding ShowValidateButton}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray600}}"
+                        Command="{Binding ValidateFhirCommand}" />
+
+                <!-- Editing state: Apply / Cancel -->
+                <Button Grid.Column="0"
+                        Text="✓ Apply"
+                        IsVisible="{Binding ShowJsonApplyCancel}"
+                        Command="{Binding ApplyJsonCommand}" />
+
+                <Button Grid.Column="1"
+                        Text="✗ Cancel"
+                        IsVisible="{Binding ShowJsonApplyCancel}"
+                        Command="{Binding CancelJsonCommand}" />
+
+                <Label Grid.Column="4"
+                       Text="Editing JSON — Apply validates the syntax, Cancel restores the previous content."
+                       FontSize="12"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding ShowJsonApplyCancel}"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray300}}" />
+            </Grid>
+
+            <!-- Generated message editor (expands automatically with content lines, always editable) -->
+            <Grid Grid.Row="1" ColumnSpacing="6" ZIndex="1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="6" />
@@ -580,12 +690,12 @@
                         Text="Copy"
                         Clicked="OnCopyMessageClicked" />
 
-                <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="8">
+                <Border Grid.Column="2" Style="{StaticResource CardBorder}" Padding="8" HeightRequest="150">
                     <Border.GestureRecognizers>
                         <DropGestureRecognizer AllowDrop="True" Drop="OnGeneratedMessageFileDropped" />
                     </Border.GestureRecognizers>
-                    <Editor Text="{Binding GeneratedMessage}" 
-                            AutoSize="TextChanges"
+                    <Editor Text="{Binding GeneratedMessage}"
+                            VerticalOptions="Fill"
                             Placeholder="HL7 message will appear here after generation or file drop" />
                 </Border>
 
@@ -616,7 +726,7 @@
             </Grid>
 
             <!-- Bottom action bar (Generate / Send / Settings buttons) -->
-            <Grid Grid.Row="1" Padding="0,10,0,0" ColumnSpacing="12">
+            <Grid Grid.Row="2" Padding="0,10,0,0" ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />

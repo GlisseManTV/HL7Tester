@@ -3,14 +3,17 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:HL7Tester.ViewModels"
              xmlns:converters="clr-namespace:HL7Tester.Converters"
+             xmlns:controls="clr-namespace:HL7Tester.Controls"
+             xmlns:batch="clr-namespace:HL7Tester.Core.Batch;assembly=HL7Tester.Core"
              x:Class="HL7Tester.BatchSendPage"
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False"
              Title="Batch Send">
 
     <ContentPage.Resources>
         <ResourceDictionary>
             <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
             <converters:CollectionNotEmptyConverter x:Key="CollectionNotEmptyConverter" />
-            <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -20,14 +23,64 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="16" Spacing="12">
 
+                <!-- ── FHIR mode badge ───────────────────────────────────────── -->
+                <Border IsVisible="{Binding IsFhirMode}"
+                        Padding="10,6"
+                        BackgroundColor="{AppThemeBinding Light=#EEF2FF, Dark=#1E1B4B}"
+                        StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="8" />
+                    </Border.StrokeShape>
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="⚡ FHIR Mode"
+                               FontAttributes="Bold"
+                               FontSize="14"
+                               TextColor="{AppThemeBinding Light=#3730A3, Dark=#A5B4FC}" />
+                        <Label Text="Resources are sent over HTTP (POST/PUT/PATCH)"
+                               FontSize="12"
+                               VerticalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}" />
+                    </HorizontalStackLayout>
+                </Border>
+
                 <!-- ── Template selector ─────────────────────────────────────── -->
                 <Border Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="Workflow Template" Style="{StaticResource SubHeadline}" />
-                        <Picker x:Name="TemplatePicker"
-                                Title="Select a template"
-                                ItemsSource="{Binding Templates}"
-                                SelectedItem="{Binding SelectedTemplate}" />
+                        <CollectionView ItemsSource="{Binding Templates}"
+                                        SelectionMode="None"
+                                        HeightRequest="180">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="batch:BatchWorkflowTemplate">
+                                    <Border Padding="10" Margin="0,2"
+                                            Style="{StaticResource ClickableListItemBorder}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectTemplateCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Label Text="{Binding Name}"
+                                               FontSize="13"
+                                               LineBreakMode="TailTruncation" />
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Button Grid.Column="0"
+                                    Text="💾 Save"
+                                    Command="{Binding SaveTemplateCommand}"
+                                    FontSize="13"
+                                    Padding="8,4" />
+                            <Button Grid.Column="1"
+                                    Text="🗑️ Delete"
+                                    Command="{Binding DeleteTemplateCommand}"
+                                    FontSize="13"
+                                    Padding="8,4"
+                                    BackgroundColor="#EF4444"
+                                    TextColor="White"
+                                    IsVisible="{Binding CanDeleteTemplate}" />
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
 
@@ -36,11 +89,11 @@
                     <VerticalStackLayout Spacing="10">
                         <Grid ColumnDefinitions="*,*,Auto">
                             <Label Grid.Column="0" Text="Steps" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
-                            <Picker Grid.Column="1"
-                                    Title="Message type"
+                            <controls:AppDropdown Grid.Column="1"
+                                    Placeholder="Message type"
                                     ItemsSource="{Binding AvailableStepTypes}"
                                     SelectedItem="{Binding SelectedNewStepType}"
-                                    FontSize="12" />
+                                    MaxListHeight="150" />
                             <Button Grid.Column="2" Text="+ Add"
                                     Command="{Binding AddStepCommand}"
                                     FontSize="13"
@@ -87,7 +140,7 @@
 
                                             <!-- Row 2a: Identity fields (A31) -->
                                             <Grid ColumnDefinitions="*,*" ColumnSpacing="8"
-                                                  IsVisible="{Binding IsIdentityStep, Converter={StaticResource BoolToVis}}">
+                                                  IsVisible="{Binding IsIdentityStep}">
                                                 <Entry Grid.Column="0"
                                                        Text="{Binding GivenName}"
                                                        Placeholder="PID.5.1 Name"
@@ -100,7 +153,7 @@
 
                                             <!-- Row 2b: Location fields (non-A31) -->
                                             <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8"
-                                                  IsVisible="{Binding IsLocationStep, Converter={StaticResource BoolToVis}}">
+                                                  IsVisible="{Binding IsLocationStep}">
                                                 <Entry Grid.Column="0"
                                                        Text="{Binding Unit}"
                                                        Placeholder="PV1.3.1 Unit"
@@ -118,6 +171,20 @@
                                                        Placeholder="PV1.3.4 Floor"
                                                        FontSize="12" />
                                             </Grid>
+
+                                            <!-- Row 2c: Merge fields (A18/A40) -->
+                                            <Grid ColumnDefinitions="*"
+                                                  IsVisible="{Binding IsMergeStep}">
+                                                <Entry Grid.Column="0"
+                                                       Text="{Binding NewPatientId}"
+                                                       Placeholder="MRG.1 New Patient ID"
+                                                       FontSize="12" />
+                                            </Grid>
+
+                                            <!-- Row 2d: Event date/time (EVN-6.1) -->
+                                            <Entry Text="{Binding EventDateTime}"
+                                                   Placeholder="EVN.6.1 yyyyMMddHHmmss or @2"
+                                                   FontSize="12" />
                                         </VerticalStackLayout>
                                     </Border>
                                 </DataTemplate>
@@ -136,6 +203,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -145,22 +213,27 @@
                             <Label Grid.Row="0" Grid.Column="0" Text="Unit" VerticalOptions="Center" />
                             <Entry Grid.Row="0" Grid.Column="1"
                                    Text="{Binding Unit}"
-                                   Placeholder="PV1.3.1 Unit" />
+                                   Placeholder="ICU, NURSING" />
 
                             <Label Grid.Row="1" Grid.Column="0" Text="Room" VerticalOptions="Center" />
                             <Entry Grid.Row="1" Grid.Column="1"
                                    Text="{Binding Room}"
-                                   Placeholder="PV1.3.2 Room" />
+                                   Placeholder="301A, 302B, 308A" />
 
                             <Label Grid.Row="2" Grid.Column="0" Text="Bed" VerticalOptions="Center" />
                             <Entry Grid.Row="2" Grid.Column="1"
                                    Text="{Binding Bed}"
-                                   Placeholder="PV1.3.3 Bed" />
+                                   Placeholder="1, 2, 3" />
 
                             <Label Grid.Row="3" Grid.Column="0" Text="Floor" VerticalOptions="Center" />
                             <Entry Grid.Row="3" Grid.Column="1"
                                    Text="{Binding Floor}"
-                                   Placeholder="PV1.3.4 Floor" />
+                                   Placeholder="4, 5" />
+
+                            <Label Grid.Row="4" Grid.Column="0" Text="Sex" VerticalOptions="Center" />
+                            <Entry Grid.Row="4" Grid.Column="1"
+                                   Text="{Binding Sex}"
+                                   Placeholder="M / F (empty = random)" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
@@ -187,10 +260,11 @@
                 </Border>
 
                 <!-- ── Start / Stop ──────────────────────────────────────────── -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="12">
                     <Button Grid.Column="0"
                             Text="▶ Start"
                             Command="{Binding StartCommand}"
+                            IsEnabled="{Binding CanStart}"
                             BackgroundColor="#10B981"
                             TextColor="White"
                             FontAttributes="Bold"
@@ -199,20 +273,41 @@
                     <Button Grid.Column="1"
                             Text="■ Stop"
                             Command="{Binding StopCommand}"
+                            IsEnabled="{Binding IsRunning}"
                             BackgroundColor="#EF4444"
                             TextColor="White"
                             FontAttributes="Bold"
                             CornerRadius="8"
                             HeightRequest="44" />
+                    <VerticalStackLayout Grid.Column="2"
+                                         VerticalOptions="Center"
+                                         Spacing="2"
+                                         IsVisible="{Binding IsMllpMode}">
+                        <Label Text="Keep Connection"
+                               FontSize="11"
+                               HorizontalOptions="Center"
+                               TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}" />
+                        <Switch IsToggled="{Binding KeepConnectionOpen}"
+                                HorizontalOptions="Center" />
+                    </VerticalStackLayout>
                 </Grid>
 
                 <!-- ── Status ────────────────────────────────────────────────── -->
                 <Border Style="{StaticResource CardBorder}"
                         IsVisible="{Binding StatusText, Converter={StaticResource StringNotEmptyConverter}}">
-                    <Label Text="{Binding StatusText}"
-                           FontSize="13"
-                           TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
-                           LineBreakMode="WordWrap" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0"
+                               Text="{Binding StatusText}"
+                               FontSize="13"
+                               TextColor="{AppThemeBinding Light=#6B7280, Dark=#9CA3AF}"
+                               LineBreakMode="WordWrap"
+                               VerticalOptions="Center" />
+                        <Button Grid.Column="1"
+                                Text="Logs"
+                                FontSize="12"
+                                Padding="8,4"
+                                Clicked="OnOpenLogsClicked" />
+                    </Grid>
                 </Border>
 
                 <!-- ── Results ───────────────────────────────────────────────── -->
@@ -251,14 +346,10 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ── Footer ────────────────────────────────────────────────────────── -->
-        <Grid Grid.Row="1" Padding="16,10">
-            <Button Text="← Home"
-                    Clicked="OnHomeClicked"
-                    HorizontalOptions="Start"
-                    FontSize="14"
-                    Padding="12,6" />
-        </Grid>
+        <!-- ── Unified navigation footer ─────────────────────────────────────── -->
+        <controls:NavigationFooterView Grid.Row="1"
+                                       CurrentPage="Other"
+                                       CenterText="Batch Send" />
 
     </Grid>
 

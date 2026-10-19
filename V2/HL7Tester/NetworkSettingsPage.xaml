@@ -2,7 +2,15 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.NetworkSettingsPage"
+             xmlns:controls="clr-namespace:HL7Tester.Controls"
+             xmlns:converters="clr-namespace:HL7Tester.Resources.Converters"
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False"
              Title="Settings">
+
+    <ContentPage.Resources>
+        <converters:ProtocolDisplayConverter x:Key="ProtocolDisplayConverter" />
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
 
@@ -10,94 +18,42 @@
         <ScrollView Grid.Row="0">
             <VerticalStackLayout Padding="20" Spacing="16">
 
-                <!-- Row 1: Network Settings (left) + Connection History (right) -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                    
-                    <!-- Carte Network Settings -->
-                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorder}">
-                        <VerticalStackLayout Spacing="12">
-                            <Label Text="Network Settings" Style="{StaticResource SubHeadline}" />
-                            <Grid RowSpacing="10" ColumnSpacing="10">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                <!-- Active mode badge: purple = HL7v2, teal = FHIR -->
+                <Border BackgroundColor="{Binding ModeBadgeColor}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 6"
+                        Padding="12,6"
+                        HorizontalOptions="Start">
+                    <Label Text="{Binding ModeBadgeText}"
+                           TextColor="White"
+                           FontSize="13"
+                           FontAttributes="Bold" />
+                </Border>
 
-                                <Label Grid.Row="0" Grid.Column="0" Text="IP (*)" VerticalOptions="Center" />
-                                <Entry Grid.Row="0" Grid.Column="1"
-                                       Text="{Binding IpAddress}"
-                                       Keyboard="Numeric"
-                                       Placeholder="e.g., 192.168.1.10" />
-
-                                <Label Grid.Row="1" Grid.Column="0" Text="Port (*)" VerticalOptions="Center" />
-                                <Entry Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding Port}"
-                                       Keyboard="Numeric"
-                                       Placeholder="e.g., 70" />
-
-                                <Label Grid.Row="2" Grid.Column="0" Text="Nickname (optional)" VerticalOptions="Center" />
-                                <Entry Grid.Row="2" Grid.Column="1"
-                                       Text="{Binding Nickname}"
-                                       Placeholder="e.g., Server A, Test Lab" />
-
-                                <Button Grid.Row="3" Grid.ColumnSpan="2"
-                                        Text="Save Network settings"
-                                        Command="{Binding SaveNetworkSettingsCommand}"
-                                        HorizontalOptions="Fill" />
-                            </Grid>
+                <!-- Migration notice: Connections moved to a dedicated page -->
+                <Border Style="{StaticResource CardBorder}" Padding="16">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4" VerticalOptions="Center">
+                            <Label Text="Network settings have moved" FontAttributes="Bold" FontSize="15" />
+                            <Label Text="IP address, port and connection history are now managed in the Connections page."
+                                   FontSize="13"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
                         </VerticalStackLayout>
-                    </Border>
+                        <Button Grid.Column="1"
+                                Text="Open Connections"
+                                Command="{Binding OpenConnectionsCommand}"
+                                VerticalOptions="Center"
+                                Padding="12,8" />
+                    </Grid>
+                </Border>
 
-                    <!-- Carte Connection History -->
-                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
-                        <VerticalStackLayout Spacing="12">
-                            <Grid ColumnSpacing="10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Label Grid.Column="0" Text="Connection History" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
-                                <Button Grid.Column="1" Text="Delete History" 
-                                        Command="{Binding DeleteHistoryCommand}"
-                                        FontSize="14"
-                                        Padding="8,4" />
-                            </Grid>
-                            <CollectionView ItemsSource="{Binding HistoryEntries}"
-                                            HeightRequest="160"
-                                            SelectionMode="Single">
-                                <CollectionView.EmptyView>
-                                    <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
-                                </CollectionView.EmptyView>
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Padding="10" Style="{StaticResource ClickableListItemBorder}">
-                                            <Grid.GestureRecognizers>
-                                                <TapGestureRecognizer
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectHistoryEntryCommand}"
-                                                    CommandParameter="{Binding DisplayText}" />
-                                            </Grid.GestureRecognizers>
-                                            <Label Text="{Binding DisplayText}" />
-                                        </Border>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                        </VerticalStackLayout>
-                    </Border>
-
-                </Grid>
-
-                <!-- Row 2: Application Settings (full width) -->
+                <!-- Row 1: Application Settings (full width) -->
                 <Border Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="Application Settings" Style="{StaticResource SubHeadline}" />
                         <Grid RowSpacing="10" ColumnSpacing="10">
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -110,21 +66,27 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Label Grid.Row="0" Grid.Column="0" Text="Check updates" VerticalOptions="Center" />
-                            <Switch Grid.Row="0" Grid.Column="1"
+                            <Label Grid.Row="0" Grid.Column="0" Text="Protocol" VerticalOptions="Center" />
+                            <controls:AppDropdown Grid.Row="0" Grid.Column="1"
+                                    ItemsSource="{Binding AvailableProtocols}"
+                                    SelectedItem="{Binding SelectedProtocol}"
+                                    DisplayConverter="{StaticResource ProtocolDisplayConverter}" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="Check updates" VerticalOptions="Center" />
+                            <Switch Grid.Row="1" Grid.Column="1"
                                     IsToggled="{Binding AutoUpdateCheck}" />
 
-                            <Label Grid.Row="1" Grid.Column="0" Text="Log level" VerticalOptions="Center" />
-                            <Picker Grid.Row="1" Grid.Column="1"
+                            <Label Grid.Row="2" Grid.Column="0" Text="Log level" VerticalOptions="Center" />
+                            <controls:AppDropdown Grid.Row="2" Grid.Column="1"
                                     ItemsSource="{Binding AvailableLogLevels}"
                                     SelectedItem="{Binding SelectedLogLevel}" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="Message encoding" VerticalOptions="Center" />
-                            <Picker Grid.Row="2" Grid.Column="1"
+                            <Label Grid.Row="3" Grid.Column="0" Text="Message encoding" VerticalOptions="Center" />
+                            <controls:AppDropdown Grid.Row="3" Grid.Column="1"
                                     ItemsSource="{Binding AvailableEncodings}"
                                     SelectedItem="{Binding SelectedEncoding}" />
 
-                            <Grid Grid.Row="3" Grid.ColumnSpan="2"
+                            <Grid Grid.Row="4" Grid.ColumnSpan="2"
                                   ColumnDefinitions="Auto,*"
                                   IsVisible="{Binding UseCustomEncoding}">
                                 <Label Text="Use custom encoding" VerticalOptions="Center" />
@@ -133,12 +95,12 @@
                                         IsToggled="{Binding UseCustomEncoding}" />
                             </Grid>
 
-                            <Entry Grid.Row="4" Grid.ColumnSpan="2"
+                            <Entry Grid.Row="5" Grid.ColumnSpan="2"
                                    Text="{Binding CustomEncoding}"
                                    Placeholder="e.g., ISO-8859-2, KOI8-R..."
                                    IsVisible="{Binding UseCustomEncoding}" />
 
-                            <Button Grid.Row="5" Grid.ColumnSpan="2"
+                            <Button Grid.Row="6" Grid.ColumnSpan="2"
                                     Text="Save Application settings"
                                     Command="{Binding SaveApplicationSettingsCommand}"
                                     HorizontalOptions="Fill" />
@@ -146,40 +108,72 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Row 3: Documentation (left) + HL7 Tools (right) -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
-                    
+                <!-- Row 3: Documentation (left) + HL7v2 Tools (center) + FHIR Tools (right) -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+
                     <!-- Carte Documentation HL7 -->
                     <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorder}">
                         <VerticalStackLayout Spacing="12">
                             <Label Text="HL7 Documentation" Style="{StaticResource SubHeadline}" />
-                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                                <Button Grid.Column="0"
+                            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8" ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                <Button Grid.Row="0" Grid.Column="0"
                                         Text="ADT v2.3 ↗"
                                         Command="{Binding OpenDocumentationCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="8,6"
                                         FontSize="11" />
-                                <Button Grid.Column="1"
+                                <Button Grid.Row="0" Grid.Column="1"
                                         Text="ORM v2.3 ↗"
                                         Command="{Binding OpenOrmDocumentationCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="8,6"
                                         FontSize="11" />
-                                <Button Grid.Column="2"
+                                <Button Grid.Row="0" Grid.Column="2"
                                         Text="SIU v2.3 ↗"
                                         Command="{Binding OpenSiuDocumentationCommand}"
                                         HorizontalOptions="Fill"
                                         Padding="8,6"
                                         FontSize="11" />
+                                <Button Grid.Row="1" Grid.Column="0"
+                                        Text="ADT v2.9 ↗"
+                                        Command="{Binding OpenAdtV29Command}"
+                                        HorizontalOptions="Fill"
+                                        Padding="8,6"
+                                        FontSize="11" />
+                                <Button Grid.Row="1" Grid.Column="1"
+                                        Text="ORM v2.9 ↗"
+                                        Command="{Binding OpenOrmV29Command}"
+                                        HorizontalOptions="Fill"
+                                        Padding="8,6"
+                                        FontSize="11" />
+                                <Button Grid.Row="1" Grid.Column="2"
+                                        Text="SIU v2.9 ↗"
+                                        Command="{Binding OpenSiuV29Command}"
+                                        HorizontalOptions="Fill"
+                                        Padding="8,6"
+                                        FontSize="11" />
+                                <Grid Grid.Row="2" Grid.ColumnSpan="3" ColumnDefinitions="*,*" ColumnSpacing="8">
+                                    <Button Grid.Column="0"
+                                            Text="📖 FHIR R4 ↗"
+                                            Command="{Binding OpenFhirR4DocsCommand}"
+                                            HorizontalOptions="Fill"
+                                            Padding="8,6"
+                                            FontSize="11" />
+                                    <Button Grid.Column="1"
+                                            Text="📖 FHIR R5 ↗"
+                                            Command="{Binding OpenFhirR5DocsCommand}"
+                                            HorizontalOptions="Fill"
+                                            Padding="8,6"
+                                            FontSize="11" />
+                                </Grid>
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
 
-                    <!-- Carte HL7 Tools -->
+                    <!-- Carte HL7v2 Tools -->
                     <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
-                        <VerticalStackLayout Spacing="12">                        
-                            <Label Text="HL7 Tools" Style="{StaticResource SubHeadline}" />
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="🔧 HL7v2 Tools" Style="{StaticResource SubHeadline}" />
                             <Grid RowDefinitions="*,*,*" RowSpacing="8">
                                 <Button Grid.Row="0"
                                         Text="Embedded HL7 Inspector"
@@ -200,24 +194,34 @@
                         </VerticalStackLayout>
                     </Border>
 
+                    <!-- Carte FHIR Tools -->
+                    <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="🔍 FHIR Tools" Style="{StaticResource SubHeadline}" />
+                            <Grid RowDefinitions="*,*" RowSpacing="8">
+                                <Button Grid.Row="0"
+                                        Text="🔍 FHIR Explorer"
+                                        Command="{Binding OpenFhirExplorerCommand}"
+                                        HorizontalOptions="Fill"
+                                        Padding="12,8" />
+                                <Button Grid.Row="1"
+                                        Text="HL7 ⇄ FHIR Converter"
+                                        Command="{Binding OpenConverterCommand}"
+                                        HorizontalOptions="Fill"
+                                        Padding="12,8" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
                 </Grid>
 
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Static footer with Home button only -->
-        <Grid Grid.Row="1" Padding="16,10" ColumnDefinitions="*,Auto" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
-            <Label Grid.Column="0"
-                   Text="{Binding AssemblyVersion}"
-                   HorizontalOptions="Start"
-                   FontSize="14"
-                   TextColor="{DynamicResource Primary}" />
-
-            <Button Grid.Column="1"
-                    Text="Home"
-                    HorizontalOptions="End"
-                    Clicked="OnHomeClicked" />
-        </Grid>
+        <!-- Unified navigation footer: the Settings button is hidden on this page -->
+        <controls:NavigationFooterView Grid.Row="1"
+                                       CurrentPage="Settings"
+                                       CenterText="{Binding AssemblyVersion}" />
 
     </Grid>
 

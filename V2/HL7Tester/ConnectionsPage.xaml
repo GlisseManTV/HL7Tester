@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HL7Tester.ConnectionsPage"
+             xmlns:controls="clr-namespace:HL7Tester.Controls"
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False"
+             Title="Connections">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- Scrollable content area -->
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Padding="20" Spacing="16">
+
+                <!-- Active mode badge: purple = HL7v2, teal = FHIR -->
+                <Border BackgroundColor="{Binding ModeBadgeColor}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 6"
+                        Padding="12,6"
+                        HorizontalOptions="Start">
+                    <Label Text="{Binding ModeBadgeText}"
+                           TextColor="White"
+                           FontSize="13"
+                           FontAttributes="Bold" />
+                </Border>
+
+                <!-- Row 1: Active Connection (left) + Connection History (right) -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+
+                    <!-- Active Connection card -->
+                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="Active Connection (MLLP)" Style="{StaticResource SubHeadline}" />
+                            <Grid RowSpacing="10" ColumnSpacing="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Text="IP (*)" VerticalOptions="Center" />
+                                <Entry Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding IpAddress}"
+                                       Keyboard="Numeric"
+                                       Placeholder="e.g., 192.168.1.10" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Text="Port (*)" VerticalOptions="Center" />
+                                <Entry Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding Port}"
+                                       Keyboard="Numeric"
+                                       Placeholder="e.g., 70" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Text="Nickname (optional)" VerticalOptions="Center" />
+                                <Entry Grid.Row="2" Grid.Column="1"
+                                       Text="{Binding Nickname}"
+                                       Placeholder="e.g., Server A, Test Lab" />
+
+                                <Button Grid.Row="3" Grid.ColumnSpan="2"
+                                        Text="Save Connection"
+                                        Command="{Binding SaveConnectionCommand}"
+                                        HorizontalOptions="Fill" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Connection History card -->
+                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Text="Saved Connections" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
+                                <Button Grid.Column="1" Text="Delete History"
+                                        Command="{Binding DeleteHistoryCommand}"
+                                        FontSize="14"
+                                        Padding="8,4" />
+                            </Grid>
+                            <CollectionView ItemsSource="{Binding HistoryEntries}"
+                                            HeightRequest="240"
+                                            SelectionMode="Single">
+                                <CollectionView.EmptyView>
+                                    <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
+                                </CollectionView.EmptyView>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="10" Style="{StaticResource ClickableListItemBorder}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectHistoryEntryCommand}"
+                                                    CommandParameter="{Binding DisplayText}" />
+                                            </Border.GestureRecognizers>
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                                <Label Grid.Column="0" Text="{Binding DisplayText}" VerticalOptions="Center" />
+                                                <!-- Per-entry delete button -->
+                                                <Button Grid.Column="1"
+                                                        Text="🗑️"
+                                                        FontSize="12"
+                                                        Padding="6,2"
+                                                        BackgroundColor="Transparent"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteHistoryEntryCommand}"
+                                                        CommandParameter="{Binding .}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+
+                </Grid>
+
+                <!-- Row 2: FHIR Profiles — editor (left) + profile list (right), same pattern as MLLP -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+
+                    <!-- FHIR Profile editor card -->
+                    <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label Text="Active FHIR Profile" Style="{StaticResource SubHeadline}" />
+
+                            <Label Text="No FHIR profile selected. Click '+ Add Profile' or pick one from the list."
+                                   FontSize="13"
+                                   IsVisible="{Binding NoProfiles}"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray500}}" />
+
+                            <!-- Profile editor: visible only when a profile is selected -->
+                            <Grid RowSpacing="10" ColumnSpacing="10"
+                                  IsVisible="{Binding HasProfiles}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Text="Name" VerticalOptions="Center" />
+                                <Entry Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding ProfileName}"
+                                       Placeholder="e.g., Dev Server, Staging" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Text="Base URL" VerticalOptions="Center" />
+                                <Entry Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding BaseUrl}"
+                                       Keyboard="Url"
+                                       Placeholder="e.g., https://hapi.fhir.org/baseR4" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Text="Auth" VerticalOptions="Center" />
+                                <controls:AppDropdown Grid.Row="2" Grid.Column="1"
+                                        ItemsSource="{Binding AvailableAuthTypes}"
+                                        SelectedItem="{Binding SelectedAuthTypeDisplay}"
+                                        MaxListHeight="200" />
+
+                                <!-- BearerToken -->
+                                <Label Grid.Row="3" Grid.Column="0" Text="Token" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowTokenField}" />
+                                <Entry Grid.Row="3" Grid.Column="1"
+                                       Text="{Binding Token}"
+                                       IsPassword="True"
+                                       Placeholder="Bearer token"
+                                       IsVisible="{Binding ShowTokenField}" />
+
+                                <!-- BasicAuth -->
+                                <Label Grid.Row="4" Grid.Column="0" Text="Username" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowBasicAuthFields}" />
+                                <Entry Grid.Row="4" Grid.Column="1"
+                                       Text="{Binding Username}"
+                                       Placeholder="Username"
+                                       IsVisible="{Binding ShowBasicAuthFields}" />
+
+                                <Label Grid.Row="5" Grid.Column="0" Text="Password" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowBasicAuthFields}" />
+                                <Entry Grid.Row="5" Grid.Column="1"
+                                       Text="{Binding Password}"
+                                       IsPassword="True"
+                                       Placeholder="Password"
+                                       IsVisible="{Binding ShowBasicAuthFields}" />
+
+                                <!-- OAuth2 (shared: TokenUrl / ClientId / Scope) -->
+                                <Label Grid.Row="6" Grid.Column="0" Text="Token URL" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowOAuth2Fields}" />
+                                <Entry Grid.Row="6" Grid.Column="1"
+                                       Text="{Binding TokenUrl}"
+                                       Keyboard="Url"
+                                       Placeholder="https://auth.example.com/token"
+                                       IsVisible="{Binding ShowOAuth2Fields}" />
+
+                                <!-- OAuth2 Auth Code + PKCE -->
+                                <Label Grid.Row="7" Grid.Column="0" Text="Authorize URL" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowOAuth2PkceFields}" />
+                                <Entry Grid.Row="7" Grid.Column="1"
+                                       Text="{Binding AuthorizeUrl}"
+                                       Keyboard="Url"
+                                       Placeholder="https://auth.example.com/authorize"
+                                       IsVisible="{Binding ShowOAuth2PkceFields}" />
+
+                                <Label Grid.Row="8" Grid.Column="0" Text="Client ID" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowOAuth2Fields}" />
+                                <Entry Grid.Row="8" Grid.Column="1"
+                                       Text="{Binding ClientId}"
+                                       Placeholder="Client ID"
+                                       IsVisible="{Binding ShowOAuth2Fields}" />
+
+                                <!-- OAuth2 Client Credentials -->
+                                <Label Grid.Row="9" Grid.Column="0" Text="Client Secret" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowOAuth2CcFields}" />
+                                <Entry Grid.Row="9" Grid.Column="1"
+                                       Text="{Binding ClientSecret}"
+                                       IsPassword="True"
+                                       Placeholder="Client secret"
+                                       IsVisible="{Binding ShowOAuth2CcFields}" />
+
+                                <Label Grid.Row="10" Grid.Column="0" Text="Redirect URI" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowOAuth2PkceFields}" />
+                                <Entry Grid.Row="10" Grid.Column="1"
+                                       Text="{Binding RedirectUri}"
+                                       Keyboard="Url"
+                                       Placeholder="https://app.example.com/callback"
+                                       IsVisible="{Binding ShowOAuth2PkceFields}" />
+
+                                <Label Grid.Row="11" Grid.Column="0" Text="Scope" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowOAuth2Fields}" />
+                                <Entry Grid.Row="11" Grid.Column="1"
+                                       Text="{Binding Scope}"
+                                       Placeholder="e.g., openid patient/*.read"
+                                       IsVisible="{Binding ShowOAuth2Fields}" />
+
+                                <!-- ApiKey -->
+                                <Label Grid.Row="12" Grid.Column="0" Text="Header Name" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowApiKeyFields}" />
+                                <Entry Grid.Row="12" Grid.Column="1"
+                                       Text="{Binding HeaderName}"
+                                       Placeholder="e.g., X-API-Key"
+                                       IsVisible="{Binding ShowApiKeyFields}" />
+
+                                <Label Grid.Row="13" Grid.Column="0" Text="API Key" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowApiKeyFields}" />
+                                <Entry Grid.Row="13" Grid.Column="1"
+                                       Text="{Binding ApiKey}"
+                                       IsPassword="True"
+                                       Placeholder="API key"
+                                       IsVisible="{Binding ShowApiKeyFields}" />
+
+                                <!-- mTLS -->
+                                <Label Grid.Row="14" Grid.Column="0" Text="Cert Path" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowMtlsFields}" />
+                                <Entry Grid.Row="14" Grid.Column="1"
+                                       Text="{Binding ClientCertPath}"
+                                       Placeholder="/path/to/client.pfx"
+                                       IsVisible="{Binding ShowMtlsFields}" />
+
+                                <Label Grid.Row="15" Grid.Column="0" Text="Cert Password" VerticalOptions="Center"
+                                       IsVisible="{Binding ShowMtlsFields}" />
+                                <Entry Grid.Row="15" Grid.Column="1"
+                                       Text="{Binding CertPassword}"
+                                       IsPassword="True"
+                                       Placeholder="Certificate password"
+                                       IsVisible="{Binding ShowMtlsFields}" />
+
+                                <Label Grid.Row="16" Grid.Column="0" Text="Endpoint" VerticalOptions="Center" />
+                                <controls:AppDropdown Grid.Row="16" Grid.Column="1"
+                                        ItemsSource="{Binding AvailableEndpoints}"
+                                        SelectedItem="{Binding DefaultEndpoint}"
+                                        MaxListHeight="200" />
+
+                                <Label Grid.Row="17" Grid.Column="0" Text="TLS Verify" VerticalOptions="Center" />
+                                <Switch Grid.Row="17" Grid.Column="1"
+                                        IsToggled="{Binding TlsVerify}" />
+
+                                <Label Grid.Row="18" Grid.Column="0" Text="Timeout (s)" VerticalOptions="Center" />
+                                <Entry Grid.Row="18" Grid.Column="1"
+                                       Text="{Binding TimeoutText}"
+                                       Keyboard="Numeric"
+                                       Placeholder="30" />
+
+                                <Button Grid.Row="19" Grid.ColumnSpan="2"
+                                        Text="Save Profile"
+                                        Command="{Binding SaveProfileCommand}"
+                                        HorizontalOptions="Fill" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- FHIR Profiles list card -->
+                    <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0" Text="FHIR Profiles" Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
+                                <Button Grid.Column="1" Text="+ Add Profile"
+                                        Command="{Binding AddProfileCommand}"
+                                        FontSize="14"
+                                        Padding="10,6" />
+                            </Grid>
+
+                            <CollectionView ItemsSource="{Binding FhirProfiles}"
+                                            HeightRequest="240"
+                                            SelectionMode="Single">
+                                <CollectionView.EmptyView>
+                                    <Label Text="No FHIR profiles yet. Click '+ Add Profile' to configure a FHIR server."
+                                           HorizontalOptions="Center" VerticalOptions="Center" />
+                                </CollectionView.EmptyView>
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="10" Style="{StaticResource ClickableListItemBorder}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectProfileCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                                <Label Grid.Column="0" Text="{Binding Name}" VerticalOptions="Center" />
+                                                <!-- Per-profile delete button -->
+                                                <Button Grid.Column="1"
+                                                        Text="🗑️"
+                                                        FontSize="12"
+                                                        Padding="6,2"
+                                                        BackgroundColor="Transparent"
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeleteProfileEntryCommand}"
+                                                        CommandParameter="{Binding .}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Unified navigation footer: the Connections button is hidden on this page -->
+        <controls:NavigationFooterView Grid.Row="1"
+                                       CurrentPage="Connections"
+                                       CenterText="Connections" />
+
+    </Grid>
+
+</ContentPage>

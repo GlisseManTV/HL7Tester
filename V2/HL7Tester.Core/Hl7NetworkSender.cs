@@ -1,5 +1,6 @@
 using System.Net.Sockets;
 using System.Text;
+using HL7Tester.Core.Sending;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -13,6 +14,8 @@ public sealed class SendResult
     public bool Success { get; init; }
     public string? MessageCode { get; init; }
     public string? AckMessage { get; init; }
+    public string? MsaStatus { get; init; }
+    public string? ErrorDescription { get; init; }
     public string ErrorMessage { get; init; } = string.Empty;
 }
 
@@ -31,10 +34,11 @@ public interface IHL7NetworkSender
     /// <param name="port">Le port du serveur cible.</param>
     /// <param name="cancellationToken">Token d'annulation.</param>
     /// <param name="encodingName">Nom de l'encodage à utiliser (ex: "UTF-8", "CP1252", "ISO-8859-1"). Si null, utilise UTF-8 par défaut.</param>
-    Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null);
+    /// <param name="existingClient">Optionnel : un TcpClient déjà connecté à réutiliser (Keep Connection Open).</param>
+    Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null, TcpClient? existingClient = null);
 }
 
-public sealed class Hl7NetworkSender : IHL7NetworkSender
+public sealed class Hl7NetworkSender : IHL7NetworkSender, IMessageSender
 {
     private readonly ILogger<Hl7NetworkSender> _logger;
 
@@ -48,7 +52,7 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
         return await SendAsync(hl7Message, ipAddress, port, cancellationToken, encodingName: null).ConfigureAwait(false);
     }
 
-    public async Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null)
+    public async Task<SendResult> SendAsync(string hl7Message, string ipAddress, int port, CancellationToken cancellationToken = default, string? encodingName = null, TcpClient? existingClient = null)
     {
         if (string.IsNullOrWhiteSpace(hl7Message))
             throw new ArgumentException("HL7 message cannot be null or empty.", nameof(hl7Message));
@@ -62,7 +66,8 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
         var encoding = GetEncodingFromString(encodingName);
         var bytes = encoding.GetBytes(payload);
 
-        using var client = new TcpClient();
+        var ownsClient = existingClient is null;
+        var client = existingClient ?? new TcpClient();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         try
@@ -74,17 +79,21 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
             var msgContent = hl7Message.Replace("\r\n", Environment.NewLine).Replace("\n", Environment.NewLine);
             _logger.LogInformation("Sending HL7 message to {Ip}:{Port} (Message Code: {MessageCode}):\n{Message}", ipAddress, port, messageCode, msgContent);
 
-            await client.ConnectAsync(ipAddress, port, cts.Token).ConfigureAwait(false);
+            if (existingClient is null)
+            {
+                await client.ConnectAsync(ipAddress, port, cts.Token).ConfigureAwait(false);
+            }
 
-            using NetworkStream stream = client.GetStream();
+            var stream = client.GetStream();
             await stream.WriteAsync(bytes, 0, bytes.Length, cts.Token).ConfigureAwait(false);
             await stream.FlushAsync(cts.Token).ConfigureAwait(false);
 
             _logger.LogInformation("HL7 message sent to {Ip}:{Port} ({Bytes} bytes) with encoding {Encoding}", ipAddress, port, bytes.Length, encoding.EncodingName);
 
-            // Optionnel : lecture d'un ACK en retour (non parsé pour l'instant)
+            // Lecture d'un ACK en retour
             string? ackMessage = null;
-            
+            string? msaStatus = null;
+
             // On lit de manière best-effort, sans faire échouer l'envoi si rien n'arrive.
             if (stream.CanRead)
             {
@@ -96,9 +105,9 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                     if (read > 0)
                     {
                         ackMessage = encoding.GetString(buffer, 0, read);
-                        // Formater l'ACK avec des sauts de ligne pour une meilleure lisibilité
                         var ackClean = CleanAckMessage(ackMessage);
-                        _logger.LogInformation("Received ACK from {Ip}:{Port}:\n{Ack}", ipAddress, port, ackClean);
+                        msaStatus = ExtractMsaStatus(ackClean);
+                        _logger.LogInformation("Received ACK from {Ip}:{Port} (MSA-1: {MsaStatus}):\n{Ack}", ipAddress, port, msaStatus ?? "N/A", ackClean);
                     }
                     else
                     {
@@ -111,11 +120,28 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                 }
             }
 
+            // Déterminer le succès basé sur le statut MSA-1
+            // AA = Accept, AE = Error accept, AR = Reject
+            bool isSuccess = msaStatus == null || msaStatus == "AA";
+            string errorMessage = string.Empty;
+            string? errorDescription = null;
+            if (!isSuccess)
+            {
+                errorDescription = ExtractMsaErrorDescription(ackMessage);
+                errorMessage = msaStatus == "AR"
+                    ? $"Message rejected by receiver (MSA-1: AR)"
+                    : $"Message accepted with errors (MSA-1: AE)";
+                _logger.LogWarning("Message {MsaStatus} by receiver at {Ip}:{Port}. Description: {Desc}", msaStatus, ipAddress, port, errorDescription ?? "(none)");
+            }
+
             return new SendResult
             {
-                Success = true,
+                Success = isSuccess,
                 MessageCode = messageCode,
-                AckMessage = ackMessage != null ? CleanAckMessage(ackMessage) : null
+                AckMessage = ackMessage != null ? CleanAckMessage(ackMessage) : null,
+                MsaStatus = msaStatus,
+                ErrorDescription = errorDescription,
+                ErrorMessage = errorMessage
             };
         }
         catch (Exception ex)
@@ -128,6 +154,53 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
                 ErrorMessage = ex.Message
             };
         }
+        finally
+        {
+            if (ownsClient)
+            {
+                client.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Protocol-agnostic entry point (<see cref="IMessageSender"/>). Adapts a
+    /// <see cref="SendRequest"/> to the existing MLLP API and maps the legacy
+    /// <see cref="SendResult"/> onto a unified <see cref="MessageSendResult"/>.
+    /// The original <c>SendAsync(string, string, int, ...)</c> API is preserved so
+    /// existing callers (BatchSendEngine / MainViewModel) keep working unchanged.
+    /// </summary>
+    public async Task<MessageSendResult> SendAsync(SendRequest request, CancellationToken ct = default)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        if (string.IsNullOrWhiteSpace(request.Ip) || request.Port is null)
+        {
+            return new MessageSendResult
+            {
+                Success = false,
+                Protocol = "MLLP",
+                ErrorMessage = "MLLP send requires an IP address and a port.",
+                ErrorDescription = "Missing IP or port."
+            };
+        }
+
+        var result = await SendAsync(
+            request.Payload,
+            request.Ip,
+            request.Port.Value,
+            ct,
+            request.EncodingName).ConfigureAwait(false);
+
+        return new MessageSendResult
+        {
+            Success = result.Success,
+            Protocol = "MLLP",
+            MsaStatus = result.MsaStatus,
+            AckMessage = result.AckMessage,
+            ErrorDescription = result.ErrorDescription,
+            ErrorMessage = result.ErrorMessage
+        };
     }
 
     /// <summary>
@@ -184,6 +257,64 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender
     private static string CleanAckMessage(string ack)
     {
         return ack.Replace("\x0B", "").Replace("\x1C", "").Replace("\r", "\n").TrimEnd('\n');
+    }
+
+    /// <summary>
+    /// Extrait le statut MSA-1 (Acknowledge type) d'une réponse HL7.
+    /// MSA-1: AA = Accept, AE = Error accept, AR = Reject.
+    /// </summary>
+    /// <param name="ackMessage">Le message ACK nettoyé.</param>
+    /// <returns>Le code de statut (ex: "AA", "AE", "AR") ou null si non trouvé.</returns>
+    private static string? ExtractMsaStatus(string ackMessage)
+    {
+        var lines = ackMessage.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("MSA|"))
+            {
+                // MSA|AA|controlId|...
+                // MSA-1 est le premier champ après "MSA|"
+                var fields = line.Split('|');
+                if (fields.Length >= 2)
+                {
+                    return fields[1].Trim();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Extrait le texte d'erreur MSA-3 d'une réponse HL7.
+    /// MSA-3 contient la description de l'erreur (ex: "ARTrack HL7Service is unable to upload...").
+    /// </summary>
+    /// <param name="ackMessage">Le message ACK brut (non nettoyé).</param>
+    /// <returns>Le texte d'erreur ou null si non trouvé.</returns>
+    private static string? ExtractMsaErrorDescription(string? ackMessage)
+    {
+        if (string.IsNullOrWhiteSpace(ackMessage))
+            return null;
+
+        var clean = CleanAckMessage(ackMessage);
+        var lines = clean.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("MSA|"))
+            {
+                // MSA|AR|controlId|ErrorDescription
+                var fields = line.Split('|');
+                if (fields.Length >= 4)
+                {
+                    var desc = fields[3].Trim();
+                    return string.IsNullOrEmpty(desc) ? null : desc;
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

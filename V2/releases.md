@@ -1,4 +1,377 @@
-## v2.0.18 Changes (Latest Release)
+## v2.0.25 Changes (Latest Release)
+
+### Connections — Moved to a Dedicated ConnectionsPage
+
+Network settings moved out of the Settings page into a dedicated ConnectionsPage for a cleaner experience.
+
+**Key Features:**
+- IP address, Port, nickname and saved connections now live in "Connections"
+- Accessible from Settings or the migration card
+- Same functionality, better organization
+
+**Technical Details:**
+- New `ConnectionsPage.xaml` + `ConnectionsViewModel.cs` — full connection/profile management
+- Active/Inactive mode badges for connections and FHIR profiles
+- `NetworkSettingsPage` keeps the protocol toggle, tools cards and documentation links
+
+### ⚠️ FHIR Support — Beta
+
+FHIR protocol support is new in this release and still in beta.
+
+- Features work but are not yet optimized
+- Expect changes and improvements in upcoming versions
+- Feedback welcome — report any issues encountered
+
+### FHIR Module — HL7v2 to FHIR REST Integration
+
+Added a full FHIR module enabling HL7 messages to be sent as FHIR REST calls. The app now supports both MLLP and FHIR protocols, switchable via a global toggle visible on every page.
+
+**Key Features:**
+- Global protocol toggle (MLLP / FHIR) with a badge displayed on all pages
+- FHIR server profile management: baseUrl, authentication (Bearer, Basic, OAuth2, ApiKey), TLS verification
+- FHIR R4 resource generation: Bundle (transaction), Patient, Encounter, ServiceRequest, Appointment
+- JSON editor: edit, paste, format, and validate syntax before sending
+- HL7v2 ⇄ FHIR converter page (bidirectional: HL7 → FHIR JSON, FHIR JSON → HL7v2)
+- FHIR Explorer: Search, Read, Capabilities, with pagination support
+- $validate operation: server-side FHIR resource validation
+- Batch Send compatible with FHIR protocol
+
+### UI Fixes & Polish
+
+- Flyout Shell disabled (Mac Catalyst fix)
+- Standardized list heights in `AppDropdown`/`DropdownButton` controls for UI consistency
+- Tools cards separated: HL7v2 Tools / FHIR Tools
+- Documentation links for HL7v2.9 and FHIR R4/R5
+- Removed redundant System.Text.Encoding.CodePages package
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Fhir/` | NEW — Full FHIR module: FhirR4Generator, FhirRestClient, FhirSettings, FhirToHl7Converter, FhirTerminologyMapper, FhirMergeConfig, IFhirResourceGenerator |
+| `HL7Tester.Core/Fhir/FhirAuth/` | NEW — FhirAuthDelegatingHandler (Bearer, Basic, OAuth2, ApiKey) |
+| `HL7Tester.Core/Sending/` | NEW — IMessageSender, SenderRouter, SendRequest, MessageSendResult (protocol abstraction layer) |
+| `HL7Tester/ConnectionsPage.xaml` | NEW — Dedicated page for connection/profile management |
+| `HL7Tester/FhirConverterPage.xaml` | NEW — HL7v2 ⇄ FHIR bidirectional converter |
+| `HL7Tester/FhirExplorerPage.xaml` | NEW — FHIR Search, Read, Capabilities, $validate |
+| `HL7Tester/ViewModels/ConnectionsViewModel.cs` | NEW — ViewModel for connection profiles |
+| `HL7Tester/ViewModels/FhirConverterViewModel.cs` | NEW — ViewModel for HL7⇄FHIR conversion |
+| `HL7Tester/ViewModels/FhirExplorerViewModel.cs` | NEW — ViewModel for FHIR Explorer |
+| `HL7Tester/Resources/Converters/ProtocolDisplayConverter.cs` | NEW — Protocol badge display converter |
+| `HL7Tester.Core/NetworkSettings.cs` | Added Protocol property, FHIR profile storage |
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | FHIR-compatible sending via SenderRouter |
+| `HL7Tester/NetworkSettingsPage.xaml` | Protocol toggle, FHIR Tools card, documentation links |
+| `HL7Tester/AppShell.xaml` | Flyout Shell disabled |
+| `HL7Tester/HL7Tester.csproj` | Version incremented to 2.0.25; removed System.Text.Encoding.CodePages |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.25.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.25.0 |
+
+---
+
+## v2.0.24 Changes
+
+### UIScene Lifecycle Adoption (Xcode 27 / macOS 27)
+
+Adopted the UIScene lifecycle required by Xcode 27 for iOS and Mac Catalyst apps. Without this change, the app crashes at launch on macOS 27.
+
+**Key Features:**
+- Added `SceneDelegate` class (inherits `MauiUISceneDelegate`) for both MacCatalyst and iOS
+- Added `UIApplicationSceneManifest` to both `Info.plist` files
+- App now complies with Apple's mandatory UIScene lifecycle requirement
+
+**Technical Details:**
+- `SceneDelegate.cs` — new file in both `Platforms/MacCatalyst/` and `Platforms/iOS/`
+- `Info.plist` — added `UIApplicationSceneManifest` dict with `UISceneDelegateClassName = "SceneDelegate"`
+- `AppDelegate.cs` — no changes needed (SDK handles scene delegation)
+- `Program.cs` — no changes needed
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/Platforms/MacCatalyst/SceneDelegate.cs` | NEW — SceneDelegate class |
+| `HL7Tester/Platforms/MacCatalyst/Info.plist` | Added UIApplicationSceneManifest |
+| `HL7Tester/Platforms/iOS/SceneDelegate.cs` | NEW — SceneDelegate class |
+| `HL7Tester/Platforms/iOS/Info.plist` | Added UIApplicationSceneManifest |
+| `HL7Tester.csproj` | Version incremented to 2.0.24 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.24.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.24.0 |
+
+### AppDropdown — Platform-Routed Dropdown (Mac Catalyst Bug Fix)
+
+Shipped in the same v2.0.24 release: replaced every MAUI `Picker` with an `AppDropdown` wrapper that routes per platform — the native `Picker` on Windows (WinUI flyout UX preserved, no layout shift) and a custom inline `DropdownButton` on Mac Catalyst. On Mac Catalyst, the native `Picker` renders as a UIKit popover that gets auto-dismissed when Tab navigation corrupts the first-responder chain, wedging the app until force-quit; the inline control is pure MAUI: no popover, no UIKit involvement.
+
+**Key Features:**
+- `AppDropdown` wrapper (`Border`, `StrokeThickness=0`): identical bindable surface on both platforms — TwoWay `SelectedItem`/`SelectedIndex`, `Placeholder`, `DisplayConverter`, `DisplayMemberPath`
+- Windows → native `Picker`; explicit `Placeholder` only mapped to `Title` (no header when unset, identical to the original bare `Picker`), display options mapped to `ItemDisplayBinding`
+- Mac Catalyst → inline `DropdownButton`: header `Button` (Tab + Enter/Space) + list in `Border`/`ScrollView`; `MaxListHeight="240"` caps the expansion
+- Selection re-pushed after `ItemsSource` changes; anti-echo `_syncGuard` for wrapper↔implementation and `SelectedItem`↔`SelectedIndex` sync
+
+**Technical Details:**
+- New `Controls/AppDropdown.cs` + `Controls/DropdownButton.cs` (`HL7Tester.Controls`); both inherit `Border`, `DropdownButton` paints its own outline (`#C8C8C8` light / `#404040` dark, matching `Gray200`/`Gray600` from `Colors.xaml`)
+- MAUI 10 gotcha: `Picker.ItemsSource` is typed `IList` — lists/`ObservableCollection` passed through as-is (live updates), other sequences materialized
+- 6 `Picker` instances replaced: `MainPage.xaml` (Message Family, Message Type, ORC-1 Order control), `NetworkSettingsPage.xaml` (Log level, Message encoding), `BatchSendPage.xaml` (step type, `Title` → `Placeholder`)
+- Header pickers keep `Background="{AppThemeBinding Light=White, Dark=OffBlack}"` to preserve contrast on the purple header
+
+**Additional Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/Controls/AppDropdown.cs` | NEW — platform-routed wrapper (native Picker on WinUI / inline on Catalyst) |
+| `HL7Tester/Controls/DropdownButton.cs` | NEW — inline dropdown control (Mac Catalyst implementation) |
+| `HL7Tester/MainPage.xaml` | 3 Pickers → AppDropdown; xmlns:controls; MaxListHeight on Message Type |
+| `HL7Tester/NetworkSettingsPage.xaml` | 2 Pickers → AppDropdown; xmlns:controls |
+| `HL7Tester/BatchSendPage.xaml` | 1 Picker → AppDropdown; xmlns:controls; MaxListHeight on step types |
+| `HL7Tester/Resources/Raw/whatsnew.md` | Dropdown announcement merged into the v2.0.23 block |
+
+---
+
+## v2.0.23 Changes
+
+### Local HL7 Inspector — Embedded HTML Parser
+
+Replaced the external hl7inspector.com link with a fully embedded, offline HTML parser. The "Web Inspector" button now opens a local copy of the HL7 Inspector page in the system browser, with no internet connection required.
+
+**Key Features:**
+- "Web Inspector" button now opens the local `hl7-inspector.html` file in the external browser
+- No internet connection needed — the parser is fully self-contained
+- Knowledge base merged bidirectionally: both the C# embedded parser and the HTML parser now share the same segment/field references
+- Added missing segments to C# parser: RXO, RXE, RXR, RXD, RXA, ZHH
+- Added missing segments to HTML parser: PD1, ROL, DB1, DRG, IN2, ACC, UB1, UB2, QRD, RGS, AIG, AIL, AIP, AIS, SAC, SPM, TXA, SFT, UAC, ARV, PRD, CTD, QAK, QPD, RCP, DSC, DSP, BHS, BTS, FHS, FTS, ZBE, ZFA
+- Favicon added to the HTML inspector page
+- Credit attribution in the HTML header: "made by Tim" with link to [TimSimms84/HL7-Inspector](https://github.com/TimSimms84/HL7-Inspector)
+
+**Technical Details:**
+- `NetworkSettingsViewModel.OpenWebInspector()` — extracts `hl7-inspector.html` + `favicon.png` from the MAUI asset bundle to a temp directory, then opens the HTML file via `Process.Start(new ProcessStartInfo(htmlPath) { UseShellExecute = true })`
+- `HL7KnowledgeBase.cs` — added SegmentNames entries for RXO, RXE, RXR, RXD, RXA, ZHH; added FieldInfo entries for all their fields (RXO 1-21, RXE 1-30, RXR 1-6, RXD 1-14, RXA 1-17, ZHH 1-2, IN1 1-16, GT1 1-14, ORC-29, PV2-38, PV2-40); fixed typo `OBX-7` "References Range" → "Reference Range"
+- `hl7-inspector.html` — added 32 missing segments to `HL7_FIELDS`, updated `SEG_CLASS` color categories, harmonized ~20 field names to match C# parser, added missing fields to PV1, PV2, OBR, OBX, NK1, DG1, MSA, ERR, SCH
+- `hl7-inspector.html` — added `<link rel="icon" href="favicon.png">` in `<head>`, added `.credit` CSS class and `<span class="credit">` in header
+- `favicon.png` — copied from `Resources/AppIcon/HL7 _icon_whbackground.png`
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/ViewModels/NetworkSettingsViewModel.cs` | `OpenWebInspector()` now extracts local HTML + favicon and opens via `Process.Start`; added `using System.Diagnostics` |
+| `HL7Tester.Core/Inspector/Services/HL7KnowledgeBase.cs` | Added 6 segments, 100+ field definitions, fixed OBX-7 typo |
+| `HL7Tester/Resources/Raw/hl7-inspector.html` | Added 32 segments, harmonized field names, added favicon link, added credit |
+| `HL7Tester/Resources/Raw/favicon.png` | NEW — app icon as favicon for the HTML page |
+| `HL7Tester.csproj` | Version incremented to 2.0.23 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.23.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.23.0 |
+
+---
+
+## v2.0.22 Changes
+
+### Batch Send — Keep Connection Open, EventDateTime, CSV Locations & UX Improvements
+
+Added a "Keep Connection Open" toggle to reuse a single TCP connection for all messages in a batch, per-step `EventDateTime` with `@N` reference syntax, CSV parsing for global location fields, a Logs button in the status bar, and relaxed step limits (1 min, 7 max).
+
+**Key Features:**
+- **Keep Connection Open**: Toggle next to Start/Stop. When enabled, a single TCP connection is established once and reused for all messages across all patients. Eliminates per-message connection overhead for high-throughput stress testing.
+- **EventDateTime per step**: Each step now has an optional `EventDateTime` field (format `yyyyMMddHHmm` or `yyyyMMddHHmmSS`). Supports `@N` reference syntax to link a step's event time to a previous step's resolved time (e.g., `@2` = same as step 2).
+- **CSV location parsing**: Global location fields (Room, Bed, Unit, Floor) now accept comma-separated values (e.g., `301A, 302B, 308A`). A random value is picked per patient, enabling realistic multi-unit admission scenarios.
+- **Global Sex override**: New "Sex" picker (M/F/empty) to force a specific sex for all patients instead of random.
+- **Logs button**: Added to the status bar for quick access to log files without leaving the page.
+- **Step limits relaxed**: Minimum 1 step (was 2), maximum 7 steps (was 6).
+- **Template fix**: The 7-step template now has 6 steps (removed A08) to stay within the limit.
+
+**Technical Details:**
+- `IHL7NetworkSender.SendAsync` gained `TcpClient? existingClient` parameter. When provided, the sender skips `ConnectAsync` and does not dispose the client.
+- `BatchSendEngine.RunAsync` creates a shared `TcpClient` when `KeepConnectionOpen` is true, connects once, passes it to all `SendAsync` calls, and disposes it in a `finally` block.
+- `Hl7NetworkSender` no longer uses `using` on the `NetworkStream` — the stream lives as long as the `TcpClient`.
+- `BatchWorkflow.KeepConnectionOpen` (bool) — new property.
+- `WorkflowStep.EventDateTime` (string?) — new property, included in `Clone()`.
+- `BatchSendEngine.PickRandomValue(string csv)` — splits on comma, picks randomly.
+- `BatchSendEngine.ResolveEventDateTime(string? raw, string[] resolvedDates, int currentIndex)` — resolves `@N` references (1-based, must be ≤ current step).
+- `BatchSendViewModel.CanStart` — new computed property for `IsEnabled` binding on Start button.
+- `BatchSendPage.xaml`: `IsEnabled="{Binding CanStart}"` on Start, `IsEnabled="{Binding IsRunning}"` on Stop.
+- `BatchWorkflowTemplates`: 7-step template reduced to 6 steps (removed A08).
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Batch/Models/BatchWorkflow.cs` | Added `KeepConnectionOpen` (bool) |
+| `HL7Tester.Core/Batch/Models/WorkflowStep.cs` | Added `EventDateTime` (string?), updated `Clone()` |
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | Shared `TcpClient` creation, `PickRandomValue()`, `ResolveEventDateTime()`, CSV locations, `sharedClient` parameter in `RunPatientAsync` |
+| `HL7Tester.Core/Batch/BatchWorkflowTemplates.cs` | Removed A08 from 7-step template (now 6 steps) |
+| `HL7Tester.Core/Hl7NetworkSender.cs` | `TcpClient? existingClient` parameter, no `using` on stream, conditional connect/dispose |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | `KeepConnectionOpen`, `Sex`, `CanStart` properties; `IsEnabled`-based button control |
+| `HL7Tester/BatchSendPage.xaml` | Toggle, Sex picker, EventDateTime entries, Logs button, `IsEnabled` bindings |
+| `HL7Tester/BatchSendPage.xaml.cs` | `OnOpenLogsClicked` handler, `using System.Diagnostics` |
+| `HL7Tester.Tests/BatchSendEngineTests.cs` | Updated mock for new interface, new tests for CSV/EventDateTime/Sex/KeepConnection |
+| `HL7Tester.csproj` | Version incremented to 2.0.22 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.22.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.22.0 |
+
+---
+
+## v2.0.21 Changes
+
+### Batch Send — All ADT Message Types + Merge Step Support
+
+Extended the Batch Send step picker from 6 to all 30 ADT message types supported by the app (A01–A40), and added a dedicated "New Patient ID" field for merge steps (A18/A40).
+
+**Key Features:**
+- All 30 ADT message types are now available in the step picker (previously only 6)
+- New "New Patient ID" field appears automatically for A18 (Merge Patient Records) and A40 (Patient Record Merge) steps
+- Fixed a silent binding bug: `BoolToVisibilityConverter` was used on `IsVisible` (bool) properties, causing the binding to fail and all rows to remain visible. Replaced with direct bool bindings.
+
+**Technical Details:**
+- `WorkflowStep.AvailableMessageTypes` expanded from 6 to 30 entries (matching `MainViewModel.MessageTypesByFamily["ADT"]`)
+- New `WorkflowStep.NewPatientId` (string?) — passed to `AdtMessageRequest.NewPatientId` for merge steps
+- New `WorkflowStep.IsMergeStep` (bool) — `true` when type contains "A18" or "A40"
+- `UpdateStepType()` now uses correct logic: `IsIdentityStep` = contains "A31", `IsMergeStep` = contains "A18"/"A40", `IsLocationStep` = neither
+- `Clone()` includes `NewPatientId`
+- `BatchSendEngine.RunPatientAsync` passes `step.NewPatientId` to the request
+- `BatchSendPage.xaml`: removed `BoolToVisibilityConverter` from all `IsVisible` bindings (the converter returns `Visibility` enum but `IsVisible` is `bool` → silent binding failure). Direct `bool → bool` binding works natively in MAUI.
+- New Row 2c in step editor: `Entry` for "MRG.1 New Patient ID" visible only when `IsMergeStep` is true
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Batch/Models/WorkflowStep.cs` | Expanded `AvailableMessageTypes` to 30, added `NewPatientId`, `IsMergeStep`, fixed `UpdateStepType()`, updated `Clone()` |
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | Pass `step.NewPatientId` to `AdtMessageRequest` |
+| `HL7Tester/BatchSendPage.xaml` | Added merge step row, removed `BoolToVisibilityConverter` from `IsVisible` bindings, removed unused converter resource |
+| `HL7Tester.csproj` | Version incremented to 2.0.21 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.21.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.21.0 |
+
+### Network Sender — MSA-1 Status & Error Description
+
+The `SendResult` now includes the MSA-1 acknowledgment status (AA, AE, AR) and the MSA-3 error description from the receiver's ACK message. When a message is rejected (AR) or accepted with errors (AE), the send log displays the error description.
+
+**Key Features:**
+- `SendResult` gained `MsaStatus` (string?) and `ErrorDescription` (string?) properties
+- `Hl7NetworkSender` now parses the MSA segment from the ACK response to extract status and error text
+- `Success` is now `false` when MSA-1 is `AR` (reject) or `AE` (error accept), not just on network failure
+- The send log in `MainViewModel` shows "NACK" with the error description for rejected messages
+- ACK status display: "ACK" for AA, "ACK (with errors)" for AE, "NACK" for AR
+
+**Technical Details:**
+- New `ExtractMsaStatus(string ackMessage)` — scans for `MSA|` line, returns field[1] (AA/AE/AR)
+- New `ExtractMsaErrorDescription(string? ackMessage)` — scans for `MSA|` line, returns field[3] (error text)
+- `SendResult.Success` logic: `msaStatus == null || msaStatus == "AA"` → success; `AE`/`AR` → failure
+- `MainViewModel.OnSendClicked` updated to use `result.MsaStatus` for log display and to append `result.ErrorDescription` on NACK
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Hl7NetworkSender.cs` | Added `MsaStatus`/`ErrorDescription` to `SendResult`, `ExtractMsaStatus()`, `ExtractMsaErrorDescription()`, updated `SendAsync` success logic |
+| `HL7Tester/ViewModels/MainViewModel.cs` | Updated send log to use `MsaStatus` and display `ErrorDescription` on NACK |
+
+---
+
+## v2.0.20 Changes
+
+### Batch Send — Save & Delete Custom Workflow Templates
+
+Added the ability to save the current workflow configuration as a reusable custom template, and to delete custom templates. Built-in templates remain in code and cannot be deleted.
+
+**Key Features:**
+- "💾 Save" button saves the current steps as a new custom template (or overwrites an existing one with the same name)
+- Template name is auto-generated from the step sequence (e.g., "A01 → A02 → A08 → A03")
+- "🗑️ Delete" button removes the selected custom template (hidden for built-in templates)
+- Status text confirms save/delete operations
+- Custom templates persist in a separate JSON file (`~/.HL7Tester/batchtemplates.json`)
+- Built-in templates (4) remain hardcoded in `BatchWorkflowTemplates.cs`
+
+**Technical Details:**
+- New `IBatchTemplateService` / `FileBatchTemplateService` in `HL7Tester.Core/Batch/BatchTemplateService.cs`
+  - `LoadAsync()` — reads JSON file, returns `List<BatchWorkflowTemplate>`
+  - `SaveAsync(template)` — upserts by name (replaces existing or appends)
+  - `DeleteAsync(name)` — removes by name, rewrites JSON
+  - Handles corrupted JSON gracefully (returns empty list)
+- `BatchWorkflowTemplate` gained `IsBuiltIn` property (bool, default `false`)
+- `BatchWorkflowTemplate.GenerateNameFromSteps(List<WorkflowStep>)` — produces "A01 → A02 → A08 → A03"
+- `BatchSendViewModel`:
+  - `Templates` is now `ObservableCollection<BatchWorkflowTemplate>` (built-in + custom)
+  - `SelectTemplateCommand` (`Command<BatchWorkflowTemplate>`) — loads template into workflow on tap
+  - `SaveTemplateCommand` / `DeleteTemplateCommand` — save/delete via service
+  - `CanDeleteTemplate` — computed property (true only for non-built-in selected template)
+  - `LoadTemplatesAsync()` — clears and repopulates collection, selects first template
+- DI: `IBatchTemplateService` registered in `MauiProgram.cs` with path `Path.Combine(FileSystem.AppDataDirectory, "batchtemplates.json")`
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Batch/BatchTemplateService.cs` | NEW — `IBatchTemplateService` + `FileBatchTemplateService` |
+| `HL7Tester.Core/Batch/BatchWorkflowTemplates.cs` | Added `IsBuiltIn` property, `GenerateNameFromSteps()` static method |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | Added template save/delete/select commands, `CanDeleteTemplate`, `LoadTemplatesAsync()` |
+| `HL7Tester/BatchSendPage.xaml` | Added Save/Delete buttons, `CollectionView` for template list |
+| `HL7Tester/BatchSendPage.xaml.cs` | Added `OnAppearing()` to reload templates |
+| `HL7Tester/MauiProgram.cs` | Registered `IBatchTemplateService` |
+| `HL7Tester.Tests/BatchTemplateServiceTests.cs` | NEW — 10 unit tests for the template service |
+| `HL7Tester.csproj` | Version incremented to 2.0.20 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.20.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.20.0 |
+
+---
+
+### Batch Send — Template Picker Replaced with CollectionView List
+
+Replaced the unstable MAUI `Picker` dropdown with a `CollectionView` list, matching the Connection History pattern in Settings. This eliminates the known MAUI Picker binding instability when the `ItemsSource` collection is modified.
+
+**Key Features:**
+- All templates are always visible in a scrollable list (no dropdown)
+- Tap a template to load it into the workflow
+- `CollectionView` handles collection changes (Add/Remove/Clear) without binding issues
+- Same visual style as Connection History (`ClickableListItemBorder`)
+
+**Technical Details:**
+- Removed `SelectedTemplateIndex` property and `Picker` element
+- Added `SelectTemplateCommand` (`Command<BatchWorkflowTemplate>`) wired via `TapGestureRecognizer`
+- `DataTemplate x:DataType="batch:BatchWorkflowTemplate"` with `Name` label
+- `HeightRequest="180"` for the list area
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester/BatchSendPage.xaml` | Replaced `Picker` with `CollectionView` + `DataTemplate`; added `xmlns:batch` |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | Removed `SelectedTemplateIndex`; added `SelectTemplateCommand` + `OnSelectTemplate()` |
+
+---
+
+## v2.0.19 Changes (Previous Release)
+
+### Batch Send — Stress Testing Module
+
+New page for sending batches of HL7 messages in parallel to stress test an HL7 service in production-like conditions.
+
+**Key Features:**
+- Predefined workflow templates (4 built-in) named by their step sequence
+- Multiple patients (configurable count) sent in parallel
+- Global delay in ms between ALL messages via `SemaphoreSlim(1,1)` throttle
+- Randomized patient data: name, surname, patient ID, admission number, sex, birth date
+- Room/Bed/Unit/Floor are user-defined (NOT randomized)
+- Simple final summary per patient
+- Stop via `CancellationToken`
+- Access from Settings → HL7 Tools card
+
+**New Files:**
+| File | Purpose |
+|------|---------|
+| `HL7Tester.Core/Batch/Models/WorkflowStep.cs` | Step model with commands |
+| `HL7Tester.Core/Batch/Models/PatientContext.cs` | Patient identity |
+| `HL7Tester.Core/Batch/Models/BatchWorkflow.cs` | Full workflow definition |
+| `HL7Tester.Core/Batch/Models/BatchSendResult.cs` | Per-patient and overall results |
+| `HL7Tester.Core/Batch/PatientDataRandomizer.cs` | Random patient data generation |
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | Core orchestration |
+| `HL7Tester.Core/Batch/BatchWorkflowTemplates.cs` | 4 static predefined templates |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | MVVM ViewModel |
+| `HL7Tester/BatchSendPage.xaml` | UI page |
+| `HL7Tester.Tests/BatchSendEngineTests.cs` | Unit tests (8 tests) |
+| `HL7Tester.Tests/PatientDataRandomizerTests.cs` | Unit tests (8 tests) |
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `MauiProgram.cs` | DI registrations |
+| `AppShell.xaml` | Added `ShellContent` with `Route="BatchSendPage"` |
+| `NetworkSettingsPage.xaml` | Added "Batch Send" button |
+| `NetworkSettingsViewModel.cs` | Added `OpenBatchSendCommand` |
+| `HL7Tester.csproj` | Version incremented to 2.0.19 |
+
+---
+
+## v2.0.18 Changes (Previous Release)
 
 ### SIU Segment Placeholders — Field Numbers Corrected
 Fixed incorrect field placeholders for AIG, AIL, and AIP segments in the SIU section of the Main Page.

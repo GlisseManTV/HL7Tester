@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="HL7Tester.FhirExplorerPage"
+             xmlns:controls="clr-namespace:HL7Tester.Controls"
+             xmlns:converters="clr-namespace:HL7Tester.Converters"
+             Shell.FlyoutBehavior="Disabled"
+             Shell.NavBarIsVisible="False"
+             Title="FHIR Explorer">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <!-- Main layout: header + controls + input + response + footer -->
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+
+        <!-- ── Row 0: Header + mode badge ───────────────────────────────────── -->
+        <Border Grid.Row="0"
+                Style="{StaticResource CardBorder}"
+                Margin="16,12,16,4">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Label Grid.Column="0"
+                       Text="🔍 FHIR Explorer"
+                       FontAttributes="Bold"
+                       FontSize="17"
+                       VerticalOptions="Center"
+                       TextColor="{DynamicResource Primary}" />
+                <Border Grid.Column="1"
+                        BackgroundColor="{Binding ModeBadgeColor}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 6"
+                        Padding="12,6"
+                        VerticalOptions="Center">
+                    <Label Text="{Binding ModeBadgeText}"
+                           TextColor="White"
+                           FontSize="13"
+                           FontAttributes="Bold" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ── Row 1: Resource type + Search/Read toggle ────────────────────── -->
+        <Border Grid.Row="1"
+                Style="{StaticResource CardBorder}"
+                Margin="16,4">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <controls:AppDropdown Grid.Column="0"
+                                      VerticalOptions="Center"
+                                      ItemsSource="{Binding AvailableResourceTypes}"
+                                      SelectedItem="{Binding SelectedResourceType}"
+                                      MaxListHeight="150" />
+
+                <!-- Mode toggle: active button colored, inactive gray -->
+                <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
+                    <Button Grid.Column="0"
+                            Text="Search"
+                            BackgroundColor="{Binding SearchButtonColor}"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            Padding="12,8"
+                            Clicked="OnSearchClicked" />
+                    <Button Grid.Column="1"
+                            Text="Read"
+                            BackgroundColor="{Binding ReadButtonColor}"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            Padding="12,8"
+                            Clicked="OnReadClicked" />
+                    <Button Grid.Column="2"
+                            Text="Capabilities"
+                            BackgroundColor="{Binding CapabilitiesButtonColor}"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            Padding="12,8"
+                            Clicked="OnCapabilitiesClicked" />
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- ── Row 2: Conditional input (query params / resource id) ────────── -->
+        <Border Grid.Row="2"
+                Style="{StaticResource CardBorder}"
+                Margin="16,4">
+            <VerticalStackLayout Spacing="8">
+
+                <Label Text="Search parameters"
+                       FontAttributes="Bold"
+                       FontSize="14"
+                       IsVisible="{Binding IsSearchMode}"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                <Entry Text="{Binding SearchParams}"
+                       IsVisible="{Binding IsSearchMode}"
+                       Placeholder="e.g. name=Smith, gender=male, _count=10" />
+
+                <Label Text="Resource ID"
+                       FontAttributes="Bold"
+                       FontSize="14"
+                       IsVisible="{Binding IsReadMode}"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+                <Entry Text="{Binding ResourceId}"
+                       IsVisible="{Binding IsReadMode}"
+                       Placeholder="Enter resource ID, e.g. patient-123" />
+
+                <!-- Capabilities mode: no input, just show the active server BaseUrl -->
+                <Label Text="{Binding ActiveServerUrl, StringFormat='Server: {0}'}"
+                       FontAttributes="Bold"
+                       FontSize="14"
+                       IsVisible="{Binding IsCapabilitiesMode}"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
+
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- ── Row 3: Response card (fills remaining space) ─────────────────── -->
+        <Border Grid.Row="3"
+                Style="{StaticResource CardBorder}"
+                Margin="16,4">
+            <Grid RowDefinitions="Auto,*" RowSpacing="8">
+
+                <!-- Status bar -->
+                <Border Grid.Row="0"
+                        Padding="10,6"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#F0FDF4, Dark=#14532D}"
+                        IsVisible="{Binding StatusMessage, Converter={StaticResource StringNotEmptyConverter}}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="6" />
+                    </Border.StrokeShape>
+                    <Label Text="{Binding StatusMessage}"
+                           FontSize="12"
+                           TextColor="{AppThemeBinding Light=#166534, Dark=#86EFAC}" />
+                </Border>
+
+                <Border Grid.Row="1"
+                        StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#374151}"
+                        Padding="8,4"
+                        VerticalOptions="Fill">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="6" />
+                    </Border.StrokeShape>
+                    <Editor x:Name="ResponseEditor"
+                            IsReadOnly="True"
+                            AutoSize="Disabled"
+                            FontFamily="Courier New, Courier, monospace"
+                            FontSize="11"
+                            Placeholder="Response will appear here..."
+                            Text="{Binding ResponseBody}" />
+                </Border>
+
+            </Grid>
+        </Border>
+
+        <!-- ── Row 4: Footer with action buttons + unified navigation ───────── -->
+        <Grid Grid.Row="4"
+              Padding="16,10"
+              ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto"
+              ColumnSpacing="6"
+              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
+
+            <Button Grid.Column="0"
+                    Text="{Binding ExecuteButtonText}"
+                    IsEnabled="{Binding IsNotBusy}"
+                    Command="{Binding ExecuteCommand}" />
+
+            <Button Grid.Column="1"
+                    Text="Next Page"
+                    IsVisible="{Binding HasNextPage}"
+                    IsEnabled="{Binding IsNotBusy}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray600}}"
+                    Command="{Binding NextPageCommand}" />
+
+            <Button Grid.Column="2"
+                    Text="Copy"
+                    IsVisible="{Binding HasResponse}"
+                    Command="{Binding CopyResponseCommand}" />
+
+            <Button Grid.Column="3"
+                    Text="Clear"
+                    IsVisible="{Binding HasResponse}"
+                    Command="{Binding ClearCommand}" />
+
+            <Button Grid.Column="4"
+                    Text="Send to Main"
+                    IsVisible="{Binding HasResponse}"
+                    Command="{Binding SendToMainPageCommand}" />
+
+            <!-- Unified navigation footer: Home + Settings + Connections -->
+            <controls:NavigationFooterView Grid.Column="6"
+                                           Padding="0"
+                                           CurrentPage="Other" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

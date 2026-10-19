@@ -44,19 +44,30 @@ public sealed class BatchWorkflow
     public string Floor { get; set; } = string.Empty;
 
     /// <summary>
+    /// Global sex override for all patients. Empty = random (M/F), "M" or "F" = forced.
+    /// </summary>
+    public string Sex { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When true, a single TCP connection is reused for all messages in the batch.
+    /// When false (default), a new connection is created per message.
+    /// </summary>
+    public bool KeepConnectionOpen { get; set; }
+
+    /// <summary>
     /// Validates the workflow configuration.
     /// </summary>
     public bool IsValid(out string error)
     {
-        if (Steps.Count < 2)
+        if (Steps.Count < 1)
         {
-            error = "Workflow must have at least 2 steps.";
+            error = "Workflow must have at least 1 step.";
             return false;
         }
 
-        if (Steps.Count > 6)
+        if (Steps.Count > 7)
         {
-            error = "Workflow cannot have more than 6 steps.";
+            error = "Workflow cannot have more than 7 steps.";
             return false;
         }
 

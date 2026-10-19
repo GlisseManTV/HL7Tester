@@ -3,9 +3,12 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
 using HL7Tester.Core;
+using HL7Tester.Core.Fhir;
+using HL7Tester.Core.Sending;
 using Microsoft.Extensions.Logging;
 
 namespace HL7Tester.ViewModels;
@@ -63,13 +66,58 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private readonly AdtMessageGenerator _generator;
     private readonly INetworkSettingsService _networkSettingsService;
-    private readonly IHL7NetworkSender _networkSender;
+    private readonly IMessageSender _messageSender;
+    private readonly IFhirResourceGenerator _fhirGenerator;
     private readonly ILogger<MainViewModel> _logger;
+    private FhirProfile? _activeFhirProfile;
+    private bool _isFhirMode;
+    private bool _isMllpMode = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<string> AvailableMessageFamilies { get; } = new(["ADT", "ORM", "SIU"]);
     public ObservableCollection<string> AvailableMessageTypes { get; } = new();
+
+    // ---- FHIR mode properties ----
+    public ObservableCollection<string> AvailableFhirResourceTypes { get; } =
+        new(["Bundle (Transaction)", "Patient", "Encounter", "Observation", "ServiceRequest", "Appointment"]);
+
+    private string _selectedFhirResourceType = "Bundle (Transaction)";
+    public string SelectedFhirResourceType
+    {
+        get => _selectedFhirResourceType;
+        set => SetField(ref _selectedFhirResourceType, value ?? "Bundle (Transaction)");
+    }
+
+    public ObservableCollection<string> AvailableFhirHttpMethods { get; } =
+        new(["POST", "PUT", "PATCH", "DELETE"]);
+
+    private string _selectedFhirHttpMethod = "POST";
+    public string SelectedFhirHttpMethod
+    {
+        get => _selectedFhirHttpMethod;
+        set => SetField(ref _selectedFhirHttpMethod, value ?? "POST");
+    }
+
+    public bool IsFhirMode
+    {
+        get => _isFhirMode;
+        private set
+        {
+            if (SetField(ref _isFhirMode, value))
+            {
+                OnPropertyChanged(nameof(ShowJsonEditButtons));
+                OnPropertyChanged(nameof(ShowJsonApplyCancel));
+                OnPropertyChanged(nameof(ShowValidateButton));
+            }
+        }
+    }
+
+    public bool IsMllpMode
+    {
+        get => _isMllpMode;
+        private set => SetField(ref _isMllpMode, value);
+    }
 
     // Liste des contrôles de commande pour ORC-1 (Order Control Code)
     public IReadOnlyList<string> OrderControlList { get; } = new[]
@@ -214,6 +262,32 @@ public sealed class MainViewModel : INotifyPropertyChanged
         get => _generatedMessage;
         set => SetField(ref _generatedMessage, value);
     }
+
+    // ---- JSON editing (FHIR mode only) ----
+    private bool _isJsonEditing;
+    public bool IsJsonEditing
+    {
+        get => _isJsonEditing;
+        private set
+        {
+            if (SetField(ref _isJsonEditing, value))
+            {
+                OnPropertyChanged(nameof(ShowJsonEditButtons));
+                OnPropertyChanged(nameof(ShowJsonApplyCancel));
+                OnPropertyChanged(nameof(ShowValidateButton));
+            }
+        }
+    }
+
+    // Bool -> bool visibility flags (no Visibility-enum converters, see v2.0.21 bug)
+    public bool ShowJsonEditButtons => IsFhirMode && !IsJsonEditing;
+    public bool ShowJsonApplyCancel => IsFhirMode && IsJsonEditing;
+
+    // The "Validate" button is a tool shown in FHIR mode outside JSON editing.
+    public bool ShowValidateButton => IsFhirMode && !IsJsonEditing;
+
+    // Backup of the message taken when entering JSON edit mode, restored on Cancel
+    private string? _jsonBackup;
 
     private string _sendLog = string.Empty;
     public string SendLog
@@ -544,16 +618,24 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand GenerateCommand { get; }
     public ICommand SendCommand { get; }
     public ICommand RegenerateControlIdCommand { get; }
+    public ICommand ToggleEditJsonCommand { get; }
+    public ICommand ApplyJsonCommand { get; }
+    public ICommand CancelJsonCommand { get; }
+    public ICommand PasteJsonCommand { get; }
+    public ICommand FormatJsonCommand { get; }
+    public ICommand ValidateFhirCommand { get; }
 
     public MainViewModel(
         AdtMessageGenerator generator,
         INetworkSettingsService networkSettingsService,
-        IHL7NetworkSender networkSender,
+        IMessageSender messageSender,
+        IFhirResourceGenerator fhirGenerator,
         ILogger<MainViewModel> logger)
     {
         _generator = generator;
         _networkSettingsService = networkSettingsService;
-        _networkSender = networkSender;
+        _messageSender = messageSender;
+        _fhirGenerator = fhirGenerator;
         _logger = logger;
 
         RefreshMessageTypes();
@@ -562,6 +644,30 @@ public sealed class MainViewModel : INotifyPropertyChanged
         GenerateCommand = new Command(OnGenerate);
         SendCommand = new Command(async () => await OnSendAsync());
         RegenerateControlIdCommand = new Command(RegenerateControlId);
+        ToggleEditJsonCommand = new Command(ToggleEditJson);
+        ApplyJsonCommand = new Command(ApplyJson);
+        CancelJsonCommand = new Command(CancelJson);
+        PasteJsonCommand = new Command(async () => await PasteJsonAsync());
+        FormatJsonCommand = new Command(FormatJson);
+        ValidateFhirCommand = new Command(async () => await ValidateFhirAsync());
+    }
+
+    /// <summary>
+    /// Loads the active protocol and FHIR profile from settings.
+    /// Called from MainPage.OnAppearing() to refresh mode before user interaction.
+    /// </summary>
+    public async Task LoadProtocolAsync()
+    {
+        var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
+        IsFhirMode = string.Equals(settings.Protocol, "FHIR", StringComparison.OrdinalIgnoreCase);
+        IsMllpMode = !IsFhirMode;
+        _activeFhirProfile = settings.FhirProfiles.FirstOrDefault(p => p.Id == settings.ActiveFhirProfileId);
+
+        // Leaving FHIR mode: drop any pending JSON edit state
+        if (!IsFhirMode && _isJsonEditing)
+        {
+            CancelJson();
+        }
     }
 
     private void RegenerateControlId()
@@ -638,6 +744,117 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(GeneratedMessage));
     }
 
+    // ---- JSON editing commands (FHIR mode) ----
+
+    private void ToggleEditJson()
+    {
+        // Toggle acts as Cancel when already editing
+        if (IsJsonEditing)
+        {
+            CancelJson();
+            return;
+        }
+
+        // Save the current content so Cancel can restore it
+        _jsonBackup = _generatedMessage;
+        IsJsonEditing = true;
+    }
+
+    private void ApplyJson()
+    {
+        if (!TryValidateJson(_generatedMessage, out var error))
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Apply JSON rejected - Invalid JSON: {error}");
+            return;
+        }
+
+        // Valid JSON: keep the edited content and leave edit mode
+        _jsonBackup = null;
+        IsJsonEditing = false;
+    }
+
+    private void CancelJson()
+    {
+        if (_jsonBackup is not null)
+        {
+            GeneratedMessage = _jsonBackup;
+            _jsonBackup = null;
+        }
+
+        IsJsonEditing = false;
+    }
+
+    private async Task PasteJsonAsync()
+    {
+        var clipboardText = await Clipboard.GetTextAsync().ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(clipboardText))
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Paste JSON cancelled - Clipboard is empty.");
+            return;
+        }
+
+        if (!TryValidateJson(clipboardText, out var error))
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Paste JSON rejected - Invalid JSON: {error}");
+            return;
+        }
+
+        // Enter edit mode so Cancel can restore the previous content
+        if (!IsJsonEditing)
+        {
+            _jsonBackup = _generatedMessage;
+            IsJsonEditing = true;
+        }
+
+        GeneratedMessage = clipboardText;
+        AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Paste JSON accepted - Valid JSON loaded. Apply to keep, Cancel to revert.");
+    }
+
+    private void FormatJson()
+    {
+        if (string.IsNullOrWhiteSpace(_generatedMessage))
+        {
+            return;
+        }
+
+        try
+        {
+            // Pretty-print the current content (useful for single-line pasted JSON)
+            using var document = JsonDocument.Parse(_generatedMessage);
+            GeneratedMessage = JsonSerializer.Serialize(document, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch (JsonException ex)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Format JSON failed - Invalid JSON: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Validates a JSON string using System.Text.Json. Returns false and a readable error on failure.
+    /// </summary>
+    private static bool TryValidateJson(string? json, out string? error)
+    {
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            error = "The message is empty.";
+            return false;
+        }
+
+        try
+        {
+            using var _ = JsonDocument.Parse(json);
+            return true;
+        }
+        catch (JsonException ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
     private void RefreshMessageTypes()
     {
         AvailableMessageTypes.Clear();
@@ -708,9 +925,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         try
         {
+            var messageTypeCode = IsFhirMode
+                ? MapFhirResourceTypeToMessageTypeCode(SelectedFhirResourceType)
+                : SelectedMessageType;
+
             var request = new AdtMessageRequest
             {
-                MessageTypeCode = SelectedMessageType,
+                MessageTypeCode = messageTypeCode,
 
                 PatientId = PatientId ?? string.Empty,
                 NewPatientId = NewPatientId,
@@ -764,74 +985,347 @@ public sealed class MainViewModel : INotifyPropertyChanged
             request.ObxEntries.Add(new ObxEntry { Type = Obx2Type, Reason = Obx2Reason });
             request.ObxEntries.Add(new ObxEntry { Type = Obx3Type, Reason = Obx3Reason });
 
-            string hl7 = _generator.Generate(request);
-            _logger.LogDebug("HL7 message generated. Type={MessageType}", request.MessageTypeCode);
-            GeneratedMessage = hl7.Replace("\r", Environment.NewLine);
+            if (IsFhirMode)
+            {
+                var resource = _fhirGenerator.Generate(request);
+                var json = _fhirGenerator.ToJson(resource);
+                _logger.LogDebug("FHIR resource generated. ResourceType={ResourceType}", SelectedFhirResourceType);
+                GeneratedMessage = json;
+            }
+            else
+            {
+                string hl7 = _generator.Generate(request);
+                _logger.LogDebug("HL7 message generated. Type={MessageType}", request.MessageTypeCode);
+                GeneratedMessage = hl7.Replace("\r", Environment.NewLine);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating HL7 message.");
+            _logger.LogError(ex, "Error generating message.");
             GeneratedMessage = $"Error generating message: {ex.Message}";
         }
     }
+
+    /// <summary>
+    /// Maps a FHIR resource type selection to the MessageTypeCode used by FhirR4Generator.
+    /// </summary>
+    private static string MapFhirResourceTypeToMessageTypeCode(string resourceType) => resourceType switch
+    {
+        "Bundle (Transaction)" => "ADT A01",
+        "Patient" => "ADT A08",
+        "Encounter" => "ADT A02",
+        "ServiceRequest" => "ORM O01",
+        "Appointment" => "SIU S12",
+        "Observation" => "ADT A01",
+        _ => "ADT A01"
+    };
 
     private async Task OnSendAsync()
     {
         try
         {
-            string messageToSend = (GeneratedMessage ?? string.Empty).Replace(Environment.NewLine, "\r");
-            if (string.IsNullOrWhiteSpace(messageToSend))
+            if (string.IsNullOrWhiteSpace(GeneratedMessage))
             {
-                _logger.LogWarning("Send requested but HL7 message is empty.");
-                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message send cancelled - Nothing to send (HL7 message is empty).");
+                _logger.LogWarning("Send requested but message is empty.");
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Send cancelled - Nothing to send.");
                 return;
             }
 
-            var settings = await _networkSettingsService.LoadAsync();
-            string ip = settings.LastIpAddress ?? string.Empty;
-            string portStr = settings.LastPort ?? string.Empty;
-
-            if (!int.TryParse(portStr, out int port) || port < 1 || port > 65535)
+            if (IsFhirMode)
             {
-                _logger.LogWarning("Invalid port configured: {Port}", portStr);
-                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message send cancelled - Invalid port configured.");
-                return;
-            }
-
-            _logger.LogInformation("Sending HL7 message to {Ip}:{Port}.", ip, port);
-            _logger.LogDebug("HL7 message length: {Length} characters.", messageToSend.Length);
-
-            // Récupérer l'encodage configuré
-            string? encodingName = settings.MessageEncoding;
-            _logger.LogDebug("Using message encoding: {Encoding}", encodingName ?? "(default)");
-
-            var result = await _networkSender.SendAsync(messageToSend, ip, port, encodingName: encodingName);
-
-            string messageTypeStr = !string.IsNullOrWhiteSpace(result.MessageCode) 
-                ? result.MessageCode 
-                : "Unknown";
-
-            if (result.Success)
-            {
-                string ackStatus = result.AckMessage != null 
-                    ? (result.AckMessage.StartsWith("ERR") ? "NACK" : "ACK") 
-                    : "No ACK";
-
-                AppendToSendLog(
-                    $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> {ackStatus}");
+                await SendFhirAsync().ConfigureAwait(false);
             }
             else
             {
-                _logger.LogError("Failed to send HL7 message to {Ip}:{Port}: {Error}", ip, port, result.ErrorMessage);
-                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED to {ip}:{port}. Error: {result.ErrorMessage}");
+                await SendMllpAsync().ConfigureAwait(false);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while sending HL7 message.");
-            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED - Error: {ex.Message}");
+            _logger.LogError(ex, "Error while sending message.");
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] SEND FAILED - Error: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Runs the FHIR $validate operation against the active server using the current
+    /// GeneratedMessage. Reads the root resourceType to build POST [base]/{type}/$validate,
+    /// then reports the OperationOutcome issues in the send log.
+    /// </summary>
+    private async Task ValidateFhirAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_generatedMessage))
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validate skipped - Nothing to validate.");
+            return;
+        }
+
+        if (_activeFhirProfile is null)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validate failed - No active FHIR profile. Select FHIR protocol and a profile in Connections.");
+            return;
+        }
+
+        string resourceType;
+        try
+        {
+            using var doc = JsonDocument.Parse(_generatedMessage);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("resourceType", out var rt) ||
+                rt.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(rt.GetString()))
+            {
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validate failed - Could not read resourceType from the JSON.");
+                return;
+            }
+            resourceType = rt.GetString()!;
+        }
+        catch (JsonException ex)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validate failed - Invalid JSON: {ex.Message}");
+            return;
+        }
+
+        var sendRequest = new SendRequest
+        {
+            Protocol = "FHIR",
+            Payload = _generatedMessage,
+            Profile = _activeFhirProfile,
+            ResourceType = $"{resourceType}/$validate",
+            HttpMethod = FhirHttpMethod.Post
+        };
+
+        _logger.LogInformation("Validating FHIR {ResourceType} via $validate on profile '{Profile}'.",
+            resourceType, _activeFhirProfile.Name);
+
+        var result = await _messageSender.SendAsync(sendRequest).ConfigureAwait(false);
+        var status = result.HttpStatusCode ?? 0;
+
+        // Server does not advertise/support the operation.
+        if (status is 404 or 405 or 501)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validation not supported by server (HTTP {status}).");
+            return;
+        }
+
+        var outcomeJson = result.OperationOutcomeJson ?? result.ResponseBody;
+        if (TryReadOperationOutcome(outcomeJson, out var issues, out int errorCount, out int warningCount))
+        {
+            if (errorCount > 0)
+            {
+                // Keep header + up to (MaxLogLines - 1) issue lines visible in the log.
+                var shown = issues.Take(Math.Max(1, MaxLogLines - 1)).ToList();
+                var block = $"[{DateTime.Now:HH:mm:ss}] ✗ Validation failed - {errorCount} error(s), {warningCount} warning(s):";
+                foreach (var issue in shown)
+                    block += Environment.NewLine + issue;
+                if (issues.Count > shown.Count)
+                    block += Environment.NewLine + $"  ... and {issues.Count - shown.Count} more issue(s).";
+                AppendToSendLog(block);
+            }
+            else
+            {
+                var suffix = warningCount > 0 ? $" ({warningCount} warning(s))" : string.Empty;
+                AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] ✓ Validation passed{suffix}");
+            }
+            return;
+        }
+
+        if (result.Success)
+        {
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] ✓ Validation passed (no OperationOutcome returned).");
+        }
+        else
+        {
+            var err = !string.IsNullOrWhiteSpace(result.ErrorDescription) ? result.ErrorDescription
+                    : !string.IsNullOrWhiteSpace(result.ErrorMessage) ? result.ErrorMessage
+                    : $"HTTP {status}";
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Validation failed - {err}");
+        }
+    }
+
+    /// <summary>
+    /// Parses an OperationOutcome JSON body. Returns false when the payload is not an
+    /// OperationOutcome. On success, fills the formatted issue lines and counts errors/warnings.
+    /// </summary>
+    private static bool TryReadOperationOutcome(string? json, out List<string> issues, out int errorCount, out int warningCount)
+    {
+        issues = new List<string>();
+        errorCount = 0;
+        warningCount = 0;
+
+        if (string.IsNullOrWhiteSpace(json))
+            return false;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+                return false;
+
+            if (!root.TryGetProperty("resourceType", out var rt) ||
+                rt.ValueKind != JsonValueKind.String ||
+                !string.Equals(rt.GetString(), "OperationOutcome", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (!root.TryGetProperty("issue", out var issueArr) || issueArr.ValueKind != JsonValueKind.Array)
+                return true; // OperationOutcome with no issues = valid
+
+            foreach (var issue in issueArr.EnumerateArray())
+            {
+                if (issue.ValueKind != JsonValueKind.Object)
+                    continue;
+
+                var severity = GetJsonString(issue, "severity") ?? "unknown";
+                if (string.Equals(severity, "error", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(severity, "fatal", StringComparison.OrdinalIgnoreCase))
+                    errorCount++;
+                else
+                    warningCount++;
+
+                string? details = null;
+                if (issue.TryGetProperty("details", out var d) && d.ValueKind == JsonValueKind.Object)
+                    details = GetJsonString(d, "text");
+
+                string? expression = null;
+                if (issue.TryGetProperty("expression", out var e) && e.ValueKind == JsonValueKind.Array && e.GetArrayLength() > 0)
+                    expression = string.Join(", ", e.EnumerateArray()
+                        .Where(x => x.ValueKind == JsonValueKind.String)
+                        .Select(x => x.GetString()));
+
+                var code = GetJsonString(issue, "code");
+                var msg = $"  [{severity}]";
+                if (!string.IsNullOrWhiteSpace(code))
+                    msg += $" {code}";
+                if (!string.IsNullOrWhiteSpace(details))
+                    msg += $": {details}";
+                if (!string.IsNullOrWhiteSpace(expression))
+                    msg += $" ({expression})";
+                issues.Add(msg);
+            }
+
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static string? GetJsonString(JsonElement obj, string prop)
+        => obj.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+
+    private async Task SendFhirAsync()
+    {
+        var sendRequest = new SendRequest
+        {
+            Protocol = "FHIR",
+            Payload = GeneratedMessage ?? string.Empty,
+            Profile = _activeFhirProfile,
+            ResourceType = MapFhirResourceTypeToEndpoint(SelectedFhirResourceType),
+            HttpMethod = ParseHttpMethod(SelectedFhirHttpMethod)
+        };
+
+        _logger.LogInformation("Sending FHIR {Method} {ResourceType} to profile '{Profile}'.",
+            SelectedFhirHttpMethod, SelectedFhirResourceType, _activeFhirProfile?.Name ?? "(none)");
+
+        var result = await _messageSender.SendAsync(sendRequest).ConfigureAwait(false);
+
+        if (result.Success)
+        {
+            AppendToSendLog(
+                $"[{DateTime.Now:HH:mm:ss}] FHIR {SelectedFhirHttpMethod} {SelectedFhirResourceType} -> HTTP {result.HttpStatusCode} OK");
+        }
+        else
+        {
+            var errorLine = $"[{DateTime.Now:HH:mm:ss}] FHIR {SelectedFhirHttpMethod} {SelectedFhirResourceType} -> HTTP {result.HttpStatusCode} ERROR";
+            if (!string.IsNullOrWhiteSpace(result.ErrorDescription))
+                errorLine += $"\n{result.ErrorDescription}";
+            else if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+                errorLine += $"\n{result.ErrorMessage}";
+            AppendToSendLog(errorLine);
+        }
+    }
+
+    private async Task SendMllpAsync()
+    {
+        string messageToSend = (GeneratedMessage ?? string.Empty).Replace(Environment.NewLine, "\r");
+
+        var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
+        string ip = settings.LastIpAddress ?? string.Empty;
+        string portStr = settings.LastPort ?? string.Empty;
+
+        if (!int.TryParse(portStr, out int port) || port < 1 || port > 65535)
+        {
+            _logger.LogWarning("Invalid port configured: {Port}", portStr);
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Send cancelled - Invalid port configured.");
+            return;
+        }
+
+        _logger.LogInformation("Sending HL7 message to {Ip}:{Port}.", ip, port);
+
+        var sendRequest = new SendRequest
+        {
+            Protocol = "MLLP",
+            Payload = messageToSend,
+            Ip = ip,
+            Port = port,
+            EncodingName = settings.MessageEncoding
+        };
+
+        var result = await _messageSender.SendAsync(sendRequest).ConfigureAwait(false);
+
+        string messageTypeStr = SelectedMessageType ?? "Unknown";
+
+        if (result.Success)
+        {
+            string ackStatus = result.MsaStatus switch
+            {
+                "AA" => "ACK",
+                "AE" => "ACK (with errors)",
+                _ => "No ACK"
+            };
+
+            AppendToSendLog(
+                $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> {ackStatus}");
+        }
+        else if (result.MsaStatus == "AR" || result.MsaStatus == "AE")
+        {
+            _logger.LogWarning("Message {MsaStatus} by receiver at {Ip}:{Port}. {Desc}", result.MsaStatus, ip, port, result.ErrorDescription ?? "(no description)");
+            var nackLine = $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> NACK";
+            if (!string.IsNullOrWhiteSpace(result.ErrorDescription))
+            {
+                nackLine += $"\n{result.ErrorDescription}";
+            }
+            AppendToSendLog(nackLine);
+        }
+        else
+        {
+            _logger.LogError("Failed to send HL7 message to {Ip}:{Port}: {Error}", ip, port, result.ErrorMessage);
+            AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED to {ip}:{port}. Error: {result.ErrorMessage}");
+        }
+    }
+
+    private static string MapFhirResourceTypeToEndpoint(string resourceType) => resourceType switch
+    {
+        "Bundle (Transaction)" => "Bundle",
+        "Patient" => "Patient",
+        "Encounter" => "Encounter",
+        "Observation" => "Observation",
+        "ServiceRequest" => "ServiceRequest",
+        "Appointment" => "Appointment",
+        _ => "Bundle"
+    };
+
+    private static FhirHttpMethod ParseHttpMethod(string method) => method switch
+    {
+        "PUT" => FhirHttpMethod.Put,
+        "PATCH" => FhirHttpMethod.Patch,
+        "DELETE" => FhirHttpMethod.Delete,
+        "GET" => FhirHttpMethod.Get,
+        _ => FhirHttpMethod.Post
+    };
 
     private void AppendToSendLog(string line)
     {

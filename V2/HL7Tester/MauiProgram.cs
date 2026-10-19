@@ -57,6 +57,15 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AdtMessageGenerator>();
 		builder.Services.AddSingleton<IHL7NetworkSender, Hl7NetworkSender>();
 		builder.Services.AddSingleton<IUpdateChecker, GitHubUpdateChecker>();
+
+		// FHIR module (Phase 1): protocol-agnostic sender + FHIR REST client + secret store.
+		// ISecretStore is an in-memory stub for now; OS-protected storage (DPAPI/Keychain) arrives in Phase 3.
+		builder.Services.AddSingleton<HL7Tester.Core.Security.ISecretStore, Services.InMemorySecretStore>();
+		builder.Services.AddSingleton<HL7Tester.Core.Fhir.FhirRestClient>();
+		builder.Services.AddSingleton<HL7Tester.Core.Sending.IMessageSender, HL7Tester.Core.Sending.SenderRouter>();
+
+		// FHIR module (Phase 2): R4 resource generator (Firely SDK) consumed by MainPage in Phase 4.
+		builder.Services.AddSingleton<HL7Tester.Core.Fhir.IFhirResourceGenerator, HL7Tester.Core.Fhir.FhirR4Generator>();
 		builder.Services.AddTransient<MainViewModel>();
 		builder.Services.AddTransient<MainPage>();
 
@@ -68,6 +77,8 @@ public static class MauiProgram
 		});
 		builder.Services.AddTransient<NetworkSettingsViewModel>();
 		builder.Services.AddTransient<NetworkSettingsPage>();
+		builder.Services.AddTransient<ConnectionsViewModel>();
+		builder.Services.AddTransient<ConnectionsPage>();
 
 		// HL7 Inspector — ParserServices are singletons (stateless after parsing)
 		builder.Services.AddSingleton<HL7ParserService>();
@@ -81,8 +92,21 @@ public static class MauiProgram
 		// Batch Send
 		builder.Services.AddSingleton<HL7Tester.Core.Batch.PatientDataRandomizer>();
 		builder.Services.AddSingleton<HL7Tester.Core.Batch.BatchSendEngine>();
+		builder.Services.AddSingleton<HL7Tester.Core.Batch.IBatchTemplateService>(sp =>
+		{
+			var path = Path.Combine(FileSystem.AppDataDirectory, "batchtemplates.json");
+			return new HL7Tester.Core.Batch.FileBatchTemplateService(path);
+		});
 		builder.Services.AddTransient<HL7Tester.ViewModels.BatchSendViewModel>();
 		builder.Services.AddTransient<HL7Tester.BatchSendPage>();
+
+		// HL7 ⇄ FHIR Converter (Phase 7)
+		builder.Services.AddTransient<HL7Tester.ViewModels.FhirConverterViewModel>();
+		builder.Services.AddTransient<HL7Tester.FhirConverterPage>();
+
+		// FHIR Explorer — read-only server exploration (Phase 8)
+		builder.Services.AddTransient<HL7Tester.ViewModels.FhirExplorerViewModel>();
+		builder.Services.AddTransient<HL7Tester.FhirExplorerPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

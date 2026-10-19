@@ -19,4 +19,9 @@
     <PackageReference Include="Hl7.Fhir.R4" Version="6.7.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Allow the unit test project to access internal members (e.g. Hl7NetworkSender field extractors) -->
+    <InternalsVisibleTo Include="HL7Tester.Tests" />
+  </ItemGroup>
+
 </Project>

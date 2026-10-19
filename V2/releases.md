@@ -1,4 +1,37 @@
-## v2.0.25 Changes (Latest Release)
+## v2.0.26 Changes (Latest Release)
+
+### Send Log — Real Message Type, ControlID, and Connection Nickname
+
+The main page send log now reflects what was actually sent instead of the dropdown selection.
+
+**Key Features:**
+- The log shows the real message type read from the sent HL7 message (e.g. "ADT A31"), not the default dropdown value (e.g. "A01")
+- The message ControlID is appended after a pipe, e.g. "ADT A31|b549301d43168bbf2b1"
+- The destination shows the connection nickname, e.g. "to Staging (10.5.0.29:70)" instead of "to 10.5.0.29:70"
+- Fixed a bug where the displayed type/ControlID could contain extra HL7 fields (e.g. a stray "P")
+
+**Technical Details:**
+- `Hl7NetworkSender` now extracts the ControlID (MSH-10) alongside the message code (MSH-9) and exposes both on `SendResult`; `MessageSendResult` carries `MessageCode`/`ControlId` through `SenderRouter`
+- MSH field extraction rewritten: split on `|` with the correct MSH offset (MSH-9 = split[8], MSH-10 = split[9]), fixing the old pipe-counting bug that leaked adjacent fields into the displayed value
+- `MainViewModel` formats MSH-9 into "Family Trigger" (first two components), falls back to the dropdown selection when MSH-9 is unreadable, and resolves the destination nickname from the connection history (falling back to the active connection's nickname)
+- Extractors made `internal` with `InternalsVisibleTo` for the test project
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Hl7NetworkSender.cs` | Added `ControlId` to `SendResult`; new `ExtractControlId`; rewrote `ExtractMessageCode` with correct MSH field offset; new `FindMshLine` helper |
+| `HL7Tester.Core/Sending/MessageSendResult.cs` | Added `MessageCode` and `ControlId` properties |
+| `HL7Tester.Core/Sending/SenderRouter.cs` | Propagates `MessageCode`/`ControlId` from MLLP results |
+| `HL7Tester/ViewModels/MainViewModel.cs` | Send log uses real MSH-9 type + ControlID + destination nickname; added `FormatRealMessageType` and `BuildDestinationLabel` |
+| `HL7Tester.Core/HL7Tester.Core.csproj` | Added `InternalsVisibleTo` for HL7Tester.Tests |
+| `HL7Tester.Tests/Hl7NetworkSenderExtractionTests.cs` | NEW — unit tests for MSH-9/MSH-10 extraction |
+| `HL7Tester/HL7Tester.csproj` | Version incremented to 2.0.26 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.26.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.26.0 |
+
+---
+
+## v2.0.25 Changes
 
 ### Connections — Moved to a Dedicated ConnectionsPage
 

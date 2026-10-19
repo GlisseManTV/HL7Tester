@@ -1276,7 +1276,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         var result = await _messageSender.SendAsync(sendRequest).ConfigureAwait(false);
 
-        string messageTypeStr = SelectedMessageType ?? "Unknown";
+        // Prefer the real message type read from MSH-9 of the sent payload;
+        // fall back to the dropdown selection when MSH-9 is unreadable.
+        string messageTypeStr = FormatRealMessageType(result.MessageCode) ?? SelectedMessageType ?? "Unknown";
+
+        // Append the ControlID (MSH-10) of the actually-sent message when available,
+        // producing the compact "ADT A31|b549301d43168bbf2b1" log format.
+        if (!string.IsNullOrWhiteSpace(result.ControlId))
+        {
+            messageTypeStr = $"{messageTypeStr}|{result.ControlId.Trim()}";
+        }
+
+        // Resolve the friendly nickname linked to the ip/port being sent to,
+        // so the send log shows e.g. "Staging (10.5.0.29:70)" when available.
+        string destinationLabel = BuildDestinationLabel(settings, ip, portStr);
 
         if (result.Success)
         {
@@ -1288,12 +1301,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
             };
 
             AppendToSendLog(
-                $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> {ackStatus}");
+                $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {destinationLabel}. -> {ackStatus}");
         }
         else if (result.MsaStatus == "AR" || result.MsaStatus == "AE")
         {
             _logger.LogWarning("Message {MsaStatus} by receiver at {Ip}:{Port}. {Desc}", result.MsaStatus, ip, port, result.ErrorDescription ?? "(no description)");
-            var nackLine = $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {ip}:{port}. -> NACK";
+            var nackLine = $"[{DateTime.Now:HH:mm:ss}] Message SEND {messageTypeStr} to {destinationLabel}. -> NACK";
             if (!string.IsNullOrWhiteSpace(result.ErrorDescription))
             {
                 nackLine += $"\n{result.ErrorDescription}";
@@ -1305,6 +1318,47 @@ public sealed class MainViewModel : INotifyPropertyChanged
             _logger.LogError("Failed to send HL7 message to {Ip}:{Port}: {Error}", ip, port, result.ErrorMessage);
             AppendToSendLog($"[{DateTime.Now:HH:mm:ss}] Message SEND FAILED to {ip}:{port}. Error: {result.ErrorMessage}");
         }
+    }
+
+    /// <summary>
+    /// Builds the destination label used in send-log lines: "Nickname (ip:port)" when a
+    /// non-empty nickname is linked to the ip/port (from the connection history, falling
+    /// back to the active connection's nickname), otherwise the plain "ip:port".
+    /// </summary>
+    private static string BuildDestinationLabel(NetworkSettings settings, string ip, string port)
+    {
+        var entry = settings.History.FirstOrDefault(e =>
+            string.Equals(e.Ip, ip, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(e.Port, port, StringComparison.OrdinalIgnoreCase));
+
+        string? nickname = !string.IsNullOrWhiteSpace(entry?.Nickname) ? entry!.Nickname : settings.Nickname;
+
+        return string.IsNullOrWhiteSpace(nickname)
+            ? $"{ip}:{port}"
+            : $"{nickname!.Trim()} ({ip}:{port})";
+    }
+
+    /// <summary>
+    /// Formats the raw MSH-9 message code (e.g. "ADT^A31") into the compact display
+    /// string "ADT A31" (family + trigger event, first two MSH-9 components).
+    /// Returns null when the code is missing or unreadable so callers can fall back
+    /// to the dropdown selection.
+    /// </summary>
+    private static string? FormatRealMessageType(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return null;
+
+        // Keep only the first two MSH-9 components: "ADT^A31^ADT_A31" -> "ADT A31".
+        var parts = code.Split('^', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+            return null;
+
+        string normalized = parts.Length >= 2
+            ? $"{parts[0].Trim()} {parts[1].Trim()}"
+            : parts[0].Trim();
+
+        return normalized.Length == 0 ? null : normalized;
     }
 
     private static string MapFhirResourceTypeToEndpoint(string resourceType) => resourceType switch

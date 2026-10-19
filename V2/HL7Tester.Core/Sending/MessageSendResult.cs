@@ -17,6 +17,12 @@ public sealed class MessageSendResult
     public string? MsaStatus { get; init; }
     public string? AckMessage { get; init; }
 
+    /// <summary>Message code extracted from MSH-9 of the sent message (e.g. "ADT^A31").</summary>
+    public string? MessageCode { get; init; }
+
+    /// <summary>ControlID extracted from MSH-10 of the sent message (e.g. "b549301d43168bbf2b1").</summary>
+    public string? ControlId { get; init; }
+
     // ---- FHIR fields ----
     public int? HttpStatusCode { get; init; }
     public string? ResponseBody { get; init; }

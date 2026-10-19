@@ -1,4 +1,73 @@
-## v2.0.24 Changes (Latest Release)
+## v2.0.25 Changes (Latest Release)
+
+### Connections — Moved to a Dedicated ConnectionsPage
+
+Network settings moved out of the Settings page into a dedicated ConnectionsPage for a cleaner experience.
+
+**Key Features:**
+- IP address, Port, nickname and saved connections now live in "Connections"
+- Accessible from Settings or the migration card
+- Same functionality, better organization
+
+**Technical Details:**
+- New `ConnectionsPage.xaml` + `ConnectionsViewModel.cs` — full connection/profile management
+- Active/Inactive mode badges for connections and FHIR profiles
+- `NetworkSettingsPage` keeps the protocol toggle, tools cards and documentation links
+
+### ⚠️ FHIR Support — Beta
+
+FHIR protocol support is new in this release and still in beta.
+
+- Features work but are not yet optimized
+- Expect changes and improvements in upcoming versions
+- Feedback welcome — report any issues encountered
+
+### FHIR Module — HL7v2 to FHIR REST Integration
+
+Added a full FHIR module enabling HL7 messages to be sent as FHIR REST calls. The app now supports both MLLP and FHIR protocols, switchable via a global toggle visible on every page.
+
+**Key Features:**
+- Global protocol toggle (MLLP / FHIR) with a badge displayed on all pages
+- FHIR server profile management: baseUrl, authentication (Bearer, Basic, OAuth2, ApiKey), TLS verification
+- FHIR R4 resource generation: Bundle (transaction), Patient, Encounter, ServiceRequest, Appointment
+- JSON editor: edit, paste, format, and validate syntax before sending
+- HL7v2 ⇄ FHIR converter page (bidirectional: HL7 → FHIR JSON, FHIR JSON → HL7v2)
+- FHIR Explorer: Search, Read, Capabilities, with pagination support
+- $validate operation: server-side FHIR resource validation
+- Batch Send compatible with FHIR protocol
+
+### UI Fixes & Polish
+
+- Flyout Shell disabled (Mac Catalyst fix)
+- Standardized list heights in `AppDropdown`/`DropdownButton` controls for UI consistency
+- Tools cards separated: HL7v2 Tools / FHIR Tools
+- Documentation links for HL7v2.9 and FHIR R4/R5
+- Removed redundant System.Text.Encoding.CodePages package
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Fhir/` | NEW — Full FHIR module: FhirR4Generator, FhirRestClient, FhirSettings, FhirToHl7Converter, FhirTerminologyMapper, FhirMergeConfig, IFhirResourceGenerator |
+| `HL7Tester.Core/Fhir/FhirAuth/` | NEW — FhirAuthDelegatingHandler (Bearer, Basic, OAuth2, ApiKey) |
+| `HL7Tester.Core/Sending/` | NEW — IMessageSender, SenderRouter, SendRequest, MessageSendResult (protocol abstraction layer) |
+| `HL7Tester/ConnectionsPage.xaml` | NEW — Dedicated page for connection/profile management |
+| `HL7Tester/FhirConverterPage.xaml` | NEW — HL7v2 ⇄ FHIR bidirectional converter |
+| `HL7Tester/FhirExplorerPage.xaml` | NEW — FHIR Search, Read, Capabilities, $validate |
+| `HL7Tester/ViewModels/ConnectionsViewModel.cs` | NEW — ViewModel for connection profiles |
+| `HL7Tester/ViewModels/FhirConverterViewModel.cs` | NEW — ViewModel for HL7⇄FHIR conversion |
+| `HL7Tester/ViewModels/FhirExplorerViewModel.cs` | NEW — ViewModel for FHIR Explorer |
+| `HL7Tester/Resources/Converters/ProtocolDisplayConverter.cs` | NEW — Protocol badge display converter |
+| `HL7Tester.Core/NetworkSettings.cs` | Added Protocol property, FHIR profile storage |
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | FHIR-compatible sending via SenderRouter |
+| `HL7Tester/NetworkSettingsPage.xaml` | Protocol toggle, FHIR Tools card, documentation links |
+| `HL7Tester/AppShell.xaml` | Flyout Shell disabled |
+| `HL7Tester/HL7Tester.csproj` | Version incremented to 2.0.25; removed System.Text.Encoding.CodePages |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.25.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.25.0 |
+
+---
+
+## v2.0.24 Changes
 
 ### UIScene Lifecycle Adoption (Xcode 27 / macOS 27)
 

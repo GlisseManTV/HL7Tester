@@ -1,24 +1,43 @@
-## v2.0.24
+## v2.0.25
 
-### 🖱️ Dropdown Menus That Never Close on Their Own
-> On Mac, dropdown menus no longer disappear when you move through the form with the Tab key.
-- Message family, message type, and settings menus stay open until you pick one
-- On Mac, menus scroll inside their box, so the page stays stable when you open one
-- Windows keeps its familiar native drop-down menus
+### 📡 Connections Have Their Own Page
+> Network settings moved to a dedicated page for a cleaner experience.
+- IP, Port, and saved connections now live in "Connections"
+- Access it from Settings or the migration card
+- Same functionality, better organization
 
-### 🌐 HL7 Inspector Now Works Offline
-> No more internet needed — the full parser is built right into the app.
-- Click "Web Inspector" and it opens instantly in your browser, even on a plane
-- No more dependency on an external website that could disappear
-- Same powerful tree view, same field details — just faster
+### ⚠️ FHIR Support — Beta
+> FHIR protocol support is new in this release and still in beta.
+- Features work but are not yet optimized
+- Expect changes and improvements in upcoming versions
+- Feedback welcome — report any issues you encounter
 
-### 📚 Bigger Knowledge Base
-> More segments and fields recognized by both parsers.
-- The embedded inspector now understands prescription segments (RXO, RXE, RXR, RXD, RXA)
-- The web inspector now covers 30+ additional segments (insurance, billing, queries, and more)
-- Both parsers share the same field references, so you get consistent results everywhere
+### 🔌 FHIR Protocol Support
+> Send your HL7 messages as FHIR REST calls — same app, new protocol.
+- Toggle between HL7v2/MLLP and FHIR in Settings
+- Generate FHIR Bundles, Patient, Encounter from the same patient fields
+- Works on Windows and macOS
 
-### 🎨 Polished Touches
-> Small details that make a big difference.
-- The web inspector now has its own favicon in the browser tab
-- Proper credit shown in the page header for the original author
+### 🔐 FHIR Server Profiles
+> Connect to any FHIR server with the right authentication.
+- Bearer token, Basic auth, OAuth2, or API key
+- Multiple profiles, pick the active one
+- TLS verification toggle
+
+### 🔄 HL7 ⇄ FHIR Converter
+> Convert between HL7v2 and FHIR JSON in one click.
+- Paste an HL7 message → get FHIR JSON
+- Paste FHIR JSON → get HL7v2
+- Chain conversions back and forth
+
+### 🔍 FHIR Explorer
+> Browse what's on your FHIR server.
+- Search patients, encounters, and more with query params
+- Read a specific resource by ID
+- Discover server capabilities with one click
+
+### ✏️ JSON Editor
+> Edit the generated JSON before sending.
+- Modify, paste, or format JSON directly
+- Validate syntax before sending
+- Check server-side validation with $validate

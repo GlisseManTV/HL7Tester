@@ -27,14 +27,6 @@ public partial class FhirConverterPage : ContentPage
     private void OnFhirDirectionClicked(object? sender, EventArgs e)
         => _viewModel.IsHl7ToFhir = false;
 
-    // ── Navigation ────────────────────────────────────────────────────────────
-
-    private async void OnHomeClicked(object? sender, EventArgs e)
-        => await Shell.Current.GoToAsync("//MainPage");
-
-    private async void OnSettingsClicked(object? sender, EventArgs e)
-        => await Shell.Current.GoToAsync("//NetworkSettingsPage");
-
     // ── Drag & drop import ────────────────────────────────────────────────────
 
     private async void OnInputFileDropped(object? sender, DropEventArgs e)

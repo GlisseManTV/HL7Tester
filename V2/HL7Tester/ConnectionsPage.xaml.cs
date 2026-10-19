@@ -19,8 +19,4 @@ public partial class ConnectionsPage : ContentPage
         await _viewModel.LoadAsync();
     }
 
-    private async void OnHomeClicked(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//MainPage");
-    }
 }

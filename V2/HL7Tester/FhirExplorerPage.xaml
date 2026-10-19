@@ -154,48 +154,44 @@
             </Grid>
         </Border>
 
-        <!-- ── Row 4: Static footer with action buttons ─────────────────────── -->
+        <!-- ── Row 4: Footer with action buttons + unified navigation ───────── -->
         <Grid Grid.Row="4"
               Padding="16,10"
-              ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto"
+              ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto"
               ColumnSpacing="6"
               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
 
             <Button Grid.Column="0"
-                    Text="Settings"
-                    Clicked="OnSettingsClicked" />
-
-            <Button Grid.Column="1"
                     Text="{Binding ExecuteButtonText}"
                     IsEnabled="{Binding IsNotBusy}"
                     Command="{Binding ExecuteCommand}" />
 
-            <Button Grid.Column="2"
+            <Button Grid.Column="1"
                     Text="Next Page"
                     IsVisible="{Binding HasNextPage}"
                     IsEnabled="{Binding IsNotBusy}"
                     BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray600}}"
                     Command="{Binding NextPageCommand}" />
 
-            <Button Grid.Column="3"
+            <Button Grid.Column="2"
                     Text="Copy"
                     IsVisible="{Binding HasResponse}"
                     Command="{Binding CopyResponseCommand}" />
 
-            <Button Grid.Column="4"
+            <Button Grid.Column="3"
                     Text="Clear"
                     IsVisible="{Binding HasResponse}"
                     Command="{Binding ClearCommand}" />
 
-            <Button Grid.Column="6"
+            <Button Grid.Column="4"
                     Text="Send to Main"
                     IsVisible="{Binding HasResponse}"
                     Command="{Binding SendToMainPageCommand}" />
 
-            <Button Grid.Column="7"
-                    Text="Home"
-                    HorizontalOptions="End"
-                    Clicked="OnHomeClicked" />
+            <!-- Unified navigation footer: Home + Settings + Connections -->
+            <controls:NavigationFooterView Grid.Column="6"
+                                           Padding="0"
+                                           CurrentPage="Other" />
         </Grid>
 
     </Grid>

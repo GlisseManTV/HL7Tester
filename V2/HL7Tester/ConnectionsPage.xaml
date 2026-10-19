@@ -360,19 +360,10 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Static footer with Home button -->
-        <Grid Grid.Row="1" Padding="16,10" ColumnDefinitions="*,Auto" BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
-            <Label Grid.Column="0"
-                   Text="Connections"
-                   HorizontalOptions="Start"
-                   FontSize="14"
-                   TextColor="{DynamicResource Primary}" />
-
-            <Button Grid.Column="1"
-                    Text="Home"
-                    HorizontalOptions="End"
-                    Clicked="OnHomeClicked" />
-        </Grid>
+        <!-- Unified navigation footer: the Connections button is hidden on this page -->
+        <controls:NavigationFooterView Grid.Row="1"
+                                       CurrentPage="Connections"
+                                       CenterText="Connections" />
 
     </Grid>
 

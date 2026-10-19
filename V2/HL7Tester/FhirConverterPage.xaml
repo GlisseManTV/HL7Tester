@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.FhirConverterPage"
+             xmlns:controls="clr-namespace:HL7Tester.Controls"
              xmlns:converters="clr-namespace:HL7Tester.Converters"
              Shell.FlyoutBehavior="Disabled"
              Shell.NavBarIsVisible="False"
@@ -126,46 +127,42 @@
             </Grid>
         </Border>
 
-        <!-- ── Row 3: Static footer with action buttons ─────────────────────── -->
+        <!-- ── Row 3: Footer with action buttons + unified navigation ───────── -->
         <Grid Grid.Row="3"
               Padding="16,10"
-              ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto"
+              ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto"
               ColumnSpacing="6"
               BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
 
             <Button Grid.Column="0"
-                    Text="Settings"
-                    Clicked="OnSettingsClicked" />
-
-            <Button Grid.Column="1"
                     Text="Convert"
                     IsEnabled="{Binding IsNotBusy}"
                     Command="{Binding ConvertCommand}" />
 
-            <Button Grid.Column="2"
+            <Button Grid.Column="1"
                     Text="Swap"
                     BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Gray600}}"
                     Command="{Binding SwapDirectionCommand}" />
 
-            <Button Grid.Column="3"
+            <Button Grid.Column="2"
                     Text="Copy"
                     IsVisible="{Binding HasOutput}"
                     Command="{Binding CopyOutputCommand}" />
 
-            <Button Grid.Column="4"
+            <Button Grid.Column="3"
                     Text="Clear"
                     IsVisible="{Binding HasOutput}"
                     Command="{Binding ClearCommand}" />
 
-            <Button Grid.Column="6"
+            <Button Grid.Column="4"
                     Text="Send to Main"
                     IsVisible="{Binding HasOutput}"
                     Command="{Binding SendToMainPageCommand}" />
 
-            <Button Grid.Column="7"
-                    Text="Home"
-                    HorizontalOptions="End"
-                    Clicked="OnHomeClicked" />
+            <!-- Unified navigation footer: Home + Settings + Connections -->
+            <controls:NavigationFooterView Grid.Column="6"
+                                           Padding="0"
+                                           CurrentPage="Other" />
         </Grid>
 
     </Grid>

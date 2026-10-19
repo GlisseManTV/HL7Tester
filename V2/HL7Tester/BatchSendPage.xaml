@@ -346,28 +346,10 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ── Footer ────────────────────────────────────────────────────────── -->
-        <Grid Grid.Row="1"
-              Padding="16,10"
-              ColumnDefinitions="Auto,*,Auto"
-              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
-
-            <Button Grid.Column="0"
-                    Text="Settings"
-                    HorizontalOptions="Start"
-                    Clicked="OnSettingsClicked" />
-
-            <Label Grid.Column="1"
-                   Text="Batch Send"
-                   HorizontalOptions="Center"
-                   FontAttributes="Bold"
-                   TextColor="{DynamicResource Primary}" />
-
-            <Button Grid.Column="2"
-                    Text="Home"
-                    HorizontalOptions="End"
-                    Clicked="OnHomeClicked" />
-        </Grid>
+        <!-- ── Unified navigation footer ─────────────────────────────────────── -->
+        <controls:NavigationFooterView Grid.Row="1"
+                                       CurrentPage="Other"
+                                       CenterText="Batch Send" />
 
     </Grid>
 

@@ -30,11 +30,4 @@ public partial class FhirExplorerPage : ContentPage
     private void OnCapabilitiesClicked(object? sender, EventArgs e)
         => _viewModel.IsCapabilitiesMode = true;
 
-    // ── Navigation ────────────────────────────────────────────────────────────
-
-    private async void OnHomeClicked(object? sender, EventArgs e)
-        => await Shell.Current.GoToAsync("//MainPage");
-
-    private async void OnSettingsClicked(object? sender, EventArgs e)
-        => await Shell.Current.GoToAsync("//NetworkSettingsPage");
 }

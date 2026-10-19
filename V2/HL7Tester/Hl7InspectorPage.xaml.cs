@@ -63,16 +63,11 @@ public partial class Hl7InspectorPage : ContentPage
         await Shell.Current.GoToAsync("//MainPage");
     }
 
-    private async void OnHomeClicked(object? sender, EventArgs e)
+    private void OnFooterHomeClicked(object? sender, EventArgs e)
     {
-        // Clear pending message when navigating via Home button
+        // Clear pending message when navigating via the footer's Home button.
+        // The footer control performs the //MainPage navigation itself after this event.
         Hl7InspectorViewModel.PendingParsedMessage = null;
-        await Shell.Current.GoToAsync("//MainPage");
-    }
-
-    private async void OnSettingsClicked(object? sender, EventArgs e)
-    {
-        await Shell.Current.GoToAsync("//NetworkSettingsPage");
     }
 
     private async void OnRawMessageFileDropped(object? sender, DropEventArgs e)

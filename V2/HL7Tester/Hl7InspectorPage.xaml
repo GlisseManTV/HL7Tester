@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:HL7Tester.ViewModels"
              xmlns:converters="clr-namespace:HL7Tester.Converters"
+             xmlns:controls="clr-namespace:HL7Tester.Controls"
              x:Class="HL7Tester.Hl7InspectorPage"
              Shell.FlyoutBehavior="Disabled"
              Shell.NavBarIsVisible="False"
@@ -220,28 +221,11 @@
 
         </CollectionView>
 
-        <!-- ── Row 3: Static footer ───────────────────────────────────────────── -->
-        <Grid Grid.Row="3"
-              Padding="16,10"
-              ColumnDefinitions="Auto,*,Auto"
-              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}">
-
-            <Label Grid.Column="1"
-                   Text="HL7 Inspector"
-                   HorizontalOptions="Center"
-                   FontAttributes="Bold"
-                   TextColor="{DynamicResource Primary}" />
-
-            <Button Grid.Column="0"
-                    Text="Settings"
-                    HorizontalOptions="Start"
-                    Clicked="OnSettingsClicked" />
-
-            <Button Grid.Column="2"
-                    Text="Home"
-                    HorizontalOptions="End"
-                    Clicked="OnHomeClicked" />
-        </Grid>
+        <!-- ── Row 3: Unified navigation footer ───────────────────────────────── -->
+        <controls:NavigationFooterView Grid.Row="3"
+                                       CurrentPage="Other"
+                                       CenterText="HL7 Inspector"
+                                       HomeClicked="OnFooterHomeClicked" />
 
     </Grid>
 

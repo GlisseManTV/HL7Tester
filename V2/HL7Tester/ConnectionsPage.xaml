@@ -119,16 +119,46 @@
                                                            VerticalOptions="Center"
                                                            TextColor="{Binding State, Converter={StaticResource EndpointStatusToColorConverter}}" />
                                                 </HorizontalStackLayout>
-                                                <!-- Per-entry endpoint test button -->
+                                                <!-- Per-entry endpoint test button (outline style for better contrast) -->
                                                 <Button Grid.Column="2"
                                                         Text="Test"
                                                         FontSize="12"
                                                         Padding="8,2"
                                                         MinimumWidthRequest="0"
+                                                        CornerRadius="6"
                                                         BackgroundColor="Transparent"
+                                                        BorderColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray300}}"
+                                                        BorderWidth="1"
                                                         TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
                                                         IsEnabled="{Binding IsNotBusy}"
-                                                        Command="{Binding TestCommand}" />
+                                                        Command="{Binding TestCommand}">
+                                                    <Button.VisualStateManager.VisualStateGroups>
+                                                        <VisualStateGroupList>
+                                                            <VisualStateGroup x:Name="CommonStates">
+                                                                <VisualState x:Name="Normal" />
+                                                                <VisualState x:Name="Disabled">
+                                                                    <VisualState.Setters>
+                                                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray500}}" />
+                                                                        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                                                                        <Setter Property="BackgroundColor" Value="Transparent" />
+                                                                    </VisualState.Setters>
+                                                                </VisualState>
+                                                                <VisualState x:Name="PointerOver">
+                                                                    <VisualState.Setters>
+                                                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceHoverLight}, Dark={StaticResource SurfaceHoverDark}}" />
+                                                                        <Setter Property="Opacity" Value="0.95" />
+                                                                    </VisualState.Setters>
+                                                                </VisualState>
+                                                                <VisualState x:Name="Pressed">
+                                                                    <VisualState.Setters>
+                                                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                                                                        <Setter Property="Opacity" Value="0.92" />
+                                                                    </VisualState.Setters>
+                                                                </VisualState>
+                                                            </VisualStateGroup>
+                                                        </VisualStateGroupList>
+                                                    </Button.VisualStateManager.VisualStateGroups>
+                                                </Button>
                                                 <!-- Per-entry delete button -->
                                                 <Button Grid.Column="3"
                                                         Text="🗑️"

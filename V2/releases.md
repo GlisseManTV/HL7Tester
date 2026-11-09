@@ -1,4 +1,53 @@
-## v2.0.26 Changes (Latest Release)
+## v2.0.27 Changes (Latest Release)
+
+_Released: November 09, 2026_
+
+### Connections — Per-Connection Endpoint Test
+
+Each saved connection now has a "Test" button that probes the HL7 endpoint and reports reachability.
+
+**Key Features:**
+- A "Test" button on every line of the "Saved Connections" list
+- Green "Reachable" badge when the endpoint responds, red "Unreachable" badge otherwise
+- Quick feedback without leaving the Connections page
+
+**Technical Details:**
+- `EndpointProbe` performs a lightweight TCP reachability check against the configured host and port
+- `ConnectionsViewModel` exposes a per-connection status and a `Test` command wiring the probe to each row
+- `EndpointStatusToColorConverter` maps the status to the green/red badge color
+- `ConnectionsPage.xaml` renders the "Test" button and the status badge per row
+
+### Main Page — Automatic Availability Indicator
+
+A live availability indicator is shown at the top of the home page, refreshed automatically.
+
+**Key Features:**
+- A status dot, the environment name, and an "Online"/"Offline" label at the top of the home page
+- Refreshed automatically every 60 seconds
+- Applies in MLLP mode only
+
+**Technical Details:**
+- `MainViewModel` runs a periodic availability check every 60 seconds and exposes the environment name plus an Online/Offline status
+- The probe reuses `EndpointProbe` for the reachability check
+- The indicator is gated to MLLP mode (hidden when another protocol is active)
+- `MainPage.xaml` renders the dot, environment name, and status label in the header
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/EndpointProbe.cs` | TCP reachability probe used by both features |
+| `HL7Tester/ViewModels/ConnectionsViewModel.cs` | Per-connection status + `Test` command |
+| `HL7Tester/ConnectionsPage.xaml` | "Test" button + status badge per connection row |
+| `HL7Tester/Resources/Converters/EndpointStatusToColorConverter.cs` | NEW — status → green/red badge color |
+| `HL7Tester/ViewModels/MainViewModel.cs` | Periodic 60s availability check, environment name + Online/Offline status (MLLP only) |
+| `HL7Tester/MainPage.xaml` | Availability indicator (dot + environment name + status) in header |
+| `HL7Tester/HL7Tester.csproj` | Version incremented to 2.0.27 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.27.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.27.0 |
+
+---
+
+## v2.0.26 Changes
 
 ### Send Log — Real Message Type, ControlID, and Connection Nickname
 

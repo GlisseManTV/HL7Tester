@@ -3,9 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.ConnectionsPage"
              xmlns:controls="clr-namespace:HL7Tester.Controls"
+             xmlns:converters="clr-namespace:HL7Tester.Converters"
              Shell.FlyoutBehavior="Disabled"
              Shell.NavBarIsVisible="False"
              Title="Connections">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:EndpointStatusToColorConverter x:Key="EndpointStatusToColorConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
 
@@ -97,10 +104,33 @@
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectHistoryEntryCommand}"
                                                     CommandParameter="{Binding DisplayText}" />
                                             </Border.GestureRecognizers>
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
                                                 <Label Grid.Column="0" Text="{Binding DisplayText}" VerticalOptions="Center" />
+                                                <!-- Ephemeral endpoint status: colored dot + short label -->
+                                                <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                                    <Border WidthRequest="10"
+                                                            HeightRequest="10"
+                                                            StrokeThickness="0"
+                                                            VerticalOptions="Center"
+                                                            StrokeShape="RoundRectangle 5"
+                                                            BackgroundColor="{Binding State, Converter={StaticResource EndpointStatusToColorConverter}}" />
+                                                    <Label Text="{Binding StatusText}"
+                                                           FontSize="12"
+                                                           VerticalOptions="Center"
+                                                           TextColor="{Binding State, Converter={StaticResource EndpointStatusToColorConverter}}" />
+                                                </HorizontalStackLayout>
+                                                <!-- Per-entry endpoint test button -->
+                                                <Button Grid.Column="2"
+                                                        Text="Test"
+                                                        FontSize="12"
+                                                        Padding="8,2"
+                                                        MinimumWidthRequest="0"
+                                                        BackgroundColor="Transparent"
+                                                        TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
+                                                        IsEnabled="{Binding IsNotBusy}"
+                                                        Command="{Binding TestCommand}" />
                                                 <!-- Per-entry delete button -->
-                                                <Button Grid.Column="1"
+                                                <Button Grid.Column="3"
                                                         Text="🗑️"
                                                         FontSize="12"
                                                         Padding="6,2"

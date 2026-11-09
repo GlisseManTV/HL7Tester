@@ -68,10 +68,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly INetworkSettingsService _networkSettingsService;
     private readonly IMessageSender _messageSender;
     private readonly IFhirResourceGenerator _fhirGenerator;
+    private readonly IEndpointProbe _endpointProbe;
     private readonly ILogger<MainViewModel> _logger;
     private FhirProfile? _activeFhirProfile;
     private bool _isFhirMode;
     private bool _isMllpMode = true;
+
+    // ---- Endpoint availability indicator (MLLP mode only) ----
+    private CancellationTokenSource? _pollingCts;
+    private bool _isProbing; // anti-collision guard: never run two probes in parallel
+    private const int PollingIntervalSeconds = 60;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -117,6 +123,47 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         get => _isMllpMode;
         private set => SetField(ref _isMllpMode, value);
+    }
+
+    // ---- Endpoint availability indicator (MLLP mode only) ----
+
+    private EndpointTestState _endpointState = EndpointTestState.Unknown;
+    /// <summary>
+    /// Reachability state of the active MLLP endpoint. Drives the colored dot and the
+    /// status text in the header indicator.
+    /// </summary>
+    public EndpointTestState EndpointState
+    {
+        get => _endpointState;
+        private set
+        {
+            if (SetField(ref _endpointState, value))
+            {
+                OnPropertyChanged(nameof(EndpointStatusText));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Human-readable status shown next to the dot: Online / Offline / Testing… / No connection.
+    /// </summary>
+    public string EndpointStatusText => EndpointState switch
+    {
+        EndpointTestState.Testing => "Testing…",
+        EndpointTestState.Reachable => "Online",
+        EndpointTestState.Unreachable => "Offline",
+        _ => "No connection"
+    };
+
+    private string _activeEnvironmentLabel = string.Empty;
+    /// <summary>
+    /// Display label for the active connection: "Nickname (ip:port)" or just "ip:port".
+    /// Empty when no connection is configured.
+    /// </summary>
+    public string ActiveEnvironmentLabel
+    {
+        get => _activeEnvironmentLabel;
+        private set => SetField(ref _activeEnvironmentLabel, value);
     }
 
     // Liste des contrôles de commande pour ORC-1 (Order Control Code)
@@ -630,12 +677,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         INetworkSettingsService networkSettingsService,
         IMessageSender messageSender,
         IFhirResourceGenerator fhirGenerator,
+        IEndpointProbe endpointProbe,
         ILogger<MainViewModel> logger)
     {
         _generator = generator;
         _networkSettingsService = networkSettingsService;
         _messageSender = messageSender;
         _fhirGenerator = fhirGenerator;
+        _endpointProbe = endpointProbe;
         _logger = logger;
 
         RefreshMessageTypes();
@@ -667,6 +716,121 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!IsFhirMode && _isJsonEditing)
         {
             CancelJson();
+        }
+
+        // Refresh the endpoint environment label so the header indicator shows the
+        // correct destination text even before the first probe completes.
+        var ip = settings.LastIpAddress?.Trim() ?? string.Empty;
+        var portStr = settings.LastPort?.Trim() ?? string.Empty;
+        ActiveEnvironmentLabel = string.IsNullOrWhiteSpace(ip)
+            ? string.Empty
+            : BuildDestinationLabel(settings, ip, portStr);
+    }
+
+    /// <summary>
+    /// Starts the periodic endpoint availability probe. Called from MainPage.OnAppearing.
+    /// Safe to call multiple times: any running loop is stopped first (idempotent).
+    /// </summary>
+    public void StartEndpointPolling()
+    {
+        StopEndpointPolling(); // ensure a single loop, never duplicated
+
+        var cts = new CancellationTokenSource();
+        _pollingCts = cts;
+        _ = Task.Run(() => PollLoopAsync(cts.Token));
+    }
+
+    /// <summary>
+    /// Stops the periodic endpoint availability probe. Called from MainPage.OnDisappearing.
+    /// </summary>
+    public void StopEndpointPolling()
+    {
+        var cts = _pollingCts;
+        _pollingCts = null;
+        if (cts is null)
+        {
+            return;
+        }
+
+        cts.Cancel();
+        cts.Dispose();
+    }
+
+    private async Task PollLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            // Probe immediately on start, then every PollingIntervalSeconds.
+            await ProbeOnceAsync(ct).ConfigureAwait(false);
+
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(PollingIntervalSeconds));
+            while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
+            {
+                await ProbeOnceAsync(ct).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected on stop — nothing to do.
+        }
+    }
+
+    private async Task ProbeOnceAsync(CancellationToken ct)
+    {
+        // Anti-collision: never run two probes at the same time.
+        if (_isProbing)
+        {
+            return;
+        }
+
+        _isProbing = true;
+
+        try
+        {
+            var settings = await _networkSettingsService.LoadAsync().ConfigureAwait(false);
+            var ip = settings.LastIpAddress?.Trim() ?? string.Empty;
+            var portStr = settings.LastPort?.Trim() ?? string.Empty;
+
+            // No IP configured (or invalid port) → Unknown state, skip the TCP probe.
+            if (string.IsNullOrWhiteSpace(ip) || !int.TryParse(portStr, out var port) || port < 1 || port > 65535)
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    ActiveEnvironmentLabel = string.IsNullOrWhiteSpace(ip)
+                        ? string.Empty
+                        : BuildDestinationLabel(settings, ip, portStr);
+                    EndpointState = EndpointTestState.Unknown;
+                }).ConfigureAwait(false);
+                return;
+            }
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                ActiveEnvironmentLabel = BuildDestinationLabel(settings, ip, portStr);
+                EndpointState = EndpointTestState.Testing;
+            }).ConfigureAwait(false);
+
+            var result = await _endpointProbe.TestTcpAsync(ip, port, cancellationToken: ct).ConfigureAwait(false);
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                EndpointState = result.Reachable ? EndpointTestState.Reachable : EndpointTestState.Unreachable;
+            }).ConfigureAwait(false);
+
+            _logger.LogInformation("Endpoint indicator probe: {Ip}:{Port} -> {State}.", ip, port, EndpointState);
+        }
+        catch (OperationCanceledException)
+        {
+            throw; // propagate to the loop so it exits cleanly
+        }
+        catch (Exception ex)
+        {
+            await MainThread.InvokeOnMainThreadAsync(() => EndpointState = EndpointTestState.Unreachable).ConfigureAwait(false);
+            _logger.LogWarning(ex, "Endpoint indicator probe error.");
+        }
+        finally
+        {
+            _isProbing = false;
         }
     }
 

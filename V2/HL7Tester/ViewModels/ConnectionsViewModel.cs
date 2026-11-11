@@ -818,7 +818,11 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
                 return;
             }
 
-            var result = await _endpointProbe.TestTcpAsync(ip, port).ConfigureAwait(false);
+            // Await WITHOUT ConfigureAwait(false): this is a UI command handler, so the
+            // continuation (IsBusy = false -> ChangeCanExecute + PropertyChanged that
+            // re-enables the Test button) must resume on the UI thread, otherwise the
+            // button can stay grayed after the probe finishes.
+            var result = await _endpointProbe.TestTcpAsync(ip, port);
 
             State = result.Reachable ? EndpointTestState.Reachable : EndpointTestState.Unreachable;
 

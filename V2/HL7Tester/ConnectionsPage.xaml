@@ -90,13 +90,16 @@
                                         FontSize="14"
                                         Padding="8,4" />
                             </Grid>
-                            <CollectionView ItemsSource="{Binding HistoryEntries}"
-                                            HeightRequest="240"
-                                            SelectionMode="Single">
-                                <CollectionView.EmptyView>
-                                    <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
-                                </CollectionView.EmptyView>
-                                <CollectionView.ItemTemplate>
+                            <!-- Non-recycling list: BindableLayout renders one real view per item,
+                                 avoiding the CollectionView recycling artifact that left a stale
+                                 "Disabled" look on an unrelated row's Test button. -->
+                            <ScrollView HeightRequest="240">
+                                <VerticalStackLayout Spacing="0"
+                                                     BindableLayout.ItemsSource="{Binding HistoryEntries}">
+                                    <BindableLayout.EmptyView>
+                                        <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </BindableLayout.EmptyView>
+                                    <BindableLayout.ItemTemplate>
                                     <DataTemplate>
                                         <Border Padding="10" Style="{StaticResource ClickableListItemBorder}">
                                             <Border.GestureRecognizers>
@@ -170,8 +173,9 @@
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+                                </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </ScrollView>
                         </VerticalStackLayout>
                     </Border>
 

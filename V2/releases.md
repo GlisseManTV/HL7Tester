@@ -1,4 +1,86 @@
-## v2.0.25 Changes (Latest Release)
+## v2.0.27 Changes (Latest Release)
+
+_Released: November 09, 2026_
+
+### Connections — Per-Connection Endpoint Test
+
+Each saved connection now has a "Test" button that probes the HL7 endpoint and reports reachability.
+
+**Key Features:**
+- A "Test" button on every line of the "Saved Connections" list
+- Green "Reachable" badge when the endpoint responds, red "Unreachable" badge otherwise
+- Quick feedback without leaving the Connections page
+
+**Technical Details:**
+- `EndpointProbe` performs a lightweight TCP reachability check against the configured host and port
+- `ConnectionsViewModel` exposes a per-connection status and a `Test` command wiring the probe to each row
+- `EndpointStatusToColorConverter` maps the status to the green/red badge color
+- `ConnectionsPage.xaml` renders the "Test" button and the status badge per row
+
+### Main Page — Automatic Availability Indicator
+
+A live availability indicator is shown at the top of the home page, refreshed automatically.
+
+**Key Features:**
+- A status dot, the environment name, and an "Online"/"Offline" label at the top of the home page
+- Refreshed automatically every 60 seconds
+- Applies in MLLP mode only
+
+**Technical Details:**
+- `MainViewModel` runs a periodic availability check every 60 seconds and exposes the environment name plus an Online/Offline status
+- The probe reuses `EndpointProbe` for the reachability check
+- The indicator is gated to MLLP mode (hidden when another protocol is active)
+- `MainPage.xaml` renders the dot, environment name, and status label in the header
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/EndpointProbe.cs` | TCP reachability probe used by both features |
+| `HL7Tester/ViewModels/ConnectionsViewModel.cs` | Per-connection status + `Test` command |
+| `HL7Tester/ConnectionsPage.xaml` | "Test" button + status badge per connection row |
+| `HL7Tester/Resources/Converters/EndpointStatusToColorConverter.cs` | NEW — status → green/red badge color |
+| `HL7Tester/ViewModels/MainViewModel.cs` | Periodic 60s availability check, environment name + Online/Offline status (MLLP only) |
+| `HL7Tester/MainPage.xaml` | Availability indicator (dot + environment name + status) in header |
+| `HL7Tester/HL7Tester.csproj` | Version incremented to 2.0.27 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.27.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.27.0 |
+
+---
+
+## v2.0.26 Changes
+
+### Send Log — Real Message Type, ControlID, and Connection Nickname
+
+The main page send log now reflects what was actually sent instead of the dropdown selection.
+
+**Key Features:**
+- The log shows the real message type read from the sent HL7 message (e.g. "ADT A31"), not the default dropdown value (e.g. "A01")
+- The message ControlID is appended after a pipe, e.g. "ADT A31|b549301d43168bbf2b1"
+- The destination shows the connection nickname, e.g. "to Staging (10.5.0.29:70)" instead of "to 10.5.0.29:70"
+- Fixed a bug where the displayed type/ControlID could contain extra HL7 fields (e.g. a stray "P")
+
+**Technical Details:**
+- `Hl7NetworkSender` now extracts the ControlID (MSH-10) alongside the message code (MSH-9) and exposes both on `SendResult`; `MessageSendResult` carries `MessageCode`/`ControlId` through `SenderRouter`
+- MSH field extraction rewritten: split on `|` with the correct MSH offset (MSH-9 = split[8], MSH-10 = split[9]), fixing the old pipe-counting bug that leaked adjacent fields into the displayed value
+- `MainViewModel` formats MSH-9 into "Family Trigger" (first two components), falls back to the dropdown selection when MSH-9 is unreadable, and resolves the destination nickname from the connection history (falling back to the active connection's nickname)
+- Extractors made `internal` with `InternalsVisibleTo` for the test project
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Hl7NetworkSender.cs` | Added `ControlId` to `SendResult`; new `ExtractControlId`; rewrote `ExtractMessageCode` with correct MSH field offset; new `FindMshLine` helper |
+| `HL7Tester.Core/Sending/MessageSendResult.cs` | Added `MessageCode` and `ControlId` properties |
+| `HL7Tester.Core/Sending/SenderRouter.cs` | Propagates `MessageCode`/`ControlId` from MLLP results |
+| `HL7Tester/ViewModels/MainViewModel.cs` | Send log uses real MSH-9 type + ControlID + destination nickname; added `FormatRealMessageType` and `BuildDestinationLabel` |
+| `HL7Tester.Core/HL7Tester.Core.csproj` | Added `InternalsVisibleTo` for HL7Tester.Tests |
+| `HL7Tester.Tests/Hl7NetworkSenderExtractionTests.cs` | NEW — unit tests for MSH-9/MSH-10 extraction |
+| `HL7Tester/HL7Tester.csproj` | Version incremented to 2.0.26 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.26.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.26.0 |
+
+---
+
+## v2.0.25 Changes
 
 ### Connections — Moved to a Dedicated ConnectionsPage
 

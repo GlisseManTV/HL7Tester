@@ -13,6 +13,7 @@ public sealed class SendResult
 {
     public bool Success { get; init; }
     public string? MessageCode { get; init; }
+    public string? ControlId { get; init; }
     public string? AckMessage { get; init; }
     public string? MsaStatus { get; init; }
     public string? ErrorDescription { get; init; }
@@ -72,8 +73,9 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender, IMessageSender
 
         try
         {
-            // Extraire le Message Code (MSH-9) pour l'affichage dans l'UI
+            // Extract MSH-9 (message code) and MSH-10 (control ID) for UI display
             string? messageCode = ExtractMessageCode(hl7Message);
+            string? controlId = ExtractControlId(hl7Message);
 
             // Log le contenu du message HL7 avant l'envoi
             var msgContent = hl7Message.Replace("\r\n", Environment.NewLine).Replace("\n", Environment.NewLine);
@@ -138,6 +140,7 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender, IMessageSender
             {
                 Success = isSuccess,
                 MessageCode = messageCode,
+                ControlId = controlId,
                 AckMessage = ackMessage != null ? CleanAckMessage(ackMessage) : null,
                 MsaStatus = msaStatus,
                 ErrorDescription = errorDescription,
@@ -198,56 +201,69 @@ public sealed class Hl7NetworkSender : IHL7NetworkSender, IMessageSender
             Protocol = "MLLP",
             MsaStatus = result.MsaStatus,
             AckMessage = result.AckMessage,
+            MessageCode = result.MessageCode,
+            ControlId = result.ControlId,
             ErrorDescription = result.ErrorDescription,
             ErrorMessage = result.ErrorMessage
         };
     }
 
     /// <summary>
-    /// Extrait le Message Code (MSH-9) du message HL7.
-    /// MSH est le segment 1, MSH-9 contient le type de message au format MessageType^SubType.
+    /// Extracts the Message Code (MSH-9) from the HL7 message.
+    /// MSH-9 holds the message type in the form MessageType^SubType.
     /// </summary>
-    private static string? ExtractMessageCode(string hl7Message)
+    internal static string? ExtractMessageCode(string hl7Message)
     {
-        // Trouver le segment MSH (premier segment non vide)
+        var line = FindMshLine(hl7Message);
+        if (line is null)
+            return null;
+
+        // For the MSH line, Split('|') yields index 0 = "MSH", index 1 = MSH-2
+        // (the encoding characters), and in general MSH-n (n >= 2) = split[n - 1].
+        // Therefore MSH-9 (message type) = split[8].
+        var fields = line.Split('|');
+        if (fields.Length > 8)
+        {
+            var value = fields[8].Trim();
+            return value.Length > 0 ? value : null;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Extracts the ControlID (MSH-10) from the HL7 message.
+    /// For the MSH line, MSH-n (n >= 2) maps to split[n - 1], so MSH-10 = split[9].
+    /// </summary>
+    internal static string? ExtractControlId(string hl7Message)
+    {
+        var line = FindMshLine(hl7Message);
+        if (line is null)
+            return null;
+
+        var fields = line.Split('|');
+        if (fields.Length > 9)
+        {
+            var value = fields[9].Trim();
+            return value.Length > 0 ? value : null;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Returns the first non-empty line starting with "MSH", or null if none is found.
+    /// </summary>
+    private static string? FindMshLine(string hl7Message)
+    {
         var lines = hl7Message.Split(new[] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-        
+
         foreach (var line in lines)
         {
             if (line.StartsWith("MSH"))
-            {
-                // Le séparateur de champs est '|' par défaut
-                // MSH-1: |, MSH-2: ^~\&, MSH-3: SenderApp, MSH-4: ReceiverApp, 
-                // MSH-5: ReceiverFacility, MSH-6: SenderFacility, MSH-7: DateTime,
-                // MSH-8: Security (souvent vide), MSH-9: MessageType (ex: ADT^A01)
-                // Donc MSH-9 est après le 8ème | et avant le 9ème |
-                
-                int pipeCount = 0;
-                int startPos = -1;
-                
-                for (int i = 0; i < line.Length && pipeCount < 9; i++)
-                {
-                    if (line[i] == '|')
-                    {
-                        pipeCount++;
-                        if (pipeCount == 8)
-                        {
-                            startPos = i + 1; // Commence après le 8ème |
-                        }
-                        else if (pipeCount == 9)
-                        {
-                            // Trouver le prochain | ou la fin du segment
-                            int endPos = line.IndexOf('|', i + 1);
-                            if (endPos < 0)
-                                endPos = line.Length;
-                            
-                            return line.Substring(startPos, endPos - startPos);
-                        }
-                    }
-                }
-            }
+                return line;
         }
-        
+
         return null;
     }
 

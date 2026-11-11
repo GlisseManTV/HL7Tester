@@ -20,6 +20,7 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
 {
     private readonly INetworkSettingsService _service;
     private readonly ISecretStore _secretStore;
+    private readonly IEndpointProbe _endpointProbe;
     private NetworkSettings _settings = new();
     private readonly ILogger<ConnectionsViewModel> _logger;
 
@@ -358,10 +359,12 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
     public ConnectionsViewModel(
         INetworkSettingsService service,
         ISecretStore secretStore,
+        IEndpointProbe endpointProbe,
         ILogger<ConnectionsViewModel> logger)
     {
         _service = service;
         _secretStore = secretStore;
+        _endpointProbe = endpointProbe;
         _logger = logger;
 
         SaveConnectionCommand = new Command(async () => await SaveConnectionAsync());
@@ -611,7 +614,7 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
                 var displayText = string.IsNullOrEmpty(entry.Nickname)
                     ? $"{entry.Ip}:{entry.Port}"
                     : $"{entry.Ip}:{entry.Port} ({entry.Nickname})";
-                HistoryEntries.Add(new HistoryEntryViewModel { DisplayText = displayText, Entry = entry });
+                HistoryEntries.Add(new HistoryEntryViewModel(entry, displayText, _endpointProbe, _logger));
             }
         }
     }
@@ -717,10 +720,126 @@ public sealed class ConnectionsViewModel : INotifyPropertyChanged
         }
     }
 
-    public sealed class HistoryEntryViewModel
+    /// <summary>
+    /// Row view-model for a saved MLLP connection. Owns the ephemeral per-session
+    /// endpoint test state (never persisted to settings) and the "Test" command.
+    /// </summary>
+    public sealed class HistoryEntryViewModel : INotifyPropertyChanged
     {
-        public string DisplayText { get; set; } = string.Empty;
-        public ConnectionHistoryEntry? Entry { get; set; }
+        private readonly IEndpointProbe _endpointProbe;
+        private readonly ILogger _logger;
+        private bool _isBusy;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public HistoryEntryViewModel(
+            ConnectionHistoryEntry? entry,
+            string displayText,
+            IEndpointProbe endpointProbe,
+            ILogger logger)
+        {
+            Entry = entry;
+            DisplayText = displayText;
+            _endpointProbe = endpointProbe;
+            _logger = logger;
+
+            TestCommand = new Command(async () => await TestEndpointAsync(), () => !IsBusy);
+        }
+
+        public string DisplayText { get; }
+
+        public ConnectionHistoryEntry? Entry { get; }
+
+        private EndpointTestState _state = EndpointTestState.Unknown;
+
+        /// <summary>Ephemeral reachability state of this endpoint (resets on reload).</summary>
+        public EndpointTestState State
+        {
+            get => _state;
+            private set
+            {
+                if (_state == value)
+                {
+                    return;
+                }
+
+                _state = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(StatusText));
+            }
+        }
+
+        /// <summary>Short label shown next to the status dot.</summary>
+        public string StatusText => State switch
+        {
+            EndpointTestState.Testing => "Testing…",
+            EndpointTestState.Reachable => "Reachable",
+            EndpointTestState.Unreachable => "Unreachable",
+            _ => "—"
+        };
+
+        /// <summary>True while a probe is running; drives the spinner and disables the button.</summary>
+        public bool IsBusy
+        {
+            get => _isBusy;
+            private set
+            {
+                if (_isBusy == value)
+                {
+                    return;
+                }
+
+                _isBusy = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsNotBusy));
+                ((Command)TestCommand).ChangeCanExecute();
+            }
+        }
+
+        /// <summary>Anti-re-entry: the Test button is disabled while a probe is running.</summary>
+        public bool IsNotBusy => !IsBusy;
+
+        /// <summary>Runs a passive TCP probe against this entry's IP/Port.</summary>
+        public ICommand TestCommand { get; }
+
+        private async Task TestEndpointAsync()
+        {
+            var ip = Entry?.Ip?.Trim() ?? string.Empty;
+            var portText = Entry?.Port?.Trim() ?? string.Empty;
+
+            IsBusy = true;
+            State = EndpointTestState.Testing;
+
+            if (string.IsNullOrWhiteSpace(ip) || !int.TryParse(portText, out var port))
+            {
+                State = EndpointTestState.Unreachable;
+                _logger.LogWarning("Endpoint test skipped for {Entry}: invalid IP or port.", DisplayText);
+                IsBusy = false;
+                return;
+            }
+
+            // Await WITHOUT ConfigureAwait(false): this is a UI command handler, so the
+            // continuation (IsBusy = false -> ChangeCanExecute + PropertyChanged that
+            // re-enables the Test button) must resume on the UI thread, otherwise the
+            // button can stay grayed after the probe finishes.
+            var result = await _endpointProbe.TestTcpAsync(ip, port);
+
+            State = result.Reachable ? EndpointTestState.Reachable : EndpointTestState.Unreachable;
+
+            if (result.Reachable)
+            {
+                _logger.LogInformation("Endpoint test succeeded for {Ip}:{Port}: {Message}", ip, port, result.Message);
+            }
+            else
+            {
+                _logger.LogWarning("Endpoint test failed for {Ip}:{Port}: {Message}", ip, port, result.Message);
+            }
+
+            IsBusy = false;
+        }
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

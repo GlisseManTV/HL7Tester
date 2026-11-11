@@ -8,6 +8,7 @@
         <ContentPage.Resources>
             <converters:BoolToArrowConverter x:Key="BoolToArrowConverter" />
             <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+            <converters:EndpointStatusToColorConverter x:Key="EndpointStatusToColorConverter" />
         </ContentPage.Resources>
     <Grid RowDefinitions="Auto,*,Auto,Auto">
         <!-- Header -->
@@ -42,6 +43,30 @@
                            FontSize="12"
                            FontAttributes="Bold" />
                 </Border>
+
+                <!-- Active environment availability indicator (MLLP mode only) -->
+                <HorizontalStackLayout Spacing="6"
+                                       Margin="0,6,0,0"
+                                       IsVisible="{Binding IsMllpMode}">
+                    <Border WidthRequest="10"
+                            HeightRequest="10"
+                            StrokeThickness="0"
+                            VerticalOptions="Center"
+                            BackgroundColor="{Binding EndpointState, Converter={StaticResource EndpointStatusToColorConverter}}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="5" />
+                        </Border.StrokeShape>
+                    </Border>
+                    <Label Text="{Binding ActiveEnvironmentLabel}"
+                           FontSize="12"
+                           VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray200}}" />
+                    <Label Text="{Binding EndpointStatusText}"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{Binding EndpointState, Converter={StaticResource EndpointStatusToColorConverter}}" />
+                </HorizontalStackLayout>
             </VerticalStackLayout>
 
             <!-- MLLP dropdowns (visible only in MLLP mode) -->

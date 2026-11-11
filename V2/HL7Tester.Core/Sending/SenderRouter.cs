@@ -59,6 +59,8 @@ public sealed class SenderRouter : IMessageSender
             Protocol = "MLLP",
             MsaStatus = sendResult.MsaStatus,
             AckMessage = sendResult.AckMessage,
+            MessageCode = sendResult.MessageCode,
+            ControlId = sendResult.ControlId,
             ErrorDescription = sendResult.ErrorDescription,
             ErrorMessage = sendResult.ErrorMessage
         };

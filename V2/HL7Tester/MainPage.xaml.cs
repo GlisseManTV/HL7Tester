@@ -38,7 +38,19 @@ public partial class MainPage : ContentPage
 		if (vm is not null)
 		{
 			await vm.LoadProtocolAsync();
+
+			// Start endpoint availability polling (idempotent: restarts cleanly)
+			vm.StartEndpointPolling();
 		}
+	}
+
+	protected override void OnDisappearing()
+	{
+		base.OnDisappearing();
+
+		// Stop endpoint availability polling when leaving the page
+		var vm = BindingContext as MainViewModel;
+		vm?.StopEndpointPolling();
 	}
 
 	private async void OnSettingsClicked(object? sender, EventArgs e)

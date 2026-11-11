@@ -3,9 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="HL7Tester.ConnectionsPage"
              xmlns:controls="clr-namespace:HL7Tester.Controls"
+             xmlns:converters="clr-namespace:HL7Tester.Converters"
              Shell.FlyoutBehavior="Disabled"
              Shell.NavBarIsVisible="False"
              Title="Connections">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:EndpointStatusToColorConverter x:Key="EndpointStatusToColorConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="*,Auto">
 
@@ -83,13 +90,16 @@
                                         FontSize="14"
                                         Padding="8,4" />
                             </Grid>
-                            <CollectionView ItemsSource="{Binding HistoryEntries}"
-                                            HeightRequest="240"
-                                            SelectionMode="Single">
-                                <CollectionView.EmptyView>
-                                    <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
-                                </CollectionView.EmptyView>
-                                <CollectionView.ItemTemplate>
+                            <!-- Non-recycling list: BindableLayout renders one real view per item,
+                                 avoiding the CollectionView recycling artifact that left a stale
+                                 "Disabled" look on an unrelated row's Test button. -->
+                            <ScrollView HeightRequest="240">
+                                <VerticalStackLayout Spacing="0"
+                                                     BindableLayout.ItemsSource="{Binding HistoryEntries}">
+                                    <BindableLayout.EmptyView>
+                                        <Label Text="No previous connections yet." HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </BindableLayout.EmptyView>
+                                    <BindableLayout.ItemTemplate>
                                     <DataTemplate>
                                         <Border Padding="10" Style="{StaticResource ClickableListItemBorder}">
                                             <Border.GestureRecognizers>
@@ -97,10 +107,63 @@
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectHistoryEntryCommand}"
                                                     CommandParameter="{Binding DisplayText}" />
                                             </Border.GestureRecognizers>
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
                                                 <Label Grid.Column="0" Text="{Binding DisplayText}" VerticalOptions="Center" />
+                                                <!-- Ephemeral endpoint status: colored dot + short label -->
+                                                <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                                                    <Border WidthRequest="10"
+                                                            HeightRequest="10"
+                                                            StrokeThickness="0"
+                                                            VerticalOptions="Center"
+                                                            StrokeShape="RoundRectangle 5"
+                                                            BackgroundColor="{Binding State, Converter={StaticResource EndpointStatusToColorConverter}}" />
+                                                    <Label Text="{Binding StatusText}"
+                                                           FontSize="12"
+                                                           VerticalOptions="Center"
+                                                           TextColor="{Binding State, Converter={StaticResource EndpointStatusToColorConverter}}" />
+                                                </HorizontalStackLayout>
+                                                <!-- Per-entry endpoint test button (outline style for better contrast) -->
+                                                <Button Grid.Column="2"
+                                                        Text="Test"
+                                                        FontSize="12"
+                                                        Padding="8,2"
+                                                        MinimumWidthRequest="0"
+                                                        CornerRadius="6"
+                                                        BackgroundColor="Transparent"
+                                                        BorderColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Gray300}}"
+                                                        BorderWidth="1"
+                                                        TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource White}}"
+                                                        IsEnabled="{Binding IsNotBusy}"
+                                                        Command="{Binding TestCommand}">
+                                                    <Button.VisualStateManager.VisualStateGroups>
+                                                        <VisualStateGroupList>
+                                                            <VisualStateGroup x:Name="CommonStates">
+                                                                <VisualState x:Name="Normal" />
+                                                                <VisualState x:Name="Disabled">
+                                                                    <VisualState.Setters>
+                                                                        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray500}}" />
+                                                                        <Setter Property="BorderColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                                                                        <Setter Property="BackgroundColor" Value="Transparent" />
+                                                                    </VisualState.Setters>
+                                                                </VisualState>
+                                                                <VisualState x:Name="PointerOver">
+                                                                    <VisualState.Setters>
+                                                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource SurfaceHoverLight}, Dark={StaticResource SurfaceHoverDark}}" />
+                                                                        <Setter Property="Opacity" Value="0.95" />
+                                                                    </VisualState.Setters>
+                                                                </VisualState>
+                                                                <VisualState x:Name="Pressed">
+                                                                    <VisualState.Setters>
+                                                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                                                                        <Setter Property="Opacity" Value="0.92" />
+                                                                    </VisualState.Setters>
+                                                                </VisualState>
+                                                            </VisualStateGroup>
+                                                        </VisualStateGroupList>
+                                                    </Button.VisualStateManager.VisualStateGroups>
+                                                </Button>
                                                 <!-- Per-entry delete button -->
-                                                <Button Grid.Column="1"
+                                                <Button Grid.Column="3"
                                                         Text="🗑️"
                                                         FontSize="12"
                                                         Padding="6,2"
@@ -110,8 +173,9 @@
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
+                                </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </ScrollView>
                         </VerticalStackLayout>
                     </Border>
 

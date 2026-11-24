@@ -1,3 +1,63 @@
+## v2.0.28 Changes (Latest Release)
+
+_Released: November 24, 2026_
+
+### Batch Send — Steps List Now Visible on macOS
+
+The Batch Send steps list was invisible on macOS: the `CollectionView` was measured at height 0 inside the page `ScrollView`, leaving the steps area blank. The rendering was replaced by an inline layout that always renders correctly.
+
+**Key Features:**
+- The workflow steps list is now fully visible on macOS
+- Steps render inline and grow naturally inside the scrollable page
+- Step rows keep their behavior unchanged (reorder, delete, per-step overrides)
+
+**Technical Details:**
+- `BatchSendPage.xaml`: the steps `CollectionView` + `ItemTemplate` replaced by a `VerticalStackLayout` with `BindableLayout.ItemsSource="{Binding Steps}"` — `BindableLayout` sizes to its content and is not affected by the `CollectionView` height-0 issue inside a `ScrollView`
+
+### Batch Send — Unique Patient Flow
+
+Added a "Unique patient flow" option that replays the whole workflow on a single fixed patient instead of randomized patients.
+
+**Key Features:**
+- Toggle "Unique patient flow" to run the entire workflow against one hand-entered patient
+- Fixed patient fields: Patient number, Admission number, First name, Last name
+- Randomization is disabled and the patient count is forced to 1 (the Patients field is grayed out)
+- Ideal for reproducing a specific patient's scenario end to end
+
+**Technical Details:**
+- `BatchWorkflow` gained `UseUniquePatientFlow` (bool) and `FixedPatientId` / `FixedAdmissionNumber` / `FixedGivenName` / `FixedFamilyName` (string) properties
+- `BatchSendEngine` now builds the patient list via `BuildPatients(workflow)`: in unique-patient mode a single `PatientContext` is produced from the `Fixed*` fields (no randomization), otherwise the randomizer generates patients as before
+- `BatchSendViewModel`: `UseUniquePatientFlow`, `FixedPatientId`, `FixedAdmissionNumber`, `FixedGivenName`, `FixedFamilyName` properties; `IsPatientCountEnabled` (`!UseUniquePatientFlow`) drives the Patients field `IsEnabled`; `PatientCount` is forced to 1 when building the workflow
+- New unit test `RunAsync_UseUniquePatientFlow_SingleFixedPatient_NoRandomization` asserts exactly one patient is sent and every message references the fixed patient ID
+
+### Batch Send — "Common settings" Card & Keep-Connection Default
+
+The "Location" card was renamed and moved, and "Keep connection open" is now enabled by default.
+
+**Key Features:**
+- The "Location" card is now "Common settings" and sits to the right of the Workflow Templates card (two-column layout)
+- The unique patient fields live in the same card
+- "Keep connection open" now defaults to on, so a batch reuses a single TCP connection out of the box (MLLP mode)
+
+**Technical Details:**
+- `BatchSendPage.xaml`: the former "Location (applied to all steps)" card renamed "Common settings" and moved into a 2-column `Grid` (`ColumnDefinitions="*,*"`) with the Workflow Templates card on the left
+- `BatchSendViewModel`: `_keepConnectionOpen` default flipped to `true`
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `HL7Tester.Core/Batch/BatchSendEngine.cs` | New `BuildPatients()` — single fixed `PatientContext` in unique-patient mode, random patients otherwise |
+| `HL7Tester.Core/Batch/Models/BatchWorkflow.cs` | Added `UseUniquePatientFlow`, `FixedPatientId`, `FixedAdmissionNumber`, `FixedGivenName`, `FixedFamilyName` |
+| `HL7Tester/ViewModels/BatchSendViewModel.cs` | Unique-patient properties + `IsPatientCountEnabled`; `PatientCount` forced to 1 in unique-patient mode; `KeepConnectionOpen` default `true` |
+| `HL7Tester/BatchSendPage.xaml` | Steps `CollectionView` → `VerticalStackLayout` + `BindableLayout`; "Location" → "Common settings" card in 2-column layout; unique-patient fields; Patients field `IsEnabled` binding |
+| `HL7Tester.Tests/BatchSendEngineTests.cs` | New `RunAsync_UseUniquePatientFlow_SingleFixedPatient_NoRandomization` test |
+| `HL7Tester/Resources/Raw/whatsnew.md` | v2.0.28 announcement content |
+| `HL7Tester/HL7Tester.csproj` | Version incremented to 2.0.28 |
+| `Platforms/Windows/app.manifest` | Version incremented to 2.0.28.0 |
+| `Platforms/Windows/Package.appxmanifest` | Version incremented to 2.0.28.0 |
+
+---
+
 ## v2.0.27 Changes (Latest Release)
 
 _Released: November 09, 2026_

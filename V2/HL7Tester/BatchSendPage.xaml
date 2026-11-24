@@ -100,9 +100,8 @@
                                     Padding="8,4" />
                         </Grid>
 
-                        <CollectionView ItemsSource="{Binding Steps}"
-                                        SelectionMode="None">
-                            <CollectionView.ItemTemplate>
+                        <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding Steps}">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodels:WorkflowStep">
                                     <Border Padding="10" Margin="0,2"
                                             StrokeThickness="1"
@@ -188,8 +187,8 @@
                                         </VerticalStackLayout>
                                     </Border>
                                 </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 

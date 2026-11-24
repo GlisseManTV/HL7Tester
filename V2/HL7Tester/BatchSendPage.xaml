@@ -43,46 +43,122 @@
                     </HorizontalStackLayout>
                 </Border>
 
-                <!-- ── Template selector ─────────────────────────────────────── -->
-                <Border Style="{StaticResource CardBorder}">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="Workflow Template" Style="{StaticResource SubHeadline}" />
-                        <CollectionView ItemsSource="{Binding Templates}"
-                                        SelectionMode="None"
-                                        HeightRequest="180">
-                            <CollectionView.ItemTemplate>
-                                <DataTemplate x:DataType="batch:BatchWorkflowTemplate">
-                                    <Border Padding="10" Margin="0,2"
-                                            Style="{StaticResource ClickableListItemBorder}">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectTemplateCommand}"
-                                                CommandParameter="{Binding .}" />
-                                        </Border.GestureRecognizers>
-                                        <Label Text="{Binding Name}"
-                                               FontSize="13"
-                                               LineBreakMode="TailTruncation" />
-                                    </Border>
-                                </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                            <Button Grid.Column="0"
-                                    Text="💾 Save"
-                                    Command="{Binding SaveTemplateCommand}"
-                                    FontSize="13"
-                                    Padding="8,4" />
-                            <Button Grid.Column="1"
-                                    Text="🗑️ Delete"
-                                    Command="{Binding DeleteTemplateCommand}"
-                                    FontSize="13"
-                                    Padding="8,4"
-                                    BackgroundColor="#EF4444"
-                                    TextColor="White"
-                                    IsVisible="{Binding CanDeleteTemplate}" />
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
+                <!-- ── Template + Common settings (side by side) ─────────────── -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+
+                    <!-- Template selector -->
+                    <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Workflow Template" Style="{StaticResource SubHeadline}" />
+                            <CollectionView ItemsSource="{Binding Templates}"
+                                            SelectionMode="None"
+                                            HeightRequest="180">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="batch:BatchWorkflowTemplate">
+                                        <Border Padding="10" Margin="0,2"
+                                                Style="{StaticResource ClickableListItemBorder}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectTemplateCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Border.GestureRecognizers>
+                                            <Label Text="{Binding Name}"
+                                                   FontSize="13"
+                                                   LineBreakMode="TailTruncation" />
+                                        </Border>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <Button Grid.Column="0"
+                                        Text="💾 Save"
+                                        Command="{Binding SaveTemplateCommand}"
+                                        FontSize="13"
+                                        Padding="8,4" />
+                                <Button Grid.Column="1"
+                                        Text="🗑️ Delete"
+                                        Command="{Binding DeleteTemplateCommand}"
+                                        FontSize="13"
+                                        Padding="8,4"
+                                        BackgroundColor="#EF4444"
+                                        TextColor="White"
+                                        IsVisible="{Binding CanDeleteTemplate}" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Common settings -->
+                    <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Common settings" Style="{StaticResource SubHeadline}" />
+
+                            <HorizontalStackLayout Spacing="8">
+                                <Switch IsToggled="{Binding UseUniquePatientFlow}" VerticalOptions="Center" />
+                                <Label Text="Unique patient flow" VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+
+                            <VerticalStackLayout Spacing="8" IsVisible="{Binding UseUniquePatientFlow}">
+                                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
+                                    <Entry Grid.Row="0" Grid.Column="0"
+                                           Text="{Binding FixedPatientId}"
+                                           Placeholder="PID.3 Patient Number"
+                                           FontSize="12" />
+                                    <Entry Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding FixedAdmissionNumber}"
+                                           Placeholder="Admission Number"
+                                           FontSize="12" />
+                                    <Entry Grid.Row="1" Grid.Column="0"
+                                           Text="{Binding FixedGivenName}"
+                                           Placeholder="First Name"
+                                           FontSize="12" />
+                                    <Entry Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding FixedFamilyName}"
+                                           Placeholder="Last Name"
+                                           FontSize="12" />
+                                </Grid>
+                            </VerticalStackLayout>
+
+                            <Grid RowSpacing="8" ColumnSpacing="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label Grid.Row="0" Grid.Column="0" Text="Unit" VerticalOptions="Center" />
+                                <Entry Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding Unit}"
+                                       Placeholder="ICU, NURSING" />
+
+                                <Label Grid.Row="1" Grid.Column="0" Text="Room" VerticalOptions="Center" />
+                                <Entry Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding Room}"
+                                       Placeholder="301A, 302B, 308A" />
+
+                                <Label Grid.Row="2" Grid.Column="0" Text="Bed" VerticalOptions="Center" />
+                                <Entry Grid.Row="2" Grid.Column="1"
+                                       Text="{Binding Bed}"
+                                       Placeholder="1, 2, 3" />
+
+                                <Label Grid.Row="3" Grid.Column="0" Text="Floor" VerticalOptions="Center" />
+                                <Entry Grid.Row="3" Grid.Column="1"
+                                       Text="{Binding Floor}"
+                                       Placeholder="4, 5" />
+
+                                <Label Grid.Row="4" Grid.Column="0" Text="Sex" VerticalOptions="Center" />
+                                <Entry Grid.Row="4" Grid.Column="1"
+                                       Text="{Binding Sex}"
+                                       Placeholder="M / F (empty = random)" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
 
                 <!-- ── Workflow steps ────────────────────────────────────────── -->
                 <Border Style="{StaticResource CardBorder}">
@@ -192,51 +268,6 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- ── Location fields ───────────────────────────────────────── -->
-                <Border Style="{StaticResource CardBorder}">
-                    <VerticalStackLayout Spacing="10">
-                        <Label Text="Location (applied to all steps)" Style="{StaticResource SubHeadline}" />
-                        <Grid RowSpacing="8" ColumnSpacing="10">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <Label Grid.Row="0" Grid.Column="0" Text="Unit" VerticalOptions="Center" />
-                            <Entry Grid.Row="0" Grid.Column="1"
-                                   Text="{Binding Unit}"
-                                   Placeholder="ICU, NURSING" />
-
-                            <Label Grid.Row="1" Grid.Column="0" Text="Room" VerticalOptions="Center" />
-                            <Entry Grid.Row="1" Grid.Column="1"
-                                   Text="{Binding Room}"
-                                   Placeholder="301A, 302B, 308A" />
-
-                            <Label Grid.Row="2" Grid.Column="0" Text="Bed" VerticalOptions="Center" />
-                            <Entry Grid.Row="2" Grid.Column="1"
-                                   Text="{Binding Bed}"
-                                   Placeholder="1, 2, 3" />
-
-                            <Label Grid.Row="3" Grid.Column="0" Text="Floor" VerticalOptions="Center" />
-                            <Entry Grid.Row="3" Grid.Column="1"
-                                   Text="{Binding Floor}"
-                                   Placeholder="4, 5" />
-
-                            <Label Grid.Row="4" Grid.Column="0" Text="Sex" VerticalOptions="Center" />
-                            <Entry Grid.Row="4" Grid.Column="1"
-                                   Text="{Binding Sex}"
-                                   Placeholder="M / F (empty = random)" />
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
-
                 <!-- ── Parameters ────────────────────────────────────────────── -->
                 <Border Style="{StaticResource CardBorder}">
                     <VerticalStackLayout Spacing="10">
@@ -246,7 +277,8 @@
                                 <Label Text="Patients" FontSize="13" />
                                 <Entry Text="{Binding PatientCount}"
                                        Keyboard="Numeric"
-                                       Placeholder="10" />
+                                       Placeholder="10"
+                                       IsEnabled="{Binding IsPatientCountEnabled}" />
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="1" Spacing="4">
                                 <Label Text="Delay (ms)" FontSize="13" />

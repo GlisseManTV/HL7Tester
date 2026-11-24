@@ -55,6 +55,32 @@ public sealed class BatchWorkflow
     public bool KeepConnectionOpen { get; set; }
 
     /// <summary>
+    /// When true, a single fixed patient is used for the whole batch (no randomization).
+    /// The patient identity comes from the Fixed* properties below.
+    /// </summary>
+    public bool UseUniquePatientFlow { get; set; }
+
+    /// <summary>
+    /// Fixed patient identifier (PID.3) used when <see cref="UseUniquePatientFlow"/> is true.
+    /// </summary>
+    public string FixedPatientId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Fixed admission number used when <see cref="UseUniquePatientFlow"/> is true.
+    /// </summary>
+    public string FixedAdmissionNumber { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Fixed given name (PID.5.1) used when <see cref="UseUniquePatientFlow"/> is true.
+    /// </summary>
+    public string FixedGivenName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Fixed family name (PID.5.2) used when <see cref="UseUniquePatientFlow"/> is true.
+    /// </summary>
+    public string FixedFamilyName { get; set; } = string.Empty;
+
+    /// <summary>
     /// Validates the workflow configuration.
     /// </summary>
     public bool IsValid(out string error)

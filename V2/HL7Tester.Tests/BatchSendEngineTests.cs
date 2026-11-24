@@ -448,6 +448,36 @@ public class BatchSendEngineTests
     }
 
     [TestMethod]
+    public async Task RunAsync_UseUniquePatientFlow_SingleFixedPatient_NoRandomization()
+    {
+        var sender = new MockMessageSender();
+        var engine = CreateEngine(sender);
+
+        var workflow = CreateSimpleWorkflow(patientCount: 5);
+        workflow.UseUniquePatientFlow = true;
+        workflow.FixedPatientId = "FIXED-123";
+        workflow.FixedAdmissionNumber = "ADM-999";
+        workflow.FixedGivenName = "Alice";
+        workflow.FixedFamilyName = "Doe";
+
+        var result = await engine.RunAsync(workflow, "127.0.0.1", 6667);
+
+        // Exactly one patient despite PatientCount = 5
+        Assert.AreEqual(1, result.TotalPatients);
+        Assert.AreEqual(1, result.PatientResults.Count);
+
+        var patient = result.PatientResults[0].Patient;
+        Assert.AreEqual("FIXED-123", patient.PatientId);
+        Assert.AreEqual("ADM-999", patient.AdmissionNumber);
+        Assert.AreEqual("Alice", patient.GivenName);
+        Assert.AreEqual("Doe", patient.FamilyName);
+
+        // Two steps → two messages, both reference the fixed patient (no random IDs)
+        Assert.AreEqual(2, sender.SentMessages.Count);
+        Assert.IsTrue(sender.SentMessages.All(m => m.Contains("FIXED-123")));
+    }
+
+    [TestMethod]
     public async Task RunAsync_FhirMergeStep_PostsToMergeEndpoint()
     {
         var sender = new MockMessageSender();

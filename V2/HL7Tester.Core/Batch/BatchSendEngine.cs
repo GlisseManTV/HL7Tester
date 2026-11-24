@@ -73,7 +73,7 @@ public sealed class BatchSendEngine
         var result = new BatchSendResult();
 
         // Generate all patient contexts
-        var patients = _randomizer.GeneratePatients(workflow.PatientCount);
+        var patients = BuildPatients(workflow);
 
         // Keep-alive TCP only makes sense for MLLP; ignored in FHIR mode.
         var keepConnection = !isFhir && workflow.KeepConnectionOpen;
@@ -127,6 +127,33 @@ public sealed class BatchSendEngine
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Builds the list of patient contexts for a batch run.
+    /// When <see cref="BatchWorkflow.UseUniquePatientFlow"/> is true, a single
+    /// fixed patient is produced from the Fixed* fields (no randomization).
+    /// Otherwise, random patients are generated for the configured patient count.
+    /// </summary>
+    private List<PatientContext> BuildPatients(BatchWorkflow workflow)
+    {
+        if (workflow.UseUniquePatientFlow)
+        {
+            return
+            [
+                new PatientContext
+                {
+                    PatientId = workflow.FixedPatientId,
+                    AdmissionNumber = workflow.FixedAdmissionNumber,
+                    GivenName = workflow.FixedGivenName,
+                    FamilyName = workflow.FixedFamilyName,
+                    Sex = workflow.Sex,
+                    BirthDate = string.Empty
+                }
+            ];
+        }
+
+        return _randomizer.GeneratePatients(workflow.PatientCount);
     }
 
     private async Task<PatientBatchResult> RunPatientAsync(

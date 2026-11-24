@@ -88,6 +88,67 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         set => SetField(ref _sex, value);
     }
 
+    // ─── Unique patient flow ───────────────────────────────────────
+
+    private bool _useUniquePatientFlow;
+    /// <summary>
+    /// When true, a single fixed patient is used for the whole batch (no randomization).
+    /// </summary>
+    public bool UseUniquePatientFlow
+    {
+        get => _useUniquePatientFlow;
+        set
+        {
+            if (SetField(ref _useUniquePatientFlow, value))
+                OnPropertyChanged(nameof(IsPatientCountEnabled));
+        }
+    }
+
+    private string _fixedPatientId = string.Empty;
+    /// <summary>
+    /// Fixed patient identifier (PID.3) used when <see cref="UseUniquePatientFlow"/> is true.
+    /// </summary>
+    public string FixedPatientId
+    {
+        get => _fixedPatientId;
+        set => SetField(ref _fixedPatientId, value);
+    }
+
+    private string _fixedAdmissionNumber = string.Empty;
+    /// <summary>
+    /// Fixed admission number used when <see cref="UseUniquePatientFlow"/> is true.
+    /// </summary>
+    public string FixedAdmissionNumber
+    {
+        get => _fixedAdmissionNumber;
+        set => SetField(ref _fixedAdmissionNumber, value);
+    }
+
+    private string _fixedGivenName = string.Empty;
+    /// <summary>
+    /// Fixed given name (PID.5.1) used when <see cref="UseUniquePatientFlow"/> is true.
+    /// </summary>
+    public string FixedGivenName
+    {
+        get => _fixedGivenName;
+        set => SetField(ref _fixedGivenName, value);
+    }
+
+    private string _fixedFamilyName = string.Empty;
+    /// <summary>
+    /// Fixed family name (PID.5.2) used when <see cref="UseUniquePatientFlow"/> is true.
+    /// </summary>
+    public string FixedFamilyName
+    {
+        get => _fixedFamilyName;
+        set => SetField(ref _fixedFamilyName, value);
+    }
+
+    /// <summary>
+    /// True when the Patients count field should be enabled (false in unique patient flow).
+    /// </summary>
+    public bool IsPatientCountEnabled => !UseUniquePatientFlow;
+
     // ─── Parameters ────────────────────────────────────────────────
 
     private int _patientCount = 10;
@@ -104,7 +165,7 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         set => SetField(ref _globalDelayMs, value);
     }
 
-    private bool _keepConnectionOpen;
+    private bool _keepConnectionOpen = true;
     /// <summary>
     /// When true, a single TCP connection is reused for all messages in the batch.
     /// Only meaningful in MLLP mode; ignored by the engine in FHIR mode.
@@ -309,14 +370,19 @@ public sealed class BatchSendViewModel : INotifyPropertyChanged
         // Build the workflow
         var workflow = new BatchWorkflow
         {
-            PatientCount = PatientCount,
+            PatientCount = UseUniquePatientFlow ? 1 : PatientCount,
             GlobalDelayMs = GlobalDelayMs,
             Room = Room,
             Bed = Bed,
             Unit = Unit,
             Floor = Floor,
             Sex = Sex,
-            KeepConnectionOpen = KeepConnectionOpen
+            KeepConnectionOpen = KeepConnectionOpen,
+            UseUniquePatientFlow = UseUniquePatientFlow,
+            FixedPatientId = FixedPatientId,
+            FixedAdmissionNumber = FixedAdmissionNumber,
+            FixedGivenName = FixedGivenName,
+            FixedFamilyName = FixedFamilyName
         };
         foreach (var step in Steps)
         {
